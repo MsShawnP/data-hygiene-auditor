@@ -116,4 +116,4 @@ python generate_sample.py
 
 ## License
 
-Proprietary — Lailara LLC
+MIT — see [LICENSE](LICENSE)
