@@ -1,8 +1,10 @@
 # Data Hygiene Auditor
 
-A command-line tool that audits Excel files for common data quality issues and generates three reports from a single run: a visual HTML report, a sortable Excel findings file, and a PDF suitable for client delivery.
+Phone numbers stored seven different ways in the same column. "TBD" sitting in a status field for three years. A customer record that looks unique until you notice that whitespace and casing are the only things separating it from four others. These are the issues consultants inherit when they take over someone else's spreadsheet — and the ones nobody finds until they're already in production.
 
-Built for consultants and data teams who need to show stakeholders *what's wrong* and *why it matters* — not just dump raw statistics.
+The Data Hygiene Auditor is a Python CLI that scans Excel workbooks for the specific real-world failure modes that show up in actual consulting engagements: mixed-format inconsistencies, fields used for the wrong purpose, placeholder values that escaped into production, and phantom duplicates hiding behind cosmetic differences.
+
+A single run produces three reports tailored to three audiences: an **HTML report** for the stakeholder meeting, an **Excel findings file** for the person doing the cleanup, and a **PDF** for the deliverable folder.
 
 ## What It Detects
 
@@ -33,6 +35,25 @@ A single run produces three files:
 | `*_audit_findings.xlsx` | One row per issue. Frozen header, auto-filter, severity color-coding. Built for the person who needs to work through the fixes. |
 | `*_audit_report.pdf` | Same substance as the HTML in a format suitable for email attachments and formal deliverables. |
 
+## See It In Action
+
+Real outputs from a real run are committed to this repo so you can preview them without installing anything. They were produced from the deliberately-messy demo file under [samples/](samples/) — a 30-row, 2-sheet workbook that exercises every detection category. The run reported **59 issues** (23 High, 20 Medium, 16 Low).
+
+| File | Description |
+|------|-------------|
+| [samples/input/sample_messy_data.xlsx](samples/input/sample_messy_data.xlsx) | Input — the messy workbook |
+| [samples/output/sample_messy_data_audit_report.html](samples/output/sample_messy_data_audit_report.html) | HTML stakeholder report |
+| [samples/output/sample_messy_data_audit_findings.xlsx](samples/output/sample_messy_data_audit_findings.xlsx) | Excel findings file |
+| [samples/output/sample_messy_data_audit_report.pdf](samples/output/sample_messy_data_audit_report.pdf) | PDF deliverable |
+
+Screenshots of the HTML report will be added to [samples/output/screenshots/](samples/output/screenshots/) for readers who want a preview without downloading.
+
+To regenerate the outputs locally:
+
+```
+python audit.py --input samples/input/sample_messy_data.xlsx --output samples/output/
+```
+
 ## Usage
 
 ```
@@ -51,11 +72,11 @@ python audit.py --input <file.xlsx> --output <report_directory>
 ### Example
 
 ```
-python audit.py --input sample_messy_data.xlsx --output ./reports
+python audit.py --input samples/input/sample_messy_data.xlsx --output ./reports
 ```
 
 ```
-Auditing: sample_messy_data.xlsx
+Auditing: samples/input/sample_messy_data.xlsx
 Running analysis...
   Generating HTML report...
     → ./reports/sample_messy_data_audit_report.html
@@ -68,13 +89,12 @@ Audit complete: 59 issues found
   High: 23 | Medium: 20 | Low: 16
 ```
 
-## Sample Data
+## Regenerating the Sample Data
 
-`generate_sample.py` creates a deliberately messy 30-row, 2-sheet Excel file that exercises every detection category. It serves as both a demo and a regression test:
+`generate_sample.py` recreates the deliberately-messy demo workbook at `samples/input/sample_messy_data.xlsx`. Run it if you want to modify the demo data or verify that generation is reproducible. The committed outputs in [samples/output/](samples/output/) can then be regenerated with the command shown in [See It In Action](#see-it-in-action).
 
 ```
 python generate_sample.py
-python audit.py --input sample_messy_data.xlsx --output ./reports
 ```
 
 ## Requirements

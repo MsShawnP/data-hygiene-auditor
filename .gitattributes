@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Auto-generated reports — lock to binary to prevent line-ending conversion
+*.pdf binary
+*.xlsx binary
+*.html binary

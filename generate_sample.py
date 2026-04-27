@@ -79,5 +79,9 @@ order_rows = [
 for row in order_rows:
     ws2.append(row)
 
-wb.save("/home/claude/data-hygiene-auditor/sample_messy_data.xlsx")
-print("Sample file generated: sample_messy_data.xlsx")
+import os
+
+output_path = os.path.join("samples", "input", "sample_messy_data.xlsx")
+os.makedirs(os.path.dirname(output_path), exist_ok=True)
+wb.save(output_path)
+print(f"Sample file generated: {output_path}")

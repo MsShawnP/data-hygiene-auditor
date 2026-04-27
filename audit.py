@@ -1173,21 +1173,21 @@ Outputs three files:
 
     print(f"  Generating HTML report...")
     generate_html(results, html_path)
-    print(f"    → {html_path}")
+    print(f"    -> {html_path}")
 
     print(f"  Generating Excel findings...")
     generate_excel(results, xlsx_path)
-    print(f"    → {xlsx_path}")
+    print(f"    -> {xlsx_path}")
 
     print(f"  Generating PDF report...")
     generate_pdf(results, pdf_path)
-    print(f"    → {pdf_path}")
+    print(f"    -> {pdf_path}")
 
     if args.json:
         json_path = os.path.join(args.output, f"{basename}_audit_results.json")
         with open(json_path, 'w') as f:
             json.dump(results, f, indent=2, default=str)
-        print(f"    → {json_path}")
+        print(f"    -> {json_path}")
 
     # Print summary
     total_issues = 0
