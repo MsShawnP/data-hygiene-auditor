@@ -15,10 +15,11 @@ import json
 import hashlib
 from collections import Counter, defaultdict
 from datetime import datetime
+from html import escape as _html_escape
 from pathlib import Path
+from xml.sax.saxutils import escape as _xml_escape
 
 import pandas as pd
-import numpy as np
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from reportlab.lib.pagesizes import letter
@@ -26,10 +27,19 @@ from reportlab.lib.units import inch
 from reportlab.lib import colors as rl_colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, KeepTogether, HRFlowable
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak,
 )
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
+from reportlab.lib.enums import TA_CENTER
+
+
+def _h(val):
+    """Escape a value for safe inclusion in HTML text or attributes."""
+    return _html_escape(str(val), quote=True)
+
+
+def _p(val):
+    """Escape a value for inclusion inside a reportlab Paragraph."""
+    return _xml_escape(str(val))
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CONFIGURATION
@@ -225,7 +235,7 @@ def analyze_wrong_purpose(series, col_name, field_type):
 
     if field_type == 'currency':
         for idx, val in non_null:
-            if re.match(r'^[a-zA-Z]', val) and not val.startswith('$'):
+            if re.match(r'^[a-zA-Z]', val):
                 findings.append({
                     'issue': 'Text in currency field',
                     'example': val,
@@ -250,10 +260,16 @@ def analyze_wrong_purpose(series, col_name, field_type):
                 type_counts['bare_number'] += 1
             else:
                 type_counts['other'] += 1
-        if len(type_counts) > 1 and type_counts.get('bare_number', 0) > 0 and type_counts.get('alphanumeric_code', 0) > 0:
+        if len(type_counts) > 1:
+            label_map = {
+                'alphanumeric_code': 'coded (e.g. CUST-001)',
+                'bare_number': 'bare numbers',
+                'other': 'other',
+            }
+            parts = [f"{type_counts[k]} {label_map[k]}" for k, _ in type_counts.most_common()]
             findings.append({
-                'issue': 'Mixed ID formats (some coded, some bare numbers)',
-                'example': f"{type_counts.get('alphanumeric_code',0)} coded vs {type_counts.get('bare_number',0)} bare numbers",
+                'issue': 'Mixed ID formats',
+                'example': ' vs '.join(parts),
                 'row': None,
             })
 
@@ -608,7 +624,7 @@ def generate_html(results, output_path):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Data Hygiene Audit — {results['input_file']}</title>
+<title>Data Hygiene Audit — {_h(results['input_file'])}</title>
 <style>
 :root {{
     --bg: #1a1a2e;
@@ -752,7 +768,7 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 <body>
 
 <h1>Data Hygiene Audit Report</h1>
-<p class="subtitle">{results['input_file']} &mdash; {results['audit_timestamp']}</p>
+<p class="subtitle">{_h(results['input_file'])} &mdash; {results['audit_timestamp']}</p>
 
 <div class="summary-grid">
     <div class="summary-card info"><div class="number">{total_issues}</div><div class="label">Total Issues</div></div>
@@ -764,7 +780,7 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 
     for sheet_name, sheet_data in results['sheets'].items():
         html += f"""
-<h2>Sheet: {sheet_name}</h2>
+<h2>Sheet: {_h(sheet_name)}</h2>
 <p style="color:var(--text-muted);margin-bottom:1rem;">{sheet_data['row_count']} rows &times; {sheet_data['col_count']} columns</p>
 """
         for col_name, field_data in sheet_data['fields'].items():
@@ -777,8 +793,8 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
             html += f"""
 <div class="field-card">
     <div class="field-header">
-        <span class="field-name">{col_name}</span>
-        <span class="field-type">{ftype}</span>
+        <span class="field-name">{_h(col_name)}</span>
+        <span class="field-type">{_h(ftype)}</span>
     </div>
     <div style="font-size:0.85rem;color:var(--text-muted);">
         Missing: {null['total_missing']} / {null['total_rows']} ({null['missing_pct']}%)
@@ -796,32 +812,33 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
                 html += f'<span class="severity-badge {sev}">{sev}</span> '
 
                 if itype == 'mixed_format':
-                    html += f'<strong>Mixed {detail["field_type"]} formats</strong> &mdash; {detail["inconsistent_count"]} of {detail["dominant_count"] + detail["inconsistent_count"]} values deviate from dominant format ({detail["dominant_format"]})'
+                    html += f'<strong>Mixed {_h(detail["field_type"])} formats</strong> &mdash; {detail["inconsistent_count"]} of {detail["dominant_count"] + detail["inconsistent_count"]} values deviate from dominant format ({_h(detail["dominant_format"])})'
                     html += '<table class="format-table"><tr><th>Format</th><th>Count</th></tr>'
                     for fmt, cnt in detail['format_distribution'].items():
-                        html += f'<tr><td>{fmt}</td><td>{cnt}</td></tr>'
+                        html += f'<tr><td>{_h(fmt)}</td><td>{cnt}</td></tr>'
                     html += '</table>'
                     if detail.get('sample_nonstandard'):
-                        html += f'<div style="font-size:0.85rem;color:var(--text-muted);">Non-standard samples: {", ".join(detail["sample_nonstandard"][:3])}</div>'
+                        samples = ", ".join(_h(s) for s in detail["sample_nonstandard"][:3])
+                        html += f'<div style="font-size:0.85rem;color:var(--text-muted);">Non-standard samples: {samples}</div>'
 
                 elif itype == 'wrong_purpose':
-                    html += f'<strong>{detail["issue"]}</strong>'
+                    html += f'<strong>{_h(detail["issue"])}</strong>'
                     if detail.get('example'):
-                        html += f' &mdash; e.g. "{detail["example"]}"'
-                    if detail.get('row'):
+                        html += f' &mdash; e.g. "{_h(detail["example"])}"'
+                    if detail.get('row') is not None:
                         html += f' (row {detail["row"] + 2})'
 
                 elif itype in ('placeholder_value', 'placeholder'):
-                    html += f'<strong>Placeholder detected:</strong> "{detail["value"]}" appears {detail["count"]} times ({detail["pct"]}%)'
+                    html += f'<strong>Placeholder detected:</strong> "{_h(detail["value"])}" appears {detail["count"]} times ({detail["pct"]}%)'
 
                 elif itype == 'suspicious_repetition':
-                    html += f'<strong>Suspicious repetition:</strong> "{detail["value"]}" appears {detail["count"]} times ({detail["pct"]}%)'
+                    html += f'<strong>Suspicious repetition:</strong> "{_h(detail["value"])}" appears {detail["count"]} times ({detail["pct"]}%)'
 
                 elif itype == 'null_analysis':
                     html += f'<strong>High missing rate:</strong> {detail["total_missing"]} of {detail["total_rows"]} values missing ({detail["missing_pct"]}%)'
 
                 else:
-                    html += f'<strong>{itype}</strong>: {json.dumps(detail, default=str)}'
+                    html += f'<strong>{_h(itype)}</strong>: {_h(json.dumps(detail, default=str))}'
 
                 if why:
                     html += f'<div class="why-box"><strong>Why this matters:</strong> {why}</div>'
@@ -839,10 +856,10 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     <span class="severity-badge {sev}">{sev}</span>
     <strong>{dtype}</strong> &mdash; {dup['group_size']} rows: {', '.join(str(r) for r in dup['rows'])}
     <table class="format-table">
-        <tr>{''.join(f'<th>{k}</th>' for k in dup['sample_data'][0].keys())}</tr>
+        <tr>{''.join(f'<th>{_h(k)}</th>' for k in dup['sample_data'][0].keys())}</tr>
 """
                 for row in dup['sample_data']:
-                    html += '<tr>' + ''.join(f'<td>{v}</td>' for v in row.values()) + '</tr>'
+                    html += '<tr>' + ''.join(f'<td>{_h(v)}</td>' for v in row.values()) + '</tr>'
                 html += '</table>'
                 html += f'<div class="why-box"><strong>Why this matters:</strong> {dup["why"]}</div>'
                 html += '</div>'
@@ -1015,7 +1032,7 @@ def generate_pdf(results, output_path):
     story = []
 
     story.append(Paragraph("Data Hygiene Audit Report", styles['Title']))
-    story.append(Paragraph(f"{results['input_file']} — {results['audit_timestamp']}", styles['Normal']))
+    story.append(Paragraph(f"{_p(results['input_file'])} — {results['audit_timestamp']}", styles['Normal']))
     story.append(Spacer(1, 12))
 
     total_issues = 0
@@ -1050,7 +1067,7 @@ def generate_pdf(results, output_path):
     story.append(Spacer(1, 16))
 
     for sheet_name, sheet_data in results['sheets'].items():
-        story.append(Paragraph(f"Sheet: {sheet_name}", styles['SectionHead']))
+        story.append(Paragraph(f"Sheet: {_p(sheet_name)}", styles['SectionHead']))
         story.append(Paragraph(
             f"{sheet_data['row_count']} rows × {sheet_data['col_count']} columns",
             styles['SmallBody']))
@@ -1064,7 +1081,7 @@ def generate_pdf(results, output_path):
             ftype = field_data['inferred_type']
 
             story.append(Paragraph(
-                f"<b>{col_name}</b> <i>({ftype})</i> — Missing: {null['total_missing']}/{null['total_rows']} ({null['missing_pct']}%)",
+                f"<b>{_p(col_name)}</b> <i>({_p(ftype)})</i> — Missing: {null['total_missing']}/{null['total_rows']} ({null['missing_pct']}%)",
                 styles['FieldHead']))
 
             for issue in issues:
@@ -1074,7 +1091,7 @@ def generate_pdf(results, output_path):
                 sev_style = f'Sev{sev}'
 
                 if itype == 'mixed_format':
-                    text = f"[{sev}] Mixed {detail['field_type']} formats — {detail['inconsistent_count']} values deviate from {detail['dominant_format']}"
+                    text = f"[{sev}] Mixed {_p(detail['field_type'])} formats — {detail['inconsistent_count']} values deviate from {_p(detail['dominant_format'])}"
                     story.append(Paragraph(text, styles.get(sev_style, styles['SmallBody'])))
                     fmt_data = [['Format', 'Count']]
                     for fmt, cnt in detail['format_distribution'].items():
@@ -1088,17 +1105,17 @@ def generate_pdf(results, output_path):
                     story.append(ft)
 
                 elif itype == 'wrong_purpose':
-                    text = f"[{sev}] {detail['issue']}"
+                    text = f"[{sev}] {_p(detail['issue'])}"
                     if detail.get('example'):
-                        text += f' — e.g. "{detail["example"]}"'
+                        text += f' — e.g. "{_p(detail["example"])}"'
                     story.append(Paragraph(text, styles.get(sev_style, styles['SmallBody'])))
 
                 elif itype in ('placeholder_value', 'placeholder'):
-                    text = f'[{sev}] Placeholder: "{detail["value"]}" × {detail["count"]} ({detail["pct"]}%)'
+                    text = f'[{sev}] Placeholder: "{_p(detail["value"])}" × {detail["count"]} ({detail["pct"]}%)'
                     story.append(Paragraph(text, styles.get(sev_style, styles['SmallBody'])))
 
                 elif itype == 'suspicious_repetition':
-                    text = f'[{sev}] Repetition: "{detail["value"]}" × {detail["count"]} ({detail["pct"]}%)'
+                    text = f'[{sev}] Repetition: "{_p(detail["value"])}" × {detail["count"]} ({detail["pct"]}%)'
                     story.append(Paragraph(text, styles.get(sev_style, styles['SmallBody'])))
 
                 elif itype == 'null_analysis':
