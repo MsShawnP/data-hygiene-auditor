@@ -250,10 +250,16 @@ def analyze_wrong_purpose(series, col_name, field_type):
                 type_counts['bare_number'] += 1
             else:
                 type_counts['other'] += 1
-        if len(type_counts) > 1 and type_counts.get('bare_number', 0) > 0 and type_counts.get('alphanumeric_code', 0) > 0:
+        if len(type_counts) > 1:
+            label_map = {
+                'alphanumeric_code': 'coded (e.g. CUST-001)',
+                'bare_number': 'bare numbers',
+                'other': 'other',
+            }
+            parts = [f"{type_counts[k]} {label_map[k]}" for k, _ in type_counts.most_common()]
             findings.append({
-                'issue': 'Mixed ID formats (some coded, some bare numbers)',
-                'example': f"{type_counts.get('alphanumeric_code',0)} coded vs {type_counts.get('bare_number',0)} bare numbers",
+                'issue': 'Mixed ID formats',
+                'example': ' vs '.join(parts),
                 'row': None,
             })
 
