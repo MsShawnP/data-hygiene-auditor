@@ -59,10 +59,12 @@ EMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 def infer_field_type(col_name, values):
     """Infer the semantic type of a field from its name and sample values."""
     name_lower = col_name.lower().replace('_', '').replace(' ', '')
-    non_null = [str(v).strip() for v in values if pd.notna(v) and str(v).strip()]
-    if not non_null:
+    series = pd.Series(values) if not isinstance(values, pd.Series) else values
+    str_vals = series.dropna().astype(str).str.strip()
+    non_null_s = str_vals[str_vals != '']
+    if len(non_null_s) == 0:
         return 'empty'
-    sample = non_null[:200]
+    sample = non_null_s.iloc[:200].tolist()
 
     if any(k in name_lower for k in [
         'date', 'time', 'created', 'updated', 'ship', 'join', 'birth', 'dob',
@@ -115,17 +117,27 @@ def infer_field_type(col_name, values):
 def analyze_nulls(series):
     """Baseline null/missing analysis for every field."""
     total = len(series)
-    null_count = series.isna().sum()
-    whitespace_only = sum(
-        1 for v in series if pd.notna(v) and len(str(v)) > 0 and str(v).strip() == ''
-    )
-    blank_count = sum(1 for v in series if pd.notna(v) and str(v) == '')
+    null_count = int(series.isna().sum())
+    not_null = series.dropna()
+    if len(not_null) == 0:
+        return {
+            'null_count': null_count,
+            'blank_count': 0,
+            'whitespace_only': 0,
+            'total_missing': null_count,
+            'missing_pct': round(null_count / total * 100, 1) if total > 0 else 0,
+            'total_rows': total,
+        }
+    str_vals = not_null.astype(str)
+    blank_count = int((str_vals == '').sum())
+    stripped = str_vals.str.strip()
+    whitespace_only = int(((str_vals.str.len() > 0) & (stripped == '')).sum())
     missing = null_count + blank_count + whitespace_only
     pct = (missing / total * 100) if total > 0 else 0
     return {
-        'null_count': int(null_count),
-        'blank_count': int(blank_count),
-        'whitespace_only': int(whitespace_only),
+        'null_count': null_count,
+        'blank_count': blank_count,
+        'whitespace_only': whitespace_only,
         'total_missing': int(missing),
         'missing_pct': round(pct, 1),
         'total_rows': total,
@@ -134,11 +146,9 @@ def analyze_nulls(series):
 
 def analyze_mixed_formats(series, field_type):
     """Detect inconsistent formatting within a field."""
-    non_null = [
-        (i, str(v).strip()) for i, v in series.items()
-        if pd.notna(v) and str(v).strip()
-    ]
-    if not non_null:
+    str_vals = series.dropna().astype(str).str.strip()
+    non_null = str_vals[str_vals != '']
+    if len(non_null) == 0:
         return None
 
     if field_type == 'date':
@@ -150,19 +160,19 @@ def analyze_mixed_formats(series, field_type):
     else:
         return None
 
-    format_counts = Counter()
-    unmatched = []
-    for idx, val in non_null:
-        matched = False
-        for regex, label in patterns:
-            if regex.match(val):
-                format_counts[label] += 1
-                matched = True
-                break
-        if not matched:
-            format_counts['(non-standard)'] += 1
-            unmatched.append(val)
+    labels = pd.Series('(non-standard)', index=non_null.index)
+    assigned = pd.Series(False, index=non_null.index)
+    for regex, label in patterns:
+        remaining = non_null[~assigned]
+        if len(remaining) == 0:
+            break
+        hits = remaining.str.match(regex.pattern, na=False)
+        new_idx = hits[hits].index
+        if len(new_idx) > 0:
+            labels.loc[new_idx] = label
+            assigned.loc[new_idx] = True
 
+    format_counts = Counter(labels.values)
     if len(format_counts) <= 1:
         return None
 
@@ -170,6 +180,7 @@ def analyze_mixed_formats(series, field_type):
     total_typed = sum(format_counts.values())
     inconsistent_count = total_typed - dominant[1]
     inconsistent_pct = round(inconsistent_count / total_typed * 100, 1)
+    unmatched = non_null[labels == '(non-standard)'].tolist()[:5]
 
     return {
         'field_type': field_type,
@@ -178,62 +189,72 @@ def analyze_mixed_formats(series, field_type):
         'dominant_count': dominant[1],
         'inconsistent_count': inconsistent_count,
         'inconsistent_pct': inconsistent_pct,
-        'sample_nonstandard': unmatched[:5],
+        'sample_nonstandard': unmatched,
     }
 
 
 def analyze_wrong_purpose(series, col_name, field_type):
     """Detect fields being used for the wrong purpose."""
     findings = []
-    non_null = [
-        (i, str(v).strip()) for i, v in series.items()
-        if pd.notna(v) and str(v).strip()
-    ]
-    if not non_null:
+    str_vals = series.dropna().astype(str).str.strip()
+    non_null = str_vals[str_vals != '']
+    if len(non_null) == 0:
         return findings
 
     if field_type == 'name':
-        for idx, val in non_null:
-            if re.match(r'^[A-Z]{2,}-\d+', val) or re.match(r'^REF-', val, re.IGNORECASE):
-                findings.append({
-                    'issue': 'Code/ID stuffed in name field',
-                    'example': val,
-                    'row': idx,
-                })
-            elif re.match(r'^\d+$', val):
-                findings.append({
-                    'issue': 'Numeric value in name field',
-                    'example': val,
-                    'row': idx,
-                })
+        code_mask = (
+            non_null.str.match(r'^[A-Z]{2,}-\d+', na=False)
+            | non_null.str.match(r'^REF-', case=False, na=False)
+        )
+        for idx in non_null[code_mask].index:
+            findings.append({
+                'issue': 'Code/ID stuffed in name field',
+                'example': non_null[idx],
+                'row': idx,
+            })
+        numeric_mask = non_null.str.match(r'^\d+$', na=False) & ~code_mask
+        for idx in non_null[numeric_mask].index:
+            findings.append({
+                'issue': 'Numeric value in name field',
+                'example': non_null[idx],
+                'row': idx,
+            })
 
     if field_type == 'currency':
-        for idx, val in non_null:
-            if re.match(r'^[a-zA-Z]', val):
-                findings.append({
-                    'issue': 'Text in currency field',
-                    'example': val,
-                    'row': idx,
-                })
+        text_mask = non_null.str.match(r'^[a-zA-Z]', na=False)
+        for idx in non_null[text_mask].index:
+            findings.append({
+                'issue': 'Text in currency field',
+                'example': non_null[idx],
+                'row': idx,
+            })
 
     if field_type == 'email':
-        for idx, val in non_null:
-            if not EMAIL_RE.match(val) and not PLACEHOLDER_RE.match(val):
-                findings.append({
-                    'issue': 'Invalid email format',
-                    'example': val,
-                    'row': idx,
-                })
+        email_ok = non_null.str.match(EMAIL_RE.pattern, na=False)
+        placeholder_ok = non_null.str.match(
+            PLACEHOLDER_RE.pattern, case=False, na=False,
+        )
+        invalid_mask = ~email_ok & ~placeholder_ok
+        for idx in non_null[invalid_mask].index:
+            findings.append({
+                'issue': 'Invalid email format',
+                'example': non_null[idx],
+                'row': idx,
+            })
 
     if field_type == 'id':
+        alpha_mask = non_null.str.match(r'^[A-Za-z]+-\d+$', na=False)
+        bare_mask = non_null.str.match(r'^\d+$', na=False)
         type_counts = Counter()
-        for idx, val in non_null:
-            if re.match(r'^[A-Za-z]+-\d+$', val):
-                type_counts['alphanumeric_code'] += 1
-            elif re.match(r'^\d+$', val):
-                type_counts['bare_number'] += 1
-            else:
-                type_counts['other'] += 1
+        alpha_count = int(alpha_mask.sum())
+        bare_count = int(bare_mask.sum())
+        other_count = len(non_null) - alpha_count - bare_count
+        if alpha_count > 0:
+            type_counts['alphanumeric_code'] = alpha_count
+        if bare_count > 0:
+            type_counts['bare_number'] = bare_count
+        if other_count > 0:
+            type_counts['other'] = other_count
         if len(type_counts) > 1:
             label_map = {
                 'alphanumeric_code': 'coded (e.g. CUST-001)',
@@ -251,12 +272,13 @@ def analyze_wrong_purpose(series, col_name, field_type):
             })
 
     if field_type == 'categorical':
-        unique_vals = set(v.lower() for _, v in non_null)
-        if unique_vals and all(
+        lower_vals = non_null.str.lower()
+        unique_lower = set(lower_vals.unique())
+        if unique_lower and all(
             v in ('0', '1', 'y', 'n', 'yes', 'no', 'true', 'false')
-            for v in unique_vals
+            for v in unique_lower
         ):
-            raw_vals = set(v for _, v in non_null)
+            raw_vals = set(non_null.unique())
             bool_types = set()
             for v in raw_vals:
                 vl = v.lower()
@@ -274,10 +296,8 @@ def analyze_wrong_purpose(series, col_name, field_type):
                     'example': ', '.join(raw_vals),
                     'row': None,
                 })
-        case_variants = defaultdict(set)
-        for _, v in non_null:
-            case_variants[v.lower()].add(v)
-        for key, variants in case_variants.items():
+        for key in lower_vals.unique():
+            variants = set(non_null[lower_vals == key].unique())
             if len(variants) > 1:
                 findings.append({
                     'issue': 'Inconsistent casing in categorical values',
@@ -291,13 +311,17 @@ def analyze_wrong_purpose(series, col_name, field_type):
 def analyze_placeholders(series, col_name):
     """Detect suspiciously uniform or placeholder data."""
     findings = []
-    non_null = [str(v).strip() for v in series if pd.notna(v) and str(v).strip()]
-    if not non_null:
+    str_vals = series.dropna().astype(str).str.strip()
+    non_null = str_vals[str_vals != '']
+    if len(non_null) == 0:
         return findings
 
-    placeholder_hits = [v for v in non_null if PLACEHOLDER_RE.match(v)]
-    if placeholder_hits:
-        counter = Counter(placeholder_hits)
+    placeholder_mask = non_null.str.match(
+        PLACEHOLDER_RE.pattern, case=False, na=False,
+    )
+    placeholder_hits = non_null[placeholder_mask]
+    if len(placeholder_hits) > 0:
+        counter = Counter(placeholder_hits.values)
         for val, count in counter.most_common(5):
             findings.append({
                 'type': 'placeholder_value',
@@ -306,7 +330,7 @@ def analyze_placeholders(series, col_name):
                 'pct': round(count / len(non_null) * 100, 1),
             })
 
-    val_counts = Counter(non_null)
+    val_counts = Counter(non_null.values)
     total = len(non_null)
     for val, count in val_counts.most_common(5):
         if count >= 3 and (count / total) >= 0.1 and not PLACEHOLDER_RE.match(val):
@@ -328,14 +352,6 @@ def analyze_phantom_duplicates(df, sheet_name, field_types=None):
 
     field_types = field_types or {}
 
-    def normalize(val):
-        if pd.isna(val):
-            return ''
-        s = str(val).strip().lower()
-        s = _NORMALIZE_WS.sub(' ', s)
-        s = _NORMALIZE_PUNCT.sub('', s)
-        return s
-
     id_cols = set()
     for col in df.columns:
         ft = field_types.get(col, infer_field_type(col, df[col].values))
@@ -348,7 +364,15 @@ def analyze_phantom_duplicates(df, sheet_name, field_types=None):
     if not content_cols:
         content_cols = list(df.columns)
 
-    normalized = df[content_cols].apply(lambda col: col.map(normalize))
+    normalized = df[content_cols].fillna('').astype(str)
+    for col in content_cols:
+        normalized[col] = (
+            normalized[col]
+            .str.strip()
+            .str.lower()
+            .str.replace(r'\s+', ' ', regex=True)
+            .str.replace(r'[^\w\s@.]', '', regex=True)
+        )
 
     sig_cols = [c for c in content_cols if normalized[c].nunique() < len(df)]
     if not sig_cols:
@@ -358,9 +382,8 @@ def analyze_phantom_duplicates(df, sheet_name, field_types=None):
     combined = norm_subset.iloc[:, 0].astype(str)
     for col in sig_cols[1:]:
         combined = combined + '||' + norm_subset[col].astype(str)
-    sigs = combined.apply(
-        lambda x: hashlib.md5(x.encode()).hexdigest()
-    )
+    sig_values = [hashlib.md5(x.encode()).hexdigest() for x in combined]
+    sigs = pd.Series(sig_values, index=combined.index)
     dup_sigs = sigs[sigs.duplicated(keep=False)]
     if dup_sigs.empty:
         return findings
@@ -470,7 +493,17 @@ def analyze_fuzzy_duplicates(
     if not content_cols:
         content_cols = list(df.columns)
 
-    fingerprinted = df[content_cols].apply(lambda col: col.map(_fingerprint))
+    fingerprinted = df[content_cols].fillna('').astype(str)
+    for col in content_cols:
+        s = (
+            fingerprinted[col]
+            .str.strip()
+            .str.lower()
+            .str.replace(r'[^\w\s]', '', regex=True)
+        )
+        fingerprinted[col] = s.str.split().apply(
+            lambda tokens: ' '.join(sorted(tokens)) if isinstance(tokens, list) else '',
+        )
     combined_fp = fingerprinted.iloc[:, 0].astype(str)
     for col in content_cols[1:]:
         combined_fp = combined_fp + '||' + fingerprinted[col].astype(str)
