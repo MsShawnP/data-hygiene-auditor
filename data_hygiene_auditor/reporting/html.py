@@ -168,6 +168,114 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     padding: 1rem;
     margin-bottom: 1rem;
 }}
+.score-hero {{
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+}}
+.score-ring {{
+    position: relative;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+}}
+.score-ring svg {{ transform: rotate(-90deg); }}
+.score-ring .score-value {{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    font-weight: 700;
+}}
+.score-meta .score-label {{
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}}
+.score-meta .score-desc {{
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}}
+.sheet-score {{
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}}
+.controls {{
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 1rem 0 1.5rem;
+    padding: 1rem;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+}}
+.filter-btn {{
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}}
+.filter-btn:hover {{ border-color: var(--accent); }}
+.filter-btn.active {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+.filter-btn.active-high {{ background: var(--high); border-color: var(--high); color: #fff; }}
+.filter-btn.active-medium {{ background: var(--medium); border-color: var(--medium); color: #000; }}
+.filter-btn.active-low {{ background: var(--low); border-color: var(--low); color: #fff; }}
+.search-box {{
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.85rem;
+    flex: 1;
+    min-width: 200px;
+}}
+.search-box::placeholder {{ color: var(--text-muted); }}
+.toc {{
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin: 1rem 0;
+}}
+.toc-title {{ font-weight: 600; margin-bottom: 0.5rem; }}
+.toc a {{
+    color: var(--accent); text-decoration: none;
+    font-size: 0.9rem;
+}}
+.toc a:hover {{ text-decoration: underline; }}
+.toc ul {{ list-style: none; padding: 0; margin: 0; }}
+.toc li {{ padding: 0.25rem 0; }}
+.sheet-section {{ }}
+.sheet-toggle {{
+    cursor: pointer;
+    user-select: none;
+}}
+.sheet-toggle::before {{
+    content: '▼ ';
+    font-size: 0.7em;
+    transition: transform 0.2s;
+    display: inline-block;
+}}
+.sheet-toggle.collapsed::before {{ content: '▶ '; }}
+.sheet-body.hidden {{ display: none; }}
+.field-card.hidden {{ display: none; }}
 .footer {{
     margin-top: 3rem;
     padding-top: 1rem;
@@ -176,12 +284,57 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     font-size: 0.85rem;
     text-align: center;
 }}
+@media (max-width: 600px) {{
+    body {{ padding: 1rem; }}
+    .score-hero {{ flex-direction: column; text-align: center; }}
+    .summary-grid {{ grid-template-columns: repeat(2, 1fr); }}
+    .controls {{ flex-direction: column; }}
+}}
 </style>
 </head>
 <body>
 
 <h1>Data Hygiene Audit Report</h1>
 <p class="subtitle">{_h(results['input_file'])} &mdash; {results['audit_timestamp']}</p>
+""")
+
+    overall = results.get('overall_score', 100)
+    if overall >= 90:
+        score_color = 'var(--low)'
+        score_label = 'Clean'
+        score_desc = 'This dataset is in good shape.'
+    elif overall >= 70:
+        score_color = 'var(--medium)'
+        score_label = 'Needs Attention'
+        score_desc = 'Several issues should be addressed before use.'
+    else:
+        score_color = 'var(--high)'
+        score_label = 'Significant Issues'
+        score_desc = 'This dataset has serious quality problems.'
+
+    pct = min(overall, 100)
+    circumference = 2 * 3.14159 * 52
+    dash = circumference * pct / 100
+    gap = circumference - dash
+
+    parts.append(f"""
+<div class="score-hero">
+    <div class="score-ring">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52"
+                fill="none" stroke="var(--card-border)" stroke-width="8"/>
+            <circle cx="60" cy="60" r="52"
+                fill="none" stroke="{score_color}" stroke-width="8"
+                stroke-dasharray="{dash:.1f} {gap:.1f}"
+                stroke-linecap="round"/>
+        </svg>
+        <div class="score-value" style="color:{score_color}">{overall}</div>
+    </div>
+    <div class="score-meta">
+        <div class="score-label">{score_label}</div>
+        <div class="score-desc">{score_desc}</div>
+    </div>
+</div>
 
 <div class="summary-grid">
     <div class="summary-card info">
@@ -197,11 +350,45 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
         <div class="number">{severity_totals.get('Low', 0)}</div>
         <div class="label">Low Severity</div></div>
 </div>
+
+<div class="controls">
+    <button class="filter-btn active" data-severity="all" onclick="filterSeverity('all')">All</button>
+    <button class="filter-btn" data-severity="High" onclick="filterSeverity('High')">High</button>
+    <button class="filter-btn" data-severity="Medium" onclick="filterSeverity('Medium')">Medium</button>
+    <button class="filter-btn" data-severity="Low" onclick="filterSeverity('Low')">Low</button>
+    <input class="search-box" type="text" placeholder="Search by column name or issue..."
+        oninput="searchFields(this.value)">
+</div>
+
+<div class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <ul>
 """)
 
     for sheet_name, sheet_data in results['sheets'].items():
+        sid = _h(sheet_name.replace(' ', '-').lower())
+        ss = sheet_data.get('health_score', 100)
+        parts.append(
+            f'        <li><a href="#sheet-{sid}">'
+            f'{_h(sheet_name)} ({ss}/100)</a></li>\n'
+        )
+    parts.append("    </ul>\n</div>\n")
+
+    for sheet_name, sheet_data in results['sheets'].items():
+        ss = sheet_data.get('health_score', 100)
+        if ss >= 90:
+            ss_color = 'var(--low)'
+        elif ss >= 70:
+            ss_color = 'var(--medium)'
+        else:
+            ss_color = 'var(--high)'
+        sid = _h(sheet_name.replace(' ', '-').lower())
         parts.append(f"""
-<h2>Sheet: {_h(sheet_name)}</h2>
+<div class="sheet-section" id="sheet-{sid}">
+<h2 class="sheet-toggle" onclick="toggleSheet(this)">Sheet: {_h(sheet_name)}
+    <span class="sheet-score" style="background:{ss_color};\
+color:#fff">{ss}/100</span></h2>
+<div class="sheet-body">
 <p style="color:var(--text-muted);margin-bottom:1rem;">
 {sheet_data['row_count']} rows &times; {sheet_data['col_count']} columns</p>
 """)
@@ -217,8 +404,9 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
             else:
                 null_color = 'var(--high)'
 
+            severities = ' '.join(set(i['severity'] for i in issues))
             parts.append(f"""
-<div class="field-card">
+<div class="field-card" data-field="{_h(col_name.lower())}" data-severities="{severities}">
     <div class="field-header">
         <span class="field-name">{_h(col_name)}</span>
         <span class="field-type">{_h(ftype)}</span>
@@ -357,11 +545,51 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
                 )
                 parts.append('</div>')
 
+        parts.append('</div></div>')  # close sheet-body, sheet-section
+
     parts.append(f"""
 <div class="footer">
     Data Hygiene Audit &mdash; Generated {results['audit_timestamp']}\
  &mdash; Lailara LLC
 </div>
+
+<script>
+function filterSeverity(sev) {{
+    document.querySelectorAll('.filter-btn').forEach(b => {{
+        b.className = 'filter-btn';
+        if (b.dataset.severity === sev) {{
+            b.classList.add(sev === 'all' ? 'active' : 'active-' + sev.toLowerCase());
+        }}
+    }});
+    document.querySelectorAll('.field-card').forEach(card => {{
+        if (sev === 'all') {{
+            card.classList.remove('hidden');
+        }} else {{
+            const sevs = card.dataset.severities || '';
+            card.classList.toggle('hidden', !sevs.includes(sev));
+        }}
+    }});
+}}
+
+function searchFields(query) {{
+    const q = query.toLowerCase();
+    document.querySelectorAll('.field-card').forEach(card => {{
+        const field = card.dataset.field || '';
+        const text = card.textContent.toLowerCase();
+        card.classList.toggle('hidden', q && !field.includes(q) && !text.includes(q));
+    }});
+    document.querySelectorAll('.filter-btn').forEach(b => {{
+        b.className = 'filter-btn';
+        if (b.dataset.severity === 'all') b.classList.add('active');
+    }});
+}}
+
+function toggleSheet(el) {{
+    el.classList.toggle('collapsed');
+    const body = el.nextElementSibling;
+    if (body) body.classList.toggle('hidden');
+}}
+</script>
 </body></html>""")
 
     with open(output_path, 'w', encoding='utf-8') as f:

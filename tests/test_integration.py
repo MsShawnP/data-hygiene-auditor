@@ -31,6 +31,18 @@ class TestIntegration:
         assert "Customers" in results["sheets"]
         assert "Orders" in results["sheets"]
 
+    def test_health_scores_present(self):
+        results = run_audit(str(SAMPLE_PATH))
+        assert "overall_score" in results
+        assert 0 <= results["overall_score"] <= 100
+        for sheet in results["sheets"].values():
+            assert "health_score" in sheet
+            assert 0 <= sheet["health_score"] <= 100
+
+    def test_messy_data_scores_low(self):
+        results = run_audit(str(SAMPLE_PATH))
+        assert results["overall_score"] < 70
+
     def test_html_report_generated(self):
         results = run_audit(str(SAMPLE_PATH))
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -100,6 +112,25 @@ class TestCSVSupport:
             assert len(all_issues) > 0
         finally:
             os.unlink(f.name)
+
+
+class TestHealthScore:
+    def test_clean_data_scores_high(self):
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode="w", delete=False, newline="") as f:
+            f.write("Name,Email,Phone\n")
+            f.write("Alice,alice@test.com,(555) 123-4567\n")
+            f.write("Bob,bob@test.com,(555) 234-5678\n")
+            f.write("Charlie,charlie@test.com,(555) 345-6789\n")
+        try:
+            results = run_audit(f.name)
+            assert results["overall_score"] >= 90
+        finally:
+            os.unlink(f.name)
+
+    def test_score_floors_at_zero(self):
+        results = run_audit(str(SAMPLE_PATH))
+        for sheet in results["sheets"].values():
+            assert sheet["health_score"] >= 0
 
 
 class TestEdgeCases:

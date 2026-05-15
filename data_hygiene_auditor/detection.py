@@ -20,35 +20,38 @@ PLACEHOLDER_PATTERNS = [
 PLACEHOLDER_RE = re.compile('|'.join(PLACEHOLDER_PATTERNS), re.IGNORECASE)
 
 DATE_PATTERNS = [
-    (r'^\d{4}-\d{2}-\d{2}$', 'YYYY-MM-DD'),
-    (r'^\d{2}/\d{2}/\d{4}$', 'MM/DD/YYYY'),
-    (r'^\d{1,2}/\d{1,2}/\d{4}$', 'M/D/YYYY'),
-    (r'^[A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4}$', 'Mon DD, YYYY'),
-    (r'^\d{1,2}-[A-Za-z]{3}-\d{4}$', 'DD-Mon-YYYY'),
-    (r'^\d{4}/\d{2}/\d{2}$', 'YYYY/MM/DD'),
-    (r'^\d{4}\.\d{2}\.\d{2}$', 'YYYY.MM.DD'),
-    (r'^\d{2}-\d{2}-\d{4}$', 'MM-DD-YYYY'),
-    (r'^[A-Za-z]{3,9}\s+\d{1,2}\s+\d{4}$', 'Mon DD YYYY'),
+    (re.compile(r'^\d{4}-\d{2}-\d{2}$'), 'YYYY-MM-DD'),
+    (re.compile(r'^\d{2}/\d{2}/\d{4}$'), 'MM/DD/YYYY'),
+    (re.compile(r'^\d{1,2}/\d{1,2}/\d{4}$'), 'M/D/YYYY'),
+    (re.compile(r'^[A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4}$'), 'Mon DD, YYYY'),
+    (re.compile(r'^\d{1,2}-[A-Za-z]{3}-\d{4}$'), 'DD-Mon-YYYY'),
+    (re.compile(r'^\d{4}/\d{2}/\d{2}$'), 'YYYY/MM/DD'),
+    (re.compile(r'^\d{4}\.\d{2}\.\d{2}$'), 'YYYY.MM.DD'),
+    (re.compile(r'^\d{2}-\d{2}-\d{4}$'), 'MM-DD-YYYY'),
+    (re.compile(r'^[A-Za-z]{3,9}\s+\d{1,2}\s+\d{4}$'), 'Mon DD YYYY'),
 ]
 
 PHONE_PATTERNS = [
-    (r'^\(\d{3}\)\s?\d{3}-\d{4}$', '(XXX) XXX-XXXX'),
-    (r'^\d{3}-\d{3}-\d{4}$', 'XXX-XXX-XXXX'),
-    (r'^\d{10}$', 'XXXXXXXXXX'),
-    (r'^\d{3}\.\d{3}\.\d{4}$', 'XXX.XXX.XXXX'),
-    (r'^\d{3}\s\d{3}\s\d{4}$', 'XXX XXX XXXX'),
-    (r'^\+?1-?\d{3}-\d{3}-\d{4}$', '+1-XXX-XXX-XXXX'),
-    (r'^\(\d{3}\)\d{7}$', '(XXX)XXXXXXX'),
+    (re.compile(r'^\(\d{3}\)\s?\d{3}-\d{4}$'), '(XXX) XXX-XXXX'),
+    (re.compile(r'^\d{3}-\d{3}-\d{4}$'), 'XXX-XXX-XXXX'),
+    (re.compile(r'^\d{10}$'), 'XXXXXXXXXX'),
+    (re.compile(r'^\d{3}\.\d{3}\.\d{4}$'), 'XXX.XXX.XXXX'),
+    (re.compile(r'^\d{3}\s\d{3}\s\d{4}$'), 'XXX XXX XXXX'),
+    (re.compile(r'^\+?1-?\d{3}-\d{3}-\d{4}$'), '+1-XXX-XXX-XXXX'),
+    (re.compile(r'^\(\d{3}\)\d{7}$'), '(XXX)XXXXXXX'),
 ]
 
 CURRENCY_PATTERNS = [
-    (r'^\$[\d,]+\.\d{2}$', '$X,XXX.XX'),
-    (r'^\$[\d,]+$', '$X,XXX'),
-    (r'^[\d,]+\.\d{2}$', 'X,XXX.XX (no symbol)'),
-    (r'^[\d,]+$', 'X,XXX (bare number)'),
-    (r'^\$-?[\d,]+\.\d{2}\s*(USD)?$', '$X,XXX.XX USD'),
-    (r'^\$[\d,]+\.\d{2}\s+USD$', '$X,XXX.XX USD'),
+    (re.compile(r'^\$[\d,]+\.\d{2}$'), '$X,XXX.XX'),
+    (re.compile(r'^\$[\d,]+$'), '$X,XXX'),
+    (re.compile(r'^[\d,]+\.\d{2}$'), 'X,XXX.XX (no symbol)'),
+    (re.compile(r'^[\d,]+$'), 'X,XXX (bare number)'),
+    (re.compile(r'^\$-?[\d,]+\.\d{2}\s*(USD)?$'), '$X,XXX.XX USD'),
+    (re.compile(r'^\$[\d,]+\.\d{2}\s+USD$'), '$X,XXX.XX USD'),
 ]
+
+_NORMALIZE_WS = re.compile(r'\s+')
+_NORMALIZE_PUNCT = re.compile(r'[^\w\s@.]')
 
 EMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
@@ -88,17 +91,17 @@ def infer_field_type(col_name, values):
         return 'freetext'
 
     date_hits = sum(
-        1 for v in sample if any(re.match(p, v) for p, _ in DATE_PATTERNS)
+        1 for v in sample if any(p.match(v) for p, _ in DATE_PATTERNS)
     )
     if date_hits > len(sample) * 0.5:
         return 'date'
     phone_hits = sum(
-        1 for v in sample if any(re.match(p, v) for p, _ in PHONE_PATTERNS)
+        1 for v in sample if any(p.match(v) for p, _ in PHONE_PATTERNS)
     )
     if phone_hits > len(sample) * 0.5:
         return 'phone'
     curr_hits = sum(
-        1 for v in sample if any(re.match(p, v) for p, _ in CURRENCY_PATTERNS)
+        1 for v in sample if any(p.match(v) for p, _ in CURRENCY_PATTERNS)
     )
     if curr_hits > len(sample) * 0.5:
         return 'currency'
@@ -152,7 +155,7 @@ def analyze_mixed_formats(series, field_type):
     for idx, val in non_null:
         matched = False
         for regex, label in patterns:
-            if re.match(regex, val):
+            if regex.match(val):
                 format_counts[label] += 1
                 matched = True
                 break
@@ -329,8 +332,8 @@ def analyze_phantom_duplicates(df, sheet_name, field_types=None):
         if pd.isna(val):
             return ''
         s = str(val).strip().lower()
-        s = re.sub(r'\s+', ' ', s)
-        s = re.sub(r'[^\w\s@.]', '', s)
+        s = _NORMALIZE_WS.sub(' ', s)
+        s = _NORMALIZE_PUNCT.sub('', s)
         return s
 
     id_cols = set()
@@ -352,9 +355,11 @@ def analyze_phantom_duplicates(df, sheet_name, field_types=None):
         return findings
 
     norm_subset = normalized[sig_cols]
-    sigs = norm_subset.apply(
-        lambda row: hashlib.md5('||'.join(row.values).encode()).hexdigest(),
-        axis=1,
+    combined = norm_subset.iloc[:, 0].astype(str)
+    for col in sig_cols[1:]:
+        combined = combined + '||' + norm_subset[col].astype(str)
+    sigs = combined.apply(
+        lambda x: hashlib.md5(x.encode()).hexdigest()
     )
     dup_sigs = sigs[sigs.duplicated(keep=False)]
     if dup_sigs.empty:

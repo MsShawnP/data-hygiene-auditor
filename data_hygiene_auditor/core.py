@@ -175,6 +175,46 @@ def run_audit(input_path):
             )
         sheet_results['phantom_duplicates'] = dupes
 
+        sheet_results['health_score'] = _compute_health_score(
+            sheet_results,
+        )
         results['sheets'][sheet_name] = sheet_results
 
+    if results['sheets']:
+        scores = [s['health_score'] for s in results['sheets'].values()]
+        results['overall_score'] = round(sum(scores) / len(scores))
+    else:
+        results['overall_score'] = 100
+
     return results
+
+
+def _compute_health_score(sheet_data):
+    """Compute a 0-100 health score for a sheet.
+
+    Starts at 100 and deducts for issues found. Designed so:
+    90+ = clean, 70-89 = needs attention, <70 = significant issues.
+    """
+    score = 100.0
+
+    severity_penalty = {'High': 3.0, 'Medium': 1.5, 'Low': 0.5}
+    for field_data in sheet_data['fields'].values():
+        for issue in field_data['issues']:
+            score -= severity_penalty.get(issue['severity'], 1.0)
+
+    missing_pcts = [
+        fd['null_analysis']['missing_pct']
+        for fd in sheet_data['fields'].values()
+    ]
+    if missing_pcts:
+        avg_missing = sum(missing_pcts) / len(missing_pcts)
+        score -= avg_missing * 0.2
+
+    for dup in sheet_data['phantom_duplicates']:
+        if dup['type'] == 'exact_duplicate':
+            score -= 5.0
+        else:
+            score -= 3.0
+        score -= severity_penalty.get(dup['severity'], 1.0)
+
+    return max(0, round(score))
