@@ -197,6 +197,51 @@ def generate_excel(results, output_path):
                     )
             row_num += 1
 
+        for sv in sheet_data.get('schema_violations', []):
+            svtype = sv['type']
+            col_name = sv.get('column', '')
+            detail = sv.get('detail', {})
+            if svtype == 'schema_type_mismatch':
+                desc = (
+                    f"Expected type '{detail.get('expected_type', '')}'"
+                    f" but inferred '{detail.get('actual_type', '')}'"
+                )
+                example = f"Column: {col_name}"
+            elif svtype == 'schema_missing_column':
+                desc = f"Required column '{col_name}' missing"
+                example = (
+                    f"Expected type:"
+                    f" {detail.get('expected_type', '')}"
+                )
+            elif svtype == 'schema_completeness_violation':
+                desc = (
+                    f"{detail.get('actual_missing_pct', 0)}% missing"
+                    f" (max {detail.get('max_missing_pct', 0)}%)"
+                )
+                example = f"Column: {col_name}"
+            else:
+                desc = svtype
+                example = str(detail)
+            values = [
+                sheet_name, col_name, "—",
+                "Schema Violation", sv['severity'],
+                desc, example, sv.get('why', ''), '',
+            ]
+            for col_idx, val in enumerate(values, 1):
+                cell = ws.cell(
+                    row=row_num, column=col_idx, value=val,
+                )
+                cell.font = Font(name="Arial", size=10)
+                cell.alignment = Alignment(
+                    vertical="top", wrap_text=True,
+                )
+                cell.border = thin_border
+                if col_idx == 5:
+                    cell.fill = sev_fills.get(
+                        sv['severity'], PatternFill(),
+                    )
+            row_num += 1
+
     ws.column_dimensions['A'].width = 14
     ws.column_dimensions['B'].width = 18
     ws.column_dimensions['C'].width = 14
@@ -243,6 +288,45 @@ def generate_excel(results, output_path):
         )
         ws2.cell(row=r, column=2).font = Font(name="Arial", size=10)
         r += 1
+
+    trend = results.get('trend')
+    if trend:
+        r += 1
+        ws2.cell(row=r, column=1, value="Trend vs Baseline")
+        ws2.cell(row=r, column=1).font = Font(
+            bold=True, name="Arial", size=12,
+        )
+        r += 1
+        ws2.cell(row=r, column=1, value="Baseline:")
+        ws2.cell(
+            row=r, column=2,
+            value=f"{trend['baseline_file']} ({trend['baseline_timestamp']})",
+        )
+        r += 1
+        delta = trend['overall_score_delta']
+        sign = '+' if delta > 0 else ''
+        ws2.cell(row=r, column=1, value="Score Change:")
+        ws2.cell(
+            row=r, column=2,
+            value=f"{trend['overall_score_previous']} → "
+            f"{results['overall_score']} ({sign}{delta})",
+        )
+        r += 1
+        td = trend['total_issues_delta']
+        sign = '+' if td > 0 else ''
+        ws2.cell(row=r, column=1, value="Issues Change:")
+        ws2.cell(
+            row=r, column=2,
+            value=f"{trend['total_issues_previous']} → "
+            f"{row_num - 2} ({sign}{td})",
+        )
+        for rr in range(r - 2, r + 1):
+            ws2.cell(row=rr, column=1).font = Font(
+                bold=True, name="Arial", size=10,
+            )
+            ws2.cell(row=rr, column=2).font = Font(
+                name="Arial", size=10,
+            )
 
     ws2.column_dimensions['A'].width = 16
     ws2.column_dimensions['B'].width = 40

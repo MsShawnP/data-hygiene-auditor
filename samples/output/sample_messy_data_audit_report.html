@@ -292,6 +292,31 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
     padding: 0.3rem 0.8rem 0;
     font-style: italic;
 }
+.trend-banner {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(74, 144, 217, 0.08);
+    border: 1px solid var(--info);
+    border-radius: 8px;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+.trend-banner .delta {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+.delta.positive { color: var(--low); }
+.delta.negative { color: var(--high); }
+.delta.neutral { color: var(--text-muted); }
+.schema-violation {
+    border-left: 3px solid var(--accent);
+    padding: 0.75rem 1rem;
+    margin: 0.75rem 0;
+    background: rgba(233, 69, 96, 0.05);
+    border-radius: 0 6px 6px 0;
+}
 .footer {
     margin-top: 3rem;
     padding-top: 1rem;
@@ -311,7 +336,7 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
 <body>
 
 <h1>Data Hygiene Audit Report</h1>
-<p class="subtitle">sample_messy_data.xlsx &mdash; 2026-05-15 13:58:59</p>
+<p class="subtitle">sample_messy_data.xlsx &mdash; 2026-05-15 15:03:29</p>
 
 <div class="score-hero">
     <div class="score-ring">
@@ -329,6 +354,16 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         <div class="score-label">Significant Issues</div>
         <div class="score-desc">This dataset has serious quality problems.</div>
     </div>
+</div>
+
+
+<div class="trend-banner">
+    <div>
+        <span class="delta positive">↑4</span>
+        <span> vs baseline (2026-05-15 15:03:07)</span>
+    </div>
+    <div>Score: 28 → 32</div>
+    <div>Issues: 63 → 59 (-4)</div>
 </div>
 
 <div class="summary-grid">
@@ -676,7 +711,7 @@ df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></di
 <div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 2 of 10 values missing (20.0%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (fill_missing)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 2 missing values in &quot;ShipDate&quot; (20.0%)</div><pre class="fix-code">df[&quot;ShipDate&quot;] = df[&quot;ShipDate&quot;].fillna(df[&quot;ShipDate&quot;].mode()[0])</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed date formats</strong> &mdash; 3 of 8 values deviate from dominant format (YYYY-MM-DD)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>YYYY-MM-DD</td><td>5</td></tr><tr><td>MM/DD/YYYY</td><td>1</td></tr><tr><td>Mon DD, YYYY</td><td>1</td></tr><tr><td>M/D/YYYY</td><td>1</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (&quot;Jan 15, 2023&quot;) won&#x27;t sort chronologically next to &quot;2023-01-15&quot;. Downstream tools, APIs, and reports will misparse or reject inconsistent dates.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_dates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Standardize all dates in &quot;ShipDate&quot; to YYYY-MM-DD format</div><pre class="fix-code">df[&quot;ShipDate&quot;] = pd.to_datetime(
     df[&quot;ShipDate&quot;], format=&quot;mixed&quot;, dayfirst=False
 ).dt.strftime(&quot;%Y-%m-%d&quot;)</pre></div></div></div>
-<div class="field-card" data-field="status" data-severities="High Medium">
+<div class="field-card" data-field="status" data-severities="Medium High">
     <div class="field-header">
         <span class="field-name">Status</span>
         <span class="field-type">categorical</span>
@@ -708,7 +743,7 @@ df[&quot;Status&quot;] = df[&quot;Status&quot;].replace(&quot;Test&quot;, np.nan
         <tr><th>OrderID</th><th>CustomerID</th><th>OrderDate</th><th>Amount</th><th>ShipDate</th><th>Status</th></tr>
 <tr><td>ORD-006</td><td>CUST-010</td><td>2023-01-01</td><td>$0.00</td><td>2023-01-01</td><td>Test</td></tr><tr><td>ORD-007</td><td>CUST-010</td><td>2023-01-01</td><td>$0.00</td><td>2023-01-01</td><td>Test</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Exact duplicate rows are the clearest sign of a data quality issue — they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (drop_exact_duplicates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Remove 2 exact duplicate rows (rows 7, 8)</div><pre class="fix-code">df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div></div></div>
 <div class="footer">
-    Data Hygiene Audit &mdash; Generated 2026-05-15 13:58:59 &mdash; Lailara LLC
+    Data Hygiene Audit &mdash; Generated 2026-05-15 15:03:29 &mdash; Lailara LLC
 </div>
 
 <script>

@@ -65,6 +65,18 @@ Outputs three files:
         '--threshold', '-t', type=float, default=0.85,
         help='Fuzzy duplicate similarity threshold (0.0-1.0, default: 0.85)',
     )
+    parser.add_argument(
+        '--schema', '-s',
+        help='Path to schema JSON for type/completeness validation',
+    )
+    parser.add_argument(
+        '--generate-schema',
+        help='Generate schema from inferred types and save to path',
+    )
+    parser.add_argument(
+        '--baseline', '-b',
+        help='Path to previous audit JSON for trend comparison',
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.input):
@@ -90,7 +102,12 @@ Outputs three files:
     print(f"\n  {_c('Data Hygiene Auditor', '1')}")
     print(f"  Auditing: {_c(args.input, '36')}\n")
 
-    results = run_audit(args.input, fuzzy_threshold=args.threshold)
+    results = run_audit(
+        args.input,
+        fuzzy_threshold=args.threshold,
+        schema_path=args.schema,
+        baseline_path=args.baseline,
+    )
     sheet_count = len(results['sheets'])
     for i, (name, sdata) in enumerate(results['sheets'].items(), 1):
         score = sdata['health_score']
@@ -129,8 +146,16 @@ Outputs three files:
             json.dump(results, f, indent=2, default=str)
         print(f"    {_c('JSON', '32')}  -> {json_path}")
 
+    if args.generate_schema:
+        from .schema import generate_schema
+        schema_data = generate_schema(results)
+        with open(args.generate_schema, 'w') as f:
+            json.dump(schema_data, f, indent=2)
+        print(f"    {_c('Schema', '32')} -> {args.generate_schema}")
+
     total_issues = 0
     severity_totals = Counter()
+    schema_count = 0
     for sheet in results['sheets'].values():
         for field in sheet['fields'].values():
             for issue in field['issues']:
@@ -139,6 +164,10 @@ Outputs three files:
         for d in sheet['phantom_duplicates']:
             total_issues += 1
             severity_totals[d['severity']] += 1
+        for sv in sheet.get('schema_violations', []):
+            total_issues += 1
+            severity_totals[sv['severity']] += 1
+            schema_count += 1
 
     high = severity_totals.get('High', 0)
     med = severity_totals.get('Medium', 0)
@@ -146,12 +175,28 @@ Outputs three files:
 
     overall = results['overall_score']
     score_color = '32' if overall >= 90 else ('33' if overall >= 70 else '31')
+
+    score_str = f"{overall}/100"
+    trend = results.get('trend')
+    if trend:
+        delta = trend['overall_score_delta']
+        arrow = _c(f'+{delta}', '32') if delta > 0 else _c(f'{delta}', '31') if delta < 0 else '='
+        score_str += f" ({arrow} from baseline)"
     print(
-        f"\n  Health Score: {_c(str(overall) + '/100', score_color)}"
+        f"\n  Health Score: {_c(score_str, score_color)}"
     )
-    print(
+    issue_line = (
         f"  {_c(str(total_issues) + ' issues found', '1')}"
         f"  —  {_c(f'High: {high}', '31')}"
         f" | {_c(f'Medium: {med}', '33')}"
-        f" | {_c(f'Low: {low}', '32')}\n"
+        f" | {_c(f'Low: {low}', '32')}"
     )
+    if trend:
+        td = trend['total_issues_delta']
+        if td != 0:
+            sign = '+' if td > 0 else ''
+            issue_line += f"  ({sign}{td} from baseline)"
+    print(issue_line)
+    if schema_count:
+        print(f"  Schema violations: {_c(str(schema_count), '31')}")
+    print()
