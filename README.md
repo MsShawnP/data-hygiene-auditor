@@ -64,18 +64,37 @@ To regenerate the outputs locally:
 python audit.py --input samples/input/sample_messy_data.xlsx --output samples/output/
 ```
 
-## Usage
+## Installation
+
+```
+pip install .
+```
+
+Or install dependencies directly:
 
 ```
 pip install -r requirements.txt
-python audit.py --input <file.xlsx> --output <report_directory>
 ```
+
+## Usage
+
+```
+data-hygiene-audit --input <file> --output <report_directory>
+```
+
+Or run directly:
+
+```
+python audit.py --input <file> --output <report_directory>
+```
+
+Supports `.xlsx`, `.xls`, `.csv`, and `.tsv` files.
 
 ### Options
 
 | Flag | Description |
 |------|-------------|
-| `--input`, `-i` | Path to the Excel file to audit (required) |
+| `--input`, `-i` | Path to the file to audit — `.xlsx`, `.csv`, or `.tsv` (required) |
 | `--output`, `-o` | Directory for generated reports (required) |
 | `--json` | Also output the raw findings as structured JSON |
 
@@ -86,17 +105,19 @@ python audit.py --input samples/input/sample_messy_data.xlsx --output ./reports
 ```
 
 ```
-Auditing: samples/input/sample_messy_data.xlsx
-Running analysis...
-  Generating HTML report...
-    → ./reports/sample_messy_data_audit_report.html
-  Generating Excel findings...
-    → ./reports/sample_messy_data_audit_findings.xlsx
-  Generating PDF report...
-    → ./reports/sample_messy_data_audit_report.pdf
+  Data Hygiene Auditor
+  Auditing: samples/input/sample_messy_data.xlsx
 
-Audit complete: 59 issues found
-  High: 23 | Medium: 20 | Low: 16
+  [1/2] Analyzed sheet: Customers
+  [2/2] Analyzed sheet: Orders
+
+  Generating reports...
+    HTML  -> ./reports/sample_messy_data_audit_report.html
+    Excel -> ./reports/sample_messy_data_audit_findings.xlsx
+    PDF   -> ./reports/sample_messy_data_audit_report.pdf
+
+  Audit complete: 59 issues found
+    High: 23 | Medium: 20 | Low: 16
 ```
 
 ## Regenerating the Sample Data

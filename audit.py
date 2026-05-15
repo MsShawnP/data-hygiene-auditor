@@ -8,11 +8,11 @@ Usage: python audit.py --input myfile.xlsx --output ./reports
 """
 
 import argparse
+import hashlib
+import json
 import os
 import re
 import sys
-import json
-import hashlib
 from collections import Counter, defaultdict
 from datetime import datetime
 from html import escape as _html_escape
@@ -21,15 +21,20 @@ from xml.sax.saxutils import escape as _xml_escape
 
 import pandas as pd
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from reportlab.lib import colors as rl_colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak,
-)
 from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 
 
 def _h(val):
@@ -40,6 +45,25 @@ def _h(val):
 def _p(val):
     """Escape a value for inclusion inside a reportlab Paragraph."""
     return _xml_escape(str(val))
+
+
+def _supports_color():
+    """Check if the terminal supports ANSI color codes."""
+    if os.environ.get('NO_COLOR'):
+        return False
+    if sys.platform == 'win32':
+        os.system('')  # enables ANSI on Windows 10+
+    return hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+
+
+_COLOR = _supports_color()
+
+
+def _c(text, code):
+    """Wrap text in ANSI color if supported."""
+    if not _COLOR:
+        return text
+    return f"\033[{code}m{text}\033[0m"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CONFIGURATION
@@ -85,12 +109,6 @@ CURRENCY_PATTERNS = [
 ]
 
 EMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-
-SEVERITY_COLORS = {
-    'High': '#DC3545',
-    'Medium': '#FFC107',
-    'Low': '#28A745',
-}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -150,9 +168,9 @@ def analyze_nulls(series):
     """Baseline null/missing analysis for every field."""
     total = len(series)
     null_count = series.isna().sum()
-    blank_count = sum(1 for v in series if pd.notna(v) and str(v).strip() == '')
-    whitespace_only = sum(1 for v in series if pd.notna(v) and str(v).strip() == '' and len(str(v)) > 0)
-    missing = null_count + blank_count
+    whitespace_only = sum(1 for v in series if pd.notna(v) and len(str(v)) > 0 and str(v).strip() == '')
+    blank_count = sum(1 for v in series if pd.notna(v) and str(v) == '')
+    missing = null_count + blank_count + whitespace_only
     pct = (missing / total * 100) if total > 0 else 0
     return {
         'null_count': int(null_count),
@@ -280,10 +298,14 @@ def analyze_wrong_purpose(series, col_name, field_type):
             bool_types = set()
             for v in raw_vals:
                 vl = v.lower()
-                if vl in ('0', '1'): bool_types.add('numeric')
-                elif vl in ('y', 'n'): bool_types.add('y/n')
-                elif vl in ('yes', 'no'): bool_types.add('yes/no')
-                elif vl in ('true', 'false'): bool_types.add('true/false')
+                if vl in ('0', '1'):
+                    bool_types.add('numeric')
+                elif vl in ('y', 'n'):
+                    bool_types.add('y/n')
+                elif vl in ('yes', 'no'):
+                    bool_types.add('yes/no')
+                elif vl in ('true', 'false'):
+                    bool_types.add('true/false')
             if len(bool_types) > 1:
                 findings.append({
                     'issue': 'Mixed boolean representations',
@@ -515,17 +537,32 @@ WHY_IT_MATTERS = {
 # MAIN AUDIT ORCHESTRATOR
 # ─────────────────────────────────────────────────────────────────────────────
 
+SUPPORTED_EXTENSIONS = {'.xlsx', '.xls', '.csv', '.tsv'}
+
+
+def _load_sheets(input_path):
+    """Load tabular data as a dict of {sheet_name: DataFrame}."""
+    ext = Path(input_path).suffix.lower()
+    if ext in ('.csv', '.tsv'):
+        sep = '\t' if ext == '.tsv' else ','
+        df = pd.read_csv(input_path, dtype=str, sep=sep)
+        return {Path(input_path).stem: df}
+    else:
+        xls = pd.ExcelFile(input_path)
+        return {name: pd.read_excel(xls, sheet_name=name, dtype=str)
+                for name in xls.sheet_names}
+
+
 def run_audit(input_path):
-    """Run all checks against an Excel file. Returns structured audit results."""
-    xls = pd.ExcelFile(input_path)
+    """Run all checks against an Excel or CSV file. Returns structured audit results."""
+    sheets = _load_sheets(input_path)
     results = {
         'input_file': os.path.basename(input_path),
         'audit_timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'sheets': {},
     }
 
-    for sheet_name in xls.sheet_names:
-        df = pd.read_excel(xls, sheet_name=sheet_name, dtype=str)
+    for sheet_name, df in sheets.items():
         if df.empty:
             continue
 
@@ -565,7 +602,11 @@ def run_audit(input_path):
                     'type': 'mixed_format',
                     'severity': sev,
                     'detail': mixed,
-                    'why': WHY_IT_MATTERS.get(why_key, WHY_IT_MATTERS.get('mixed_format_date')),
+                    'why': WHY_IT_MATTERS.get(
+                        why_key,
+                        f'Mixed {field_type} formats reduce data consistency'
+                        ' and can cause errors in downstream processing.',
+                    ),
                 })
 
             for w in wrong:
@@ -619,7 +660,8 @@ def generate_html(results, output_path):
             total_issues += 1
             severity_totals[d['severity']] += 1
 
-    html = f"""<!DOCTYPE html>
+    parts = []
+    parts.append(f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -650,7 +692,10 @@ body {{
     margin: 0 auto;
 }}
 h1 {{ color: var(--accent); font-size: 1.8rem; margin-bottom: 0.25rem; }}
-h2 {{ color: var(--accent-warm); font-size: 1.4rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem; }}
+h2 {{
+    color: var(--accent-warm); font-size: 1.4rem; margin: 2rem 0 1rem;
+    border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;
+}}
 h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 .subtitle {{ color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }}
 .summary-grid {{
@@ -667,7 +712,10 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     text-align: center;
 }}
 .summary-card .number {{ font-size: 2rem; font-weight: 700; }}
-.summary-card .label {{ color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }}
+.summary-card .label {{
+    color: var(--text-muted); font-size: 0.85rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+}}
 .high .number {{ color: var(--high); }}
 .medium .number {{ color: var(--medium); }}
 .low .number {{ color: var(--low); }}
@@ -771,26 +819,40 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 <p class="subtitle">{_h(results['input_file'])} &mdash; {results['audit_timestamp']}</p>
 
 <div class="summary-grid">
-    <div class="summary-card info"><div class="number">{total_issues}</div><div class="label">Total Issues</div></div>
-    <div class="summary-card high"><div class="number">{severity_totals.get('High', 0)}</div><div class="label">High Severity</div></div>
-    <div class="summary-card medium"><div class="number">{severity_totals.get('Medium', 0)}</div><div class="label">Medium Severity</div></div>
-    <div class="summary-card low"><div class="number">{severity_totals.get('Low', 0)}</div><div class="label">Low Severity</div></div>
+    <div class="summary-card info">
+        <div class="number">{total_issues}</div>
+        <div class="label">Total Issues</div></div>
+    <div class="summary-card high">
+        <div class="number">{severity_totals.get('High', 0)}</div>
+        <div class="label">High Severity</div></div>
+    <div class="summary-card medium">
+        <div class="number">{severity_totals.get('Medium', 0)}</div>
+        <div class="label">Medium Severity</div></div>
+    <div class="summary-card low">
+        <div class="number">{severity_totals.get('Low', 0)}</div>
+        <div class="label">Low Severity</div></div>
 </div>
-"""
+""")
 
     for sheet_name, sheet_data in results['sheets'].items():
-        html += f"""
+        parts.append(f"""
 <h2>Sheet: {_h(sheet_name)}</h2>
-<p style="color:var(--text-muted);margin-bottom:1rem;">{sheet_data['row_count']} rows &times; {sheet_data['col_count']} columns</p>
-"""
+<p style="color:var(--text-muted);margin-bottom:1rem;">
+{sheet_data['row_count']} rows &times; {sheet_data['col_count']} columns</p>
+""")
         for col_name, field_data in sheet_data['fields'].items():
             null = field_data['null_analysis']
             issues = field_data['issues']
             ftype = field_data['inferred_type']
 
-            null_color = 'var(--low)' if null['missing_pct'] < 10 else ('var(--medium)' if null['missing_pct'] < 30 else 'var(--high)')
+            if null['missing_pct'] < 10:
+                null_color = 'var(--low)'
+            elif null['missing_pct'] < 30:
+                null_color = 'var(--medium)'
+            else:
+                null_color = 'var(--high)'
 
-            html += f"""
+            parts.append(f"""
 <div class="field-card">
     <div class="field-header">
         <span class="field-name">{_h(col_name)}</span>
@@ -800,78 +862,101 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
         Missing: {null['total_missing']} / {null['total_rows']} ({null['missing_pct']}%)
         {f" &mdash; {null['whitespace_only']} whitespace-only" if null['whitespace_only'] else ""}
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:{min(null['missing_pct'], 100)}%;background:{null_color};"></div></div>
-"""
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:{min(null['missing_pct'], 100)}%;background:{null_color};"></div></div>
+""")
             for issue in issues:
                 sev = issue['severity']
                 itype = issue['type']
                 detail = issue['detail']
                 why = issue.get('why', '')
 
-                html += f'<div class="issue severity-{sev}">'
-                html += f'<span class="severity-badge {sev}">{sev}</span> '
+                parts.append(f'<div class="issue severity-{sev}">')
+                parts.append(f'<span class="severity-badge {sev}">{sev}</span> ')
 
                 if itype == 'mixed_format':
-                    html += f'<strong>Mixed {_h(detail["field_type"])} formats</strong> &mdash; {detail["inconsistent_count"]} of {detail["dominant_count"] + detail["inconsistent_count"]} values deviate from dominant format ({_h(detail["dominant_format"])})'
-                    html += '<table class="format-table"><tr><th>Format</th><th>Count</th></tr>'
+                    total = detail["dominant_count"] + detail["inconsistent_count"]
+                    parts.append(
+                        f'<strong>Mixed {_h(detail["field_type"])} formats</strong>'
+                        f' &mdash; {detail["inconsistent_count"]} of {total}'
+                        f' values deviate from dominant format'
+                        f' ({_h(detail["dominant_format"])})'
+                    )
+                    parts.append('<table class="format-table"><tr><th>Format</th><th>Count</th></tr>')
                     for fmt, cnt in detail['format_distribution'].items():
-                        html += f'<tr><td>{_h(fmt)}</td><td>{cnt}</td></tr>'
-                    html += '</table>'
+                        parts.append(f'<tr><td>{_h(fmt)}</td><td>{cnt}</td></tr>')
+                    parts.append('</table>')
                     if detail.get('sample_nonstandard'):
                         samples = ", ".join(_h(s) for s in detail["sample_nonstandard"][:3])
-                        html += f'<div style="font-size:0.85rem;color:var(--text-muted);">Non-standard samples: {samples}</div>'
+                        parts.append(
+                            f'<div style="font-size:0.85rem;color:var(--text-muted);">'
+                            f'Non-standard samples: {samples}</div>'
+                        )
 
                 elif itype == 'wrong_purpose':
-                    html += f'<strong>{_h(detail["issue"])}</strong>'
+                    parts.append(f'<strong>{_h(detail["issue"])}</strong>')
                     if detail.get('example'):
-                        html += f' &mdash; e.g. "{_h(detail["example"])}"'
+                        parts.append(f' &mdash; e.g. "{_h(detail["example"])}"')
                     if detail.get('row') is not None:
-                        html += f' (row {detail["row"] + 2})'
+                        parts.append(f' (row {detail["row"] + 2})')
 
                 elif itype in ('placeholder_value', 'placeholder'):
-                    html += f'<strong>Placeholder detected:</strong> "{_h(detail["value"])}" appears {detail["count"]} times ({detail["pct"]}%)'
+                    parts.append(
+                        f'<strong>Placeholder detected:</strong>'
+                        f' "{_h(detail["value"])}" appears'
+                        f' {detail["count"]} times ({detail["pct"]}%)'
+                    )
 
                 elif itype == 'suspicious_repetition':
-                    html += f'<strong>Suspicious repetition:</strong> "{_h(detail["value"])}" appears {detail["count"]} times ({detail["pct"]}%)'
+                    parts.append(
+                        f'<strong>Suspicious repetition:</strong>'
+                        f' "{_h(detail["value"])}" appears'
+                        f' {detail["count"]} times ({detail["pct"]}%)'
+                    )
 
                 elif itype == 'null_analysis':
-                    html += f'<strong>High missing rate:</strong> {detail["total_missing"]} of {detail["total_rows"]} values missing ({detail["missing_pct"]}%)'
+                    parts.append(
+                        f'<strong>High missing rate:</strong>'
+                        f' {detail["total_missing"]} of'
+                        f' {detail["total_rows"]} values missing'
+                        f' ({detail["missing_pct"]}%)'
+                    )
 
                 else:
-                    html += f'<strong>{_h(itype)}</strong>: {_h(json.dumps(detail, default=str))}'
+                    parts.append(f'<strong>{_h(itype)}</strong>: {_h(json.dumps(detail, default=str))}')
 
                 if why:
-                    html += f'<div class="why-box"><strong>Why this matters:</strong> {why}</div>'
-                html += '</div>'
+                    parts.append(f'<div class="why-box"><strong>Why this matters:</strong> {_h(why)}</div>')
+                parts.append('</div>')
 
-            html += '</div>'
+            parts.append('</div>')
 
         if sheet_data['phantom_duplicates']:
-            html += '<h3>Phantom &amp; Exact Duplicates</h3>'
+            parts.append('<h3>Phantom &amp; Exact Duplicates</h3>')
             for dup in sheet_data['phantom_duplicates']:
                 sev = dup['severity']
                 dtype = 'Exact Duplicate' if dup['type'] == 'exact_duplicate' else 'Phantom Duplicate'
-                html += f"""
+                parts.append(f"""
 <div class="dup-group">
     <span class="severity-badge {sev}">{sev}</span>
     <strong>{dtype}</strong> &mdash; {dup['group_size']} rows: {', '.join(str(r) for r in dup['rows'])}
     <table class="format-table">
         <tr>{''.join(f'<th>{_h(k)}</th>' for k in dup['sample_data'][0].keys())}</tr>
-"""
+""")
                 for row in dup['sample_data']:
-                    html += '<tr>' + ''.join(f'<td>{_h(v)}</td>' for v in row.values()) + '</tr>'
-                html += '</table>'
-                html += f'<div class="why-box"><strong>Why this matters:</strong> {dup["why"]}</div>'
-                html += '</div>'
+                    parts.append('<tr>' + ''.join(f'<td>{_h(v)}</td>' for v in row.values()) + '</tr>')
+                parts.append('</table>')
+                parts.append(f'<div class="why-box"><strong>Why this matters:</strong> {_h(dup["why"])}</div>')
+                parts.append('</div>')
 
-    html += f"""
+    parts.append(f"""
 <div class="footer">
     Data Hygiene Audit &mdash; Generated {results['audit_timestamp']} &mdash; Lailara LLC
 </div>
-</body></html>"""
+</body></html>""")
 
     with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(html)
+        f.write(''.join(parts))
     return output_path
 
 
@@ -918,20 +1003,40 @@ def generate_excel(results, output_path):
                 itype = issue['type']
 
                 if itype == 'mixed_format':
-                    desc = f"Mixed {detail['field_type']} formats: {detail['inconsistent_count']} values deviate from {detail['dominant_format']}"
-                    example = '; '.join(f"{k}: {v}" for k, v in detail['format_distribution'].items())
+                    desc = (
+                        f"Mixed {detail['field_type']} formats:"
+                        f" {detail['inconsistent_count']} values"
+                        f" deviate from {detail['dominant_format']}"
+                    )
+                    example = '; '.join(
+                        f"{k}: {v}" for k, v in detail['format_distribution'].items()
+                    )
                 elif itype == 'wrong_purpose':
                     desc = detail['issue']
                     example = detail.get('example', '')
                 elif itype in ('placeholder_value', 'placeholder'):
-                    desc = f"Placeholder \"{detail['value']}\" found {detail['count']} times"
+                    desc = (
+                        f"Placeholder \"{detail['value']}\""
+                        f" found {detail['count']} times"
+                    )
                     example = f"{detail['pct']}% of non-null values"
                 elif itype == 'suspicious_repetition':
-                    desc = f"\"{detail['value']}\" repeated {detail['count']} times"
+                    desc = (
+                        f"\"{detail['value']}\" repeated"
+                        f" {detail['count']} times"
+                    )
                     example = f"{detail['pct']}% of non-null values"
                 elif itype == 'null_analysis':
-                    desc = f"{detail['total_missing']} of {detail['total_rows']} values missing ({detail['missing_pct']}%)"
-                    example = f"Null: {detail['null_count']}, Blank: {detail['blank_count']}, Whitespace: {detail['whitespace_only']}"
+                    desc = (
+                        f"{detail['total_missing']} of"
+                        f" {detail['total_rows']} values missing"
+                        f" ({detail['missing_pct']}%)"
+                    )
+                    example = (
+                        f"Null: {detail['null_count']},"
+                        f" Blank: {detail['blank_count']},"
+                        f" Whitespace: {detail['whitespace_only']}"
+                    )
                 else:
                     desc = str(itype)
                     example = json.dumps(detail, default=str)
@@ -1081,7 +1186,9 @@ def generate_pdf(results, output_path):
             ftype = field_data['inferred_type']
 
             story.append(Paragraph(
-                f"<b>{_p(col_name)}</b> <i>({_p(ftype)})</i> — Missing: {null['total_missing']}/{null['total_rows']} ({null['missing_pct']}%)",
+                f"<b>{_p(col_name)}</b> <i>({_p(ftype)})</i>"
+                f" — Missing: {null['total_missing']}/{null['total_rows']}"
+                f" ({null['missing_pct']}%)",
                 styles['FieldHead']))
 
             for issue in issues:
@@ -1091,7 +1198,11 @@ def generate_pdf(results, output_path):
                 sev_style = f'Sev{sev}'
 
                 if itype == 'mixed_format':
-                    text = f"[{sev}] Mixed {_p(detail['field_type'])} formats — {detail['inconsistent_count']} values deviate from {_p(detail['dominant_format'])}"
+                    text = (
+                        f"[{sev}] Mixed {_p(detail['field_type'])} formats"
+                        f" — {detail['inconsistent_count']} values deviate"
+                        f" from {_p(detail['dominant_format'])}"
+                    )
                     story.append(Paragraph(text, styles.get(sev_style, styles['SmallBody'])))
                     fmt_data = [['Format', 'Count']]
                     for fmt, cnt in detail['format_distribution'].items():
@@ -1119,12 +1230,18 @@ def generate_pdf(results, output_path):
                     story.append(Paragraph(text, styles.get(sev_style, styles['SmallBody'])))
 
                 elif itype == 'null_analysis':
-                    text = f"[{sev}] High missing rate: {detail['total_missing']}/{detail['total_rows']} ({detail['missing_pct']}%)"
-                    story.append(Paragraph(text, styles.get(sev_style, styles['SmallBody'])))
+                    text = (
+                        f"[{sev}] High missing rate:"
+                        f" {detail['total_missing']}/{detail['total_rows']}"
+                        f" ({detail['missing_pct']}%)"
+                    )
+                    story.append(Paragraph(
+                        text, styles.get(sev_style, styles['SmallBody'])
+                    ))
 
                 why = issue.get('why', '')
                 if why:
-                    story.append(Paragraph(f"<b>Why this matters:</b> {why}", styles['WhyBox']))
+                    story.append(Paragraph(f"<b>Why this matters:</b> {_p(why)}", styles['WhyBox']))
 
         if sheet_data['phantom_duplicates']:
             story.append(Paragraph("Phantom &amp; Exact Duplicates", styles['FieldHead']))
@@ -1134,7 +1251,7 @@ def generate_pdf(results, output_path):
                 text = f"[{sev}] {dtype} — {dup['group_size']} rows: {', '.join(str(r) for r in dup['rows'])}"
                 story.append(Paragraph(text, styles.get(f'Sev{sev}', styles['SmallBody'])))
                 if dup.get('why'):
-                    story.append(Paragraph(f"<b>Why this matters:</b> {dup['why']}", styles['WhyBox']))
+                    story.append(Paragraph(f"<b>Why this matters:</b> {_p(dup['why'])}", styles['WhyBox']))
 
         story.append(PageBreak())
 
@@ -1154,11 +1271,12 @@ def generate_pdf(results, output_path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Data Hygiene Auditor — Detect data quality issues in Excel files',
+        description='Data Hygiene Auditor — Detect data quality issues in Excel and CSV files',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   python audit.py --input customers.xlsx --output ./reports
+  python audit.py --input data.csv --output ./reports
   python audit.py --input data.xlsx --output ./reports --json
 
 Outputs three files:
@@ -1167,7 +1285,7 @@ Outputs three files:
   - audit_report.pdf    (email-ready deliverable)
         """
     )
-    parser.add_argument('--input', '-i', required=True, help='Path to input Excel file (.xlsx)')
+    parser.add_argument('--input', '-i', required=True, help='Path to input file (.xlsx, .csv, .tsv)')
     parser.add_argument('--output', '-o', required=True, help='Output directory for reports')
     parser.add_argument('--json', action='store_true', help='Also output raw JSON results')
     args = parser.parse_args()
@@ -1176,37 +1294,44 @@ Outputs three files:
         print(f"Error: Input file not found: {args.input}", file=sys.stderr)
         sys.exit(1)
 
+    ext = Path(args.input).suffix.lower()
+    if ext not in SUPPORTED_EXTENSIONS:
+        supported = ', '.join(sorted(SUPPORTED_EXTENSIONS))
+        print(f"Error: Unsupported file type '{ext}'. Supported: {supported}", file=sys.stderr)
+        sys.exit(1)
+
     os.makedirs(args.output, exist_ok=True)
 
     basename = Path(args.input).stem
-    print(f"Auditing: {args.input}")
-    print("Running analysis...")
+    print(f"\n  {_c('Data Hygiene Auditor', '1')}")
+    print(f"  Auditing: {_c(args.input, '36')}\n")
 
     results = run_audit(args.input)
+    sheet_count = len(results['sheets'])
+    for i, name in enumerate(results['sheets'], 1):
+        print(f"  [{i}/{sheet_count}] Analyzed sheet: {_c(name, '36')}")
 
     html_path = os.path.join(args.output, f"{basename}_audit_report.html")
     xlsx_path = os.path.join(args.output, f"{basename}_audit_findings.xlsx")
     pdf_path = os.path.join(args.output, f"{basename}_audit_report.pdf")
 
-    print(f"  Generating HTML report...")
+    print("\n  Generating reports...")
+
     generate_html(results, html_path)
-    print(f"    -> {html_path}")
+    print(f"    {_c('HTML', '32')}  -> {html_path}")
 
-    print(f"  Generating Excel findings...")
     generate_excel(results, xlsx_path)
-    print(f"    -> {xlsx_path}")
+    print(f"    {_c('Excel', '32')} -> {xlsx_path}")
 
-    print(f"  Generating PDF report...")
     generate_pdf(results, pdf_path)
-    print(f"    -> {pdf_path}")
+    print(f"    {_c('PDF', '32')}   -> {pdf_path}")
 
     if args.json:
         json_path = os.path.join(args.output, f"{basename}_audit_results.json")
         with open(json_path, 'w') as f:
             json.dump(results, f, indent=2, default=str)
-        print(f"    -> {json_path}")
+        print(f"    {_c('JSON', '32')}  -> {json_path}")
 
-    # Print summary
     total_issues = 0
     severity_totals = Counter()
     for sheet in results['sheets'].values():
@@ -1218,8 +1343,12 @@ Outputs three files:
             total_issues += 1
             severity_totals[d['severity']] += 1
 
-    print(f"\nAudit complete: {total_issues} issues found")
-    print(f"  High: {severity_totals.get('High', 0)} | Medium: {severity_totals.get('Medium', 0)} | Low: {severity_totals.get('Low', 0)}")
+    high = severity_totals.get('High', 0)
+    med = severity_totals.get('Medium', 0)
+    low = severity_totals.get('Low', 0)
+
+    print(f"\n  Audit complete: {_c(str(total_issues) + ' issues found', '1')}")
+    print(f"    {_c(f'High: {high}', '31')} | {_c(f'Medium: {med}', '33')} | {_c(f'Low: {low}', '32')}\n")
 
 
 if __name__ == '__main__':

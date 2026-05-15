@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-hygiene-auditor"
+version = "1.0.0"
+description = "Detect data quality issues in Excel and CSV files — mixed formats, misused fields, placeholder floods, and phantom duplicates"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "Lailara LLC"},
+]
+keywords = ["data-quality", "excel", "csv", "audit", "data-hygiene", "data-profiling"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "pandas>=2.0",
+    "openpyxl>=3.1",
+    "reportlab>=4.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4"]
+
+[tool.setuptools]
+py-modules = ["audit"]
+
+[project.scripts]
+data-hygiene-audit = "audit:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 120
+exclude = ["generate_sample.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[project.urls]
+Homepage = "https://github.com/MsShawnP/Data-Hygiene-Auditor"
+Repository = "https://github.com/MsShawnP/Data-Hygiene-Auditor"
