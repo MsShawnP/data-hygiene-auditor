@@ -2,7 +2,7 @@
 
 **Source:** Full project audit (2025-05-15)
 **Tier:** Medium
-**Status:** Sprint 1
+**Status:** Complete — all sprints + stretch goal shipped (PRs #1-#6, 2025-05-15)
 
 ---
 
