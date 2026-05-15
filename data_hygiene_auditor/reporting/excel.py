@@ -15,6 +15,7 @@ def generate_excel(results, output_path):
     headers = [
         "Sheet", "Field", "Inferred Type", "Issue Type", "Severity",
         "Description", "Example / Detail", "Why It Matters",
+        "Suggested Fix",
     ]
     header_font = Font(bold=True, color="FFFFFF", size=11, name="Arial")
     header_fill = PatternFill("solid", fgColor="0f3460")
@@ -88,11 +89,14 @@ def generate_excel(results, output_path):
                     desc = str(itype)
                     example = json.dumps(detail, default=str)
 
+                fix = issue.get('fix', {})
+                fix_text = fix.get('code', '') if fix else ''
                 values = [
                     sheet_name, col_name,
                     field_data['inferred_type'],
                     itype, issue['severity'],
                     desc, example, issue.get('why', ''),
+                    fix_text,
                 ]
                 for col_idx, val in enumerate(values, 1):
                     cell = ws.cell(
@@ -123,9 +127,12 @@ def generate_excel(results, output_path):
             example = (
                 f"Rows: {', '.join(str(r) for r in dup['rows'])}"
             )
+            dup_fix = dup.get('fix', {})
+            dup_fix_text = dup_fix.get('code', '') if dup_fix else ''
             values = [
                 sheet_name, "(row-level)", "—", dtype,
                 dup['severity'], desc, example, dup.get('why', ''),
+                dup_fix_text,
             ]
             for col_idx, val in enumerate(values, 1):
                 cell = ws.cell(
@@ -165,10 +172,15 @@ def generate_excel(results, output_path):
             )
             if diff_parts:
                 example += f" | Diffs: {'; '.join(diff_parts)}"
+            fuzz_fix = fuzz.get('fix', {})
+            fuzz_fix_text = (
+                fuzz_fix.get('code', '') if fuzz_fix else ''
+            )
             values = [
                 sheet_name, "(row-level)", "—",
                 "Fuzzy Duplicate", fuzz['severity'],
                 desc, example, fuzz.get('why', ''),
+                fuzz_fix_text,
             ]
             for col_idx, val in enumerate(values, 1):
                 cell = ws.cell(
@@ -193,8 +205,9 @@ def generate_excel(results, output_path):
     ws.column_dimensions['F'].width = 45
     ws.column_dimensions['G'].width = 35
     ws.column_dimensions['H'].width = 55
+    ws.column_dimensions['I'].width = 50
 
-    ws.auto_filter.ref = f"A1:H{row_num - 1}"
+    ws.auto_filter.ref = f"A1:I{row_num - 1}"
     ws.freeze_panes = "A2"
 
     ws2 = wb.create_sheet("Summary", 0)

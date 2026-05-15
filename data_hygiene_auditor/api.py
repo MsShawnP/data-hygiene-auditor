@@ -25,6 +25,15 @@ from .reporting import generate_excel, generate_html, generate_pdf
 
 
 @dataclass
+class FixSuggestion:
+    """An actionable fix suggestion with code snippet."""
+
+    strategy: str
+    description: str
+    code: str
+
+
+@dataclass
 class Finding:
     """A single data quality issue found in a field."""
 
@@ -34,6 +43,7 @@ class Finding:
     description: str
     why: str
     detail: Dict[str, Any] = field(default_factory=dict)
+    fix: Optional[FixSuggestion] = None
 
     @property
     def is_high(self) -> bool:
@@ -58,6 +68,7 @@ class Duplicate:
     group_size: int
     why: str
     sample_data: List[Dict[str, str]] = field(default_factory=list)
+    fix: Optional[FixSuggestion] = None
 
 
 @dataclass
@@ -72,6 +83,7 @@ class FuzzyDuplicate:
     field_differences: Dict[str, Any] = field(default_factory=dict)
     sample_data: List[Dict[str, str]] = field(default_factory=list)
     similarity_threshold: Optional[float] = None
+    fix: Optional[FixSuggestion] = None
 
 
 @dataclass
@@ -237,6 +249,14 @@ def audit_file(path: str) -> AuditResult:
             null = field_data['null_analysis']
             findings = []
             for issue in field_data['issues']:
+                raw_fix = issue.get('fix')
+                fix_obj = None
+                if raw_fix:
+                    fix_obj = FixSuggestion(
+                        strategy=raw_fix['strategy'],
+                        description=raw_fix['description'],
+                        code=raw_fix['code'],
+                    )
                 findings.append(Finding(
                     field=col_name,
                     issue_type=issue['type'],
@@ -246,6 +266,7 @@ def audit_file(path: str) -> AuditResult:
                     ),
                     why=issue.get('why', ''),
                     detail=issue['detail'],
+                    fix=fix_obj,
                 ))
             fields.append(FieldResult(
                 name=col_name,
@@ -261,6 +282,14 @@ def audit_file(path: str) -> AuditResult:
 
         duplicates = []
         for dup in sheet_data['phantom_duplicates']:
+            raw_fix = dup.get('fix')
+            fix_obj = None
+            if raw_fix:
+                fix_obj = FixSuggestion(
+                    strategy=raw_fix['strategy'],
+                    description=raw_fix['description'],
+                    code=raw_fix['code'],
+                )
             duplicates.append(Duplicate(
                 duplicate_type=dup['type'],
                 severity=dup['severity'],
@@ -268,10 +297,19 @@ def audit_file(path: str) -> AuditResult:
                 group_size=dup['group_size'],
                 why=dup.get('why', ''),
                 sample_data=dup.get('sample_data', []),
+                fix=fix_obj,
             ))
 
         fuzzy_dups = []
         for fuzz in sheet_data.get('fuzzy_duplicates', []):
+            raw_fix = fuzz.get('fix')
+            fix_obj = None
+            if raw_fix:
+                fix_obj = FixSuggestion(
+                    strategy=raw_fix['strategy'],
+                    description=raw_fix['description'],
+                    code=raw_fix['code'],
+                )
             fuzzy_dups.append(FuzzyDuplicate(
                 match_method=fuzz['match_method'],
                 severity=fuzz['severity'],
@@ -281,6 +319,7 @@ def audit_file(path: str) -> AuditResult:
                 field_differences=fuzz.get('field_differences', {}),
                 sample_data=fuzz.get('sample_data', []),
                 similarity_threshold=fuzz.get('similarity_threshold'),
+                fix=fix_obj,
             ))
 
         sheets.append(SheetResult(

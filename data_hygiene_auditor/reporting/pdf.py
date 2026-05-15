@@ -242,6 +242,17 @@ def generate_pdf(results, output_path):
                         f"<b>Why this matters:</b> {_p(why)}",
                         styles['WhyBox'],
                     ))
+                fix = issue.get('fix')
+                if fix:
+                    story.append(Paragraph(
+                        f"<b>Suggested fix:</b> {_p(fix['description'])}",
+                        styles['WhyBox'],
+                    ))
+                    story.append(Paragraph(
+                        f"<font face='Courier' size='8'>"
+                        f"{_p(fix['code'])}</font>",
+                        styles['WhyBox'],
+                    ))
 
         if sheet_data['phantom_duplicates']:
             story.append(Paragraph(
@@ -267,6 +278,13 @@ def generate_pdf(results, output_path):
                 if dup.get('why'):
                     story.append(Paragraph(
                         f"<b>Why this matters:</b> {_p(dup['why'])}",
+                        styles['WhyBox'],
+                    ))
+                dup_fix = dup.get('fix')
+                if dup_fix:
+                    story.append(Paragraph(
+                        f"<b>Suggested fix:</b>"
+                        f" {_p(dup_fix['description'])}",
                         styles['WhyBox'],
                     ))
 
@@ -313,6 +331,13 @@ def generate_pdf(results, output_path):
                     story.append(Paragraph(
                         f"<b>Why this matters:</b>"
                         f" {_p(fuzz['why'])}",
+                        styles['WhyBox'],
+                    ))
+                fuzz_fix = fuzz.get('fix')
+                if fuzz_fix:
+                    story.append(Paragraph(
+                        f"<b>Suggested fix:</b>"
+                        f" {_p(fuzz_fix['description'])}",
                         styles['WhyBox'],
                     ))
 

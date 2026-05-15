@@ -16,6 +16,7 @@ from .detection import (
     infer_field_type,
     rate_severity,
 )
+from .suggestions import generate_dup_fix, generate_fix
 
 WHY_IT_MATTERS = {
     'mixed_format_date': (
@@ -124,17 +125,21 @@ def run_audit(input_path):
 
             null_severity = rate_severity('null_analysis', null_info)
             if null_severity:
-                field_findings['issues'].append({
+                issue = {
                     'type': 'null_analysis',
                     'severity': null_severity,
                     'detail': null_info,
                     'why': WHY_IT_MATTERS['null_analysis'],
-                })
+                }
+                fix = generate_fix('null_analysis', null_info, col, field_type)
+                if fix:
+                    issue['fix'] = fix
+                field_findings['issues'].append(issue)
 
             if mixed:
                 sev = rate_severity('mixed_format', mixed)
                 why_key = f'mixed_format_{field_type}'
-                field_findings['issues'].append({
+                issue = {
                     'type': 'mixed_format',
                     'severity': sev,
                     'detail': mixed,
@@ -143,15 +148,23 @@ def run_audit(input_path):
                         f'Mixed {field_type} formats reduce data consistency'
                         ' and can cause errors in downstream processing.',
                     ),
-                })
+                }
+                fix = generate_fix('mixed_format', mixed, col, field_type)
+                if fix:
+                    issue['fix'] = fix
+                field_findings['issues'].append(issue)
 
             for w in wrong:
-                field_findings['issues'].append({
+                issue = {
                     'type': 'wrong_purpose',
                     'severity': rate_severity('wrong_purpose', w),
                     'detail': w,
                     'why': WHY_IT_MATTERS['wrong_purpose'],
-                })
+                }
+                fix = generate_fix('wrong_purpose', w, col, field_type)
+                if fix:
+                    issue['fix'] = fix
+                field_findings['issues'].append(issue)
 
             for p in placeholders:
                 ptype = p.get('type', 'placeholder')
@@ -161,12 +174,16 @@ def run_audit(input_path):
                     if ptype == 'suspicious_repetition'
                     else 'placeholder'
                 )
-                field_findings['issues'].append({
+                issue = {
                     'type': ptype,
                     'severity': sev,
                     'detail': p,
                     'why': WHY_IT_MATTERS[why_key],
-                })
+                }
+                fix = generate_fix(ptype, p, col, field_type)
+                if fix:
+                    issue['fix'] = fix
+                field_findings['issues'].append(issue)
 
             sheet_results['fields'][col] = field_findings
 
@@ -180,6 +197,9 @@ def run_audit(input_path):
             d['why'] = WHY_IT_MATTERS.get(
                 d['type'], WHY_IT_MATTERS['phantom_duplicate']
             )
+            fix = generate_dup_fix(d['type'], d, sheet_name)
+            if fix:
+                d['fix'] = fix
         sheet_results['phantom_duplicates'] = dupes
 
         phantom_row_sets = [
@@ -193,6 +213,9 @@ def run_audit(input_path):
         for f in fuzzy:
             f['severity'] = rate_severity('fuzzy_duplicate', f)
             f['why'] = WHY_IT_MATTERS['fuzzy_duplicate']
+            fix = generate_dup_fix('fuzzy_duplicate', f, sheet_name)
+            if fix:
+                f['fix'] = fix
         sheet_results['fuzzy_duplicates'] = fuzzy
 
         sheet_results['health_score'] = _compute_health_score(

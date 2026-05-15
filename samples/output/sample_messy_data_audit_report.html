@@ -29,9 +29,14 @@ body {
     margin: 0 auto;
 }
 h1 { color: var(--accent); font-size: 1.8rem; margin-bottom: 0.25rem; }
-h2 { color: var(--accent-warm); font-size: 1.4rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem; }
+h2 {
+    color: var(--accent-warm); font-size: 1.4rem; margin: 2rem 0 1rem;
+    border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;
+}
 h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
-.subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+.subtitle {
+    color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;
+}
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -46,7 +51,10 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
     text-align: center;
 }
 .summary-card .number { font-size: 2rem; font-weight: 700; }
-.summary-card .label { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.summary-card .label {
+    color: var(--text-muted); font-size: 0.85rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+}
 .high .number { color: var(--high); }
 .medium .number { color: var(--medium); }
 .low .number { color: var(--low); }
@@ -134,6 +142,156 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
     padding: 1rem;
     margin-bottom: 1rem;
 }
+.score-hero {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+}
+.score-ring {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+}
+.score-ring svg { transform: rotate(-90deg); }
+.score-ring .score-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    font-weight: 700;
+}
+.score-meta .score-label {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+.score-meta .score-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+.sheet-score {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+.controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 1rem 0 1.5rem;
+    padding: 1rem;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+}
+.filter-btn {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+.filter-btn:hover { border-color: var(--accent); }
+.filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.filter-btn.active-high { background: var(--high); border-color: var(--high); color: #fff; }
+.filter-btn.active-medium { background: var(--medium); border-color: var(--medium); color: #000; }
+.filter-btn.active-low { background: var(--low); border-color: var(--low); color: #fff; }
+.search-box {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.85rem;
+    flex: 1;
+    min-width: 200px;
+}
+.search-box::placeholder { color: var(--text-muted); }
+.toc {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin: 1rem 0;
+}
+.toc-title { font-weight: 600; margin-bottom: 0.5rem; }
+.toc a {
+    color: var(--accent); text-decoration: none;
+    font-size: 0.9rem;
+}
+.toc a:hover { text-decoration: underline; }
+.toc ul { list-style: none; padding: 0; margin: 0; }
+.toc li { padding: 0.25rem 0; }
+.sheet-section { }
+.sheet-toggle {
+    cursor: pointer;
+    user-select: none;
+}
+.sheet-toggle::before {
+    content: '▼ ';
+    font-size: 0.7em;
+    transition: transform 0.2s;
+    display: inline-block;
+}
+.sheet-toggle.collapsed::before { content: '▶ '; }
+.sheet-body.hidden { display: none; }
+.field-card.hidden { display: none; }
+.fix-block {
+    margin-top: 0.5rem;
+    background: #1a1a2e;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.fix-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    background: rgba(212, 165, 116, 0.15);
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 600;
+}
+.fix-copy {
+    cursor: pointer;
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.75rem;
+}
+.fix-copy:hover { background: rgba(212, 165, 116, 0.2); }
+.fix-code {
+    padding: 0.6rem 0.8rem;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.8rem;
+    color: #e0e0e0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.4;
+}
+.fix-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 0.3rem 0.8rem 0;
+    font-style: italic;
+}
 .footer {
     margin-top: 3rem;
     padding-top: 1rem;
@@ -142,24 +300,77 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
     font-size: 0.85rem;
     text-align: center;
 }
+@media (max-width: 600px) {
+    body { padding: 1rem; }
+    .score-hero { flex-direction: column; text-align: center; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .controls { flex-direction: column; }
+}
 </style>
 </head>
 <body>
 
 <h1>Data Hygiene Audit Report</h1>
-<p class="subtitle">sample_messy_data.xlsx &mdash; 2026-05-15 12:42:05</p>
+<p class="subtitle">sample_messy_data.xlsx &mdash; 2026-05-15 13:58:59</p>
 
-<div class="summary-grid">
-    <div class="summary-card info"><div class="number">59</div><div class="label">Total Issues</div></div>
-    <div class="summary-card high"><div class="number">23</div><div class="label">High Severity</div></div>
-    <div class="summary-card medium"><div class="number">20</div><div class="label">Medium Severity</div></div>
-    <div class="summary-card low"><div class="number">16</div><div class="label">Low Severity</div></div>
+<div class="score-hero">
+    <div class="score-ring">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52"
+                fill="none" stroke="var(--card-border)" stroke-width="8"/>
+            <circle cx="60" cy="60" r="52"
+                fill="none" stroke="var(--high)" stroke-width="8"
+                stroke-dasharray="104.6 222.2"
+                stroke-linecap="round"/>
+        </svg>
+        <div class="score-value" style="color:var(--high)">32</div>
+    </div>
+    <div class="score-meta">
+        <div class="score-label">Significant Issues</div>
+        <div class="score-desc">This dataset has serious quality problems.</div>
+    </div>
 </div>
 
-<h2>Sheet: Customers</h2>
-<p style="color:var(--text-muted);margin-bottom:1rem;">30 rows &times; 10 columns</p>
+<div class="summary-grid">
+    <div class="summary-card info">
+        <div class="number">59</div>
+        <div class="label">Total Issues</div></div>
+    <div class="summary-card high">
+        <div class="number">23</div>
+        <div class="label">High Severity</div></div>
+    <div class="summary-card medium">
+        <div class="number">20</div>
+        <div class="label">Medium Severity</div></div>
+    <div class="summary-card low">
+        <div class="number">16</div>
+        <div class="label">Low Severity</div></div>
+</div>
 
-<div class="field-card">
+<div class="controls">
+    <button class="filter-btn active" data-severity="all" onclick="filterSeverity('all')">All</button>
+    <button class="filter-btn" data-severity="High" onclick="filterSeverity('High')">High</button>
+    <button class="filter-btn" data-severity="Medium" onclick="filterSeverity('Medium')">Medium</button>
+    <button class="filter-btn" data-severity="Low" onclick="filterSeverity('Low')">Low</button>
+    <input class="search-box" type="text" placeholder="Search by column name or issue..."
+        oninput="searchFields(this.value)">
+</div>
+
+<div class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <ul>
+        <li><a href="#sheet-customers">Customers (0/100)</a></li>
+        <li><a href="#sheet-orders">Orders (65/100)</a></li>
+    </ul>
+</div>
+
+<div class="sheet-section" id="sheet-customers">
+<h2 class="sheet-toggle" onclick="toggleSheet(this)">Sheet: Customers
+    <span class="sheet-score" style="background:var(--high);color:#fff">0/100</span></h2>
+<div class="sheet-body">
+<p style="color:var(--text-muted);margin-bottom:1rem;">
+30 rows &times; 10 columns</p>
+
+<div class="field-card" data-field="customerid" data-severities="High">
     <div class="field-header">
         <span class="field-name">CustomerID</span>
         <span class="field-type">id</span>
@@ -168,9 +379,13 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 0 / 30 (0.0%)
         
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:0.0%;background:var(--low);"></div></div>
-<div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed ID formats</strong> &mdash; e.g. "29 coded (e.g. CUST-001) vs 1 bare numbers"<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:0.0%;background:var(--low);"></div></div>
+<div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed ID formats</strong> &mdash; e.g. "29 coded (e.g. CUST-001) vs 1 bare numbers"<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (standardize_ids)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Identify rows with inconsistent ID formats in &quot;CustomerID&quot; (29 coded (e.g. CUST-001) vs 1 bare numbers)</div><pre class="fix-code">df[&quot;_CustomerID_format&quot;] = df[&quot;CustomerID&quot;].apply(
+    lambda x: &quot;coded&quot; if isinstance(x, str)
+    and &quot;-&quot; in x else &quot;numeric&quot;
+)</pre></div></div></div>
+<div class="field-card" data-field="firstname" data-severities="Low High Medium">
     <div class="field-header">
         <span class="field-name">FirstName</span>
         <span class="field-type">name</span>
@@ -179,9 +394,14 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 4 / 30 (13.3%)
          &mdash; 1 whitespace-only
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:13.3%;background:var(--medium);"></div></div>
-<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Code/ID stuffed in name field</strong> &mdash; e.g. "REF-4421" (row 16)<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "Test" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:13.3%;background:var(--medium);"></div></div>
+<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (fill_missing)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 4 missing values in &quot;FirstName&quot; (13.3%)</div><pre class="fix-code">df[&quot;FirstName&quot;] = df[&quot;FirstName&quot;].fillna(df[&quot;FirstName&quot;].mode()[0])</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Code/ID stuffed in name field</strong> &mdash; e.g. "REF-4421" (row 16)<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_misuse)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag misused values in &quot;FirstName&quot;: Code/ID stuffed in name field</div><pre class="fix-code"># Review rows where FirstName contains unexpected data
+mask = df[&quot;FirstName&quot;].notna()
+suspect = df.loc[mask, &quot;FirstName&quot;]</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "Test" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 3 placeholder values (&quot;Test&quot;) in &quot;FirstName&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;FirstName&quot;] = df[&quot;FirstName&quot;].replace(&quot;Test&quot;, np.nan)</pre></div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 1 placeholder values (&quot;TBD&quot;) in &quot;FirstName&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;FirstName&quot;] = df[&quot;FirstName&quot;].replace(&quot;TBD&quot;, np.nan)</pre></div></div></div>
+<div class="field-card" data-field="lastname" data-severities="Low Medium">
     <div class="field-header">
         <span class="field-name">LastName</span>
         <span class="field-type">name</span>
@@ -190,9 +410,15 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 4 / 30 (13.3%)
          &mdash; 1 whitespace-only
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:13.3%;background:var(--medium);"></div></div>
-<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "User" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "Doe" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:13.3%;background:var(--medium);"></div></div>
+<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (fill_missing)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 4 missing values in &quot;LastName&quot; (13.3%)</div><pre class="fix-code">df[&quot;LastName&quot;] = df[&quot;LastName&quot;].fillna(df[&quot;LastName&quot;].mode()[0])</pre></div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 1 placeholder values (&quot;TBD&quot;) in &quot;LastName&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;LastName&quot;] = df[&quot;LastName&quot;].replace(&quot;TBD&quot;, np.nan)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "User" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;LastName&quot; = &quot;User&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_LastName_review&quot;] = (
+    df[&quot;LastName&quot;] == &quot;User&quot;
+)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "Doe" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;LastName&quot; = &quot;Doe&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_LastName_review&quot;] = (
+    df[&quot;LastName&quot;] == &quot;Doe&quot;
+)</pre></div></div></div>
+<div class="field-card" data-field="email" data-severities="Low High Medium">
     <div class="field-header">
         <span class="field-name">Email</span>
         <span class="field-type">email</span>
@@ -201,9 +427,18 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 4 / 30 (13.3%)
          &mdash; 1 whitespace-only
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:13.3%;background:var(--medium);"></div></div>
-<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Invalid email format</strong> &mdash; e.g. "henrylee" (row 18)<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Invalid email format</strong> &mdash; e.g. "nancy w@example.com" (row 30)<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "test@test.com" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:13.3%;background:var(--medium);"></div></div>
+<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (fill_missing)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 4 missing values in &quot;Email&quot; (13.3%)</div><pre class="fix-code">df[&quot;Email&quot;] = df[&quot;Email&quot;].fillna(df[&quot;Email&quot;].mode()[0])</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Invalid email format</strong> &mdash; e.g. "henrylee" (row 18)<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_invalid_emails)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag invalid email addresses in &quot;Email&quot; for correction</div><pre class="fix-code">email_re = r&quot;^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$&quot;
+df[&quot;_Email_invalid&quot;] = ~df[&quot;Email&quot;].str.match(
+    email_re, na=False
+)</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Invalid email format</strong> &mdash; e.g. "nancy w@example.com" (row 30)<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_invalid_emails)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag invalid email addresses in &quot;Email&quot; for correction</div><pre class="fix-code">email_re = r&quot;^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$&quot;
+df[&quot;_Email_invalid&quot;] = ~df[&quot;Email&quot;].str.match(
+    email_re, na=False
+)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "test@test.com" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;Email&quot; = &quot;test@test.com&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_Email_review&quot;] = (
+    df[&quot;Email&quot;] == &quot;test@test.com&quot;
+)</pre></div></div></div>
+<div class="field-card" data-field="phone" data-severities="Low High Medium">
     <div class="field-header">
         <span class="field-name">Phone</span>
         <span class="field-type">phone</span>
@@ -212,9 +447,22 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 4 / 30 (13.3%)
          &mdash; 1 whitespace-only
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:13.3%;background:var(--medium);"></div></div>
-<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed phone formats</strong> &mdash; 17 of 26 values deviate from dominant format ((XXX) XXX-XXXX)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>(XXX) XXX-XXXX</td><td>9</td></tr><tr><td>XXX-XXX-XXXX</td><td>8</td></tr><tr><td>(non-standard)</td><td>3</td></tr><tr><td>+1-XXX-XXX-XXXX</td><td>2</td></tr><tr><td>XXXXXXXXXX</td><td>1</td></tr><tr><td>XXX.XXX.XXXX</td><td>1</td></tr><tr><td>XXX XXX XXXX</td><td>1</td></tr><tr><td>(XXX)XXXXXXX</td><td>1</td></tr></table><div style="font-size:0.85rem;color:var(--text-muted);">Non-standard samples: TBD, not available, (555) 456 7890</div><div class="why-box"><strong>Why this matters:</strong> Inconsistent phone formats break deduplication, prevent reliable search/lookup, and cause issues with automated dialers or SMS systems. Two records for the same person may appear as different contacts if one says &quot;(555) 123-4567&quot; and another says &quot;5551234567&quot;.</div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "(555) 123-4567" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "000-000-0000" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "555-555-5555" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:13.3%;background:var(--medium);"></div></div>
+<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (fill_missing)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 4 missing values in &quot;Phone&quot; (13.3%)</div><pre class="fix-code">df[&quot;Phone&quot;] = df[&quot;Phone&quot;].fillna(df[&quot;Phone&quot;].mode()[0])</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed phone formats</strong> &mdash; 17 of 26 values deviate from dominant format ((XXX) XXX-XXXX)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>(XXX) XXX-XXXX</td><td>9</td></tr><tr><td>XXX-XXX-XXXX</td><td>8</td></tr><tr><td>(non-standard)</td><td>3</td></tr><tr><td>+1-XXX-XXX-XXXX</td><td>2</td></tr><tr><td>XXXXXXXXXX</td><td>1</td></tr><tr><td>XXX.XXX.XXXX</td><td>1</td></tr><tr><td>XXX XXX XXXX</td><td>1</td></tr><tr><td>(XXX)XXXXXXX</td><td>1</td></tr></table><div style="font-size:0.85rem;color:var(--text-muted);">Non-standard samples: TBD, not available, (555) 456 7890</div><div class="why-box"><strong>Why this matters:</strong> Inconsistent phone formats break deduplication, prevent reliable search/lookup, and cause issues with automated dialers or SMS systems. Two records for the same person may appear as different contacts if one says &quot;(555) 123-4567&quot; and another says &quot;5551234567&quot;.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_phones)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Standardize all phone numbers in &quot;Phone&quot; to (XXX) XXX-XXXX format</div><pre class="fix-code">digits = df[&quot;Phone&quot;].str.replace(r&quot;\D&quot;, &quot;&quot;, regex=True)
+digits = digits.str.slice(-10)
+df[&quot;Phone&quot;] = (
+    &quot;(&quot; + digits.str[:3] + &quot;) &quot;
+    + digits.str[3:6] + &quot;-&quot; + digits.str[6:]
+)</pre></div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 1 placeholder values (&quot;TBD&quot;) in &quot;Phone&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;Phone&quot;] = df[&quot;Phone&quot;].replace(&quot;TBD&quot;, np.nan)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "(555) 123-4567" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;Phone&quot; = &quot;(555) 123-4567&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_Phone_review&quot;] = (
+    df[&quot;Phone&quot;] == &quot;(555) 123-4567&quot;
+)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "000-000-0000" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;Phone&quot; = &quot;000-000-0000&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_Phone_review&quot;] = (
+    df[&quot;Phone&quot;] == &quot;000-000-0000&quot;
+)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "555-555-5555" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;Phone&quot; = &quot;555-555-5555&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_Phone_review&quot;] = (
+    df[&quot;Phone&quot;] == &quot;555-555-5555&quot;
+)</pre></div></div></div>
+<div class="field-card" data-field="joindate" data-severities="Low High Medium">
     <div class="field-header">
         <span class="field-name">JoinDate</span>
         <span class="field-type">date</span>
@@ -223,9 +471,17 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 4 / 30 (13.3%)
          &mdash; 1 whitespace-only
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:13.3%;background:var(--medium);"></div></div>
-<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed date formats</strong> &mdash; 12 of 26 values deviate from dominant format (YYYY-MM-DD)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>YYYY-MM-DD</td><td>14</td></tr><tr><td>MM/DD/YYYY</td><td>3</td></tr><tr><td>Mon DD, YYYY</td><td>3</td></tr><tr><td>(non-standard)</td><td>1</td></tr><tr><td>YYYY/MM/DD</td><td>1</td></tr><tr><td>M/D/YYYY</td><td>1</td></tr><tr><td>DD-Mon-YYYY</td><td>1</td></tr><tr><td>YYYY.MM.DD</td><td>1</td></tr><tr><td>MM-DD-YYYY</td><td>1</td></tr></table><div style="font-size:0.85rem;color:var(--text-muted);">Non-standard samples: TBD</div><div class="why-box"><strong>Why this matters:</strong> Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (&quot;Jan 15, 2023&quot;) won&#x27;t sort chronologically next to &quot;2023-01-15&quot;. Downstream tools, APIs, and reports will misparse or reject inconsistent dates.</div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Suspicious repetition:</strong> "2023-01-01" appears 6 times (23.1%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "2023-01-15" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:13.3%;background:var(--medium);"></div></div>
+<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (fill_missing)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 4 missing values in &quot;JoinDate&quot; (13.3%)</div><pre class="fix-code">df[&quot;JoinDate&quot;] = df[&quot;JoinDate&quot;].fillna(df[&quot;JoinDate&quot;].mode()[0])</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed date formats</strong> &mdash; 12 of 26 values deviate from dominant format (YYYY-MM-DD)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>YYYY-MM-DD</td><td>14</td></tr><tr><td>MM/DD/YYYY</td><td>3</td></tr><tr><td>Mon DD, YYYY</td><td>3</td></tr><tr><td>(non-standard)</td><td>1</td></tr><tr><td>YYYY/MM/DD</td><td>1</td></tr><tr><td>M/D/YYYY</td><td>1</td></tr><tr><td>DD-Mon-YYYY</td><td>1</td></tr><tr><td>YYYY.MM.DD</td><td>1</td></tr><tr><td>MM-DD-YYYY</td><td>1</td></tr></table><div style="font-size:0.85rem;color:var(--text-muted);">Non-standard samples: TBD</div><div class="why-box"><strong>Why this matters:</strong> Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (&quot;Jan 15, 2023&quot;) won&#x27;t sort chronologically next to &quot;2023-01-15&quot;. Downstream tools, APIs, and reports will misparse or reject inconsistent dates.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_dates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Standardize all dates in &quot;JoinDate&quot; to YYYY-MM-DD format</div><pre class="fix-code">df[&quot;JoinDate&quot;] = pd.to_datetime(
+    df[&quot;JoinDate&quot;], format=&quot;mixed&quot;, dayfirst=False
+).dt.strftime(&quot;%Y-%m-%d&quot;)</pre></div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 1 placeholder values (&quot;TBD&quot;) in &quot;JoinDate&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;JoinDate&quot;] = df[&quot;JoinDate&quot;].replace(&quot;TBD&quot;, np.nan)</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Suspicious repetition:</strong> "2023-01-01" appears 6 times (23.1%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 6 rows where &quot;JoinDate&quot; = &quot;2023-01-01&quot; (23.1%) for manual review</div><pre class="fix-code">df[&quot;_JoinDate_review&quot;] = (
+    df[&quot;JoinDate&quot;] == &quot;2023-01-01&quot;
+)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "2023-01-15" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;JoinDate&quot; = &quot;2023-01-15&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_JoinDate_review&quot;] = (
+    df[&quot;JoinDate&quot;] == &quot;2023-01-15&quot;
+)</pre></div></div></div>
+<div class="field-card" data-field="accountbalance" data-severities="Low High Medium">
     <div class="field-header">
         <span class="field-name">AccountBalance</span>
         <span class="field-type">currency</span>
@@ -234,9 +490,22 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 4 / 30 (13.3%)
          &mdash; 1 whitespace-only
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:13.3%;background:var(--medium);"></div></div>
-<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed currency formats</strong> &mdash; 11 of 26 values deviate from dominant format ($X,XXX.XX)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>$X,XXX.XX</td><td>15</td></tr><tr><td>X,XXX.XX (no symbol)</td><td>4</td></tr><tr><td>$X,XXX</td><td>3</td></tr><tr><td>(non-standard)</td><td>2</td></tr><tr><td>$X,XXX.XX USD</td><td>2</td></tr></table><div style="font-size:0.85rem;color:var(--text-muted);">Non-standard samples: TBD, five thousand</div><div class="why-box"><strong>Why this matters:</strong> Mixed currency formats (&quot;$1,250.00&quot; vs &quot;1250&quot; vs &quot;five thousand&quot;) prevent accurate aggregation and comparison. Summing a column with text-formatted currency returns errors or silently drops values, leading to wrong totals in financial reports.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Text in currency field</strong> &mdash; e.g. "TBD" (row 15)<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Text in currency field</strong> &mdash; e.g. "five thousand" (row 16)<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Suspicious repetition:</strong> "$0.00" appears 6 times (23.1%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "$1,250.00" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:13.3%;background:var(--medium);"></div></div>
+<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (fill_missing)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 4 missing values in &quot;AccountBalance&quot; (13.3%)</div><pre class="fix-code">df[&quot;AccountBalance&quot;] = df[&quot;AccountBalance&quot;].fillna(df[&quot;AccountBalance&quot;].mode()[0])</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed currency formats</strong> &mdash; 11 of 26 values deviate from dominant format ($X,XXX.XX)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>$X,XXX.XX</td><td>15</td></tr><tr><td>X,XXX.XX (no symbol)</td><td>4</td></tr><tr><td>$X,XXX</td><td>3</td></tr><tr><td>(non-standard)</td><td>2</td></tr><tr><td>$X,XXX.XX USD</td><td>2</td></tr></table><div style="font-size:0.85rem;color:var(--text-muted);">Non-standard samples: TBD, five thousand</div><div class="why-box"><strong>Why this matters:</strong> Mixed currency formats (&quot;$1,250.00&quot; vs &quot;1250&quot; vs &quot;five thousand&quot;) prevent accurate aggregation and comparison. Summing a column with text-formatted currency returns errors or silently drops values, leading to wrong totals in financial reports.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_currency)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Standardize all currency values in &quot;AccountBalance&quot; to numeric format</div><pre class="fix-code">df[&quot;AccountBalance&quot;] = (
+    df[&quot;AccountBalance&quot;].str.replace(r&quot;[^\d.]&quot;, &quot;&quot;, regex=True)
+    .astype(float)
+)</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Text in currency field</strong> &mdash; e.g. "TBD" (row 15)<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_non_numeric)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag non-numeric values in currency field &quot;AccountBalance&quot;</div><pre class="fix-code">df[&quot;_AccountBalance_invalid&quot;] = ~df[&quot;AccountBalance&quot;].str.match(
+    r&quot;^[\$\d,\.\-]+$&quot;, na=False
+)</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Text in currency field</strong> &mdash; e.g. "five thousand" (row 16)<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_non_numeric)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag non-numeric values in currency field &quot;AccountBalance&quot;</div><pre class="fix-code">df[&quot;_AccountBalance_invalid&quot;] = ~df[&quot;AccountBalance&quot;].str.match(
+    r&quot;^[\$\d,\.\-]+$&quot;, na=False
+)</pre></div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 1 placeholder values (&quot;TBD&quot;) in &quot;AccountBalance&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;AccountBalance&quot;] = df[&quot;AccountBalance&quot;].replace(&quot;TBD&quot;, np.nan)</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Suspicious repetition:</strong> "$0.00" appears 6 times (23.1%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 6 rows where &quot;AccountBalance&quot; = &quot;$0.00&quot; (23.1%) for manual review</div><pre class="fix-code">df[&quot;_AccountBalance_review&quot;] = (
+    df[&quot;AccountBalance&quot;] == &quot;$0.00&quot;
+)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "$1,250.00" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;AccountBalance&quot; = &quot;$1,250.00&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_AccountBalance_review&quot;] = (
+    df[&quot;AccountBalance&quot;] == &quot;$1,250.00&quot;
+)</pre></div></div></div>
+<div class="field-card" data-field="status" data-severities="Low High">
     <div class="field-header">
         <span class="field-name">Status</span>
         <span class="field-type">categorical</span>
@@ -245,9 +514,15 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 4 / 30 (13.3%)
          &mdash; 1 whitespace-only
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:13.3%;background:var(--medium);"></div></div>
-<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Inconsistent casing in categorical values</strong> &mdash; e.g. "ACTIVE / Active / active"<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Suspicious repetition:</strong> "Active" appears 18 times (69.2%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:13.3%;background:var(--medium);"></div></div>
+<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (fill_missing)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 4 missing values in &quot;Status&quot; (13.3%)</div><pre class="fix-code">df[&quot;Status&quot;] = df[&quot;Status&quot;].fillna(df[&quot;Status&quot;].mode()[0])</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Inconsistent casing in categorical values</strong> &mdash; e.g. "ACTIVE / Active / active"<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_misuse)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag misused values in &quot;Status&quot;: Inconsistent casing in categorical values</div><pre class="fix-code"># Review rows where Status contains unexpected data
+mask = df[&quot;Status&quot;].notna()
+suspect = df.loc[mask, &quot;Status&quot;]</pre></div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 1 placeholder values (&quot;TBD&quot;) in &quot;Status&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;Status&quot;] = df[&quot;Status&quot;].replace(&quot;TBD&quot;, np.nan)</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Suspicious repetition:</strong> "Active" appears 18 times (69.2%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 18 rows where &quot;Status&quot; = &quot;Active&quot; (69.2%) for manual review</div><pre class="fix-code">df[&quot;_Status_review&quot;] = (
+    df[&quot;Status&quot;] == &quot;Active&quot;
+)</pre></div></div></div>
+<div class="field-card" data-field="zipcode" data-severities="Low Medium">
     <div class="field-header">
         <span class="field-name">ZipCode</span>
         <span class="field-type">zipcode</span>
@@ -256,9 +531,16 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 4 / 30 (13.3%)
          &mdash; 1 whitespace-only
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:13.3%;background:var(--medium);"></div></div>
-<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "00000" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "30301" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "12345" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:13.3%;background:var(--medium);"></div></div>
+<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 4 of 30 values missing (13.3%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (fill_missing)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 4 missing values in &quot;ZipCode&quot; (13.3%)</div><pre class="fix-code">df[&quot;ZipCode&quot;] = df[&quot;ZipCode&quot;].fillna(df[&quot;ZipCode&quot;].mode()[0])</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "00000" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 3 placeholder values (&quot;00000&quot;) in &quot;ZipCode&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;ZipCode&quot;] = df[&quot;ZipCode&quot;].replace(&quot;00000&quot;, np.nan)</pre></div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 1 placeholder values (&quot;TBD&quot;) in &quot;ZipCode&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;ZipCode&quot;] = df[&quot;ZipCode&quot;].replace(&quot;TBD&quot;, np.nan)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "30301" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;ZipCode&quot; = &quot;30301&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_ZipCode_review&quot;] = (
+    df[&quot;ZipCode&quot;] == &quot;30301&quot;
+)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "12345" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;ZipCode&quot; = &quot;12345&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_ZipCode_review&quot;] = (
+    df[&quot;ZipCode&quot;] == &quot;12345&quot;
+)</pre></div></div></div>
+<div class="field-card" data-field="notes" data-severities="Medium">
     <div class="field-header">
         <span class="field-name">Notes</span>
         <span class="field-type">freetext</span>
@@ -267,42 +549,67 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 15 / 30 (50.0%)
          &mdash; 1 whitespace-only
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:50.0%;background:var(--high);"></div></div>
-<div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>High missing rate:</strong> 15 of 30 values missing (50.0%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "TEST" appears 3 times (20.0%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (6.7%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "Preferred customer" appears 3 times (20.0%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div></div></div><h3>Phantom &amp; Exact Duplicates</h3>
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:50.0%;background:var(--high);"></div></div>
+<div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>High missing rate:</strong> 15 of 30 values missing (50.0%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (impute_or_flag)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 15 missing values in &quot;Notes&quot; (50.0%)</div><pre class="fix-code"># Option A: Fill with most common value
+df[&quot;Notes&quot;] = df[&quot;Notes&quot;].fillna(df[&quot;Notes&quot;].mode()[0])
+
+# Option B: Fill with a sentinel
+df[&quot;Notes&quot;] = df[&quot;Notes&quot;].fillna(&quot;MISSING&quot;)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "TEST" appears 3 times (20.0%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 3 placeholder values (&quot;TEST&quot;) in &quot;Notes&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;Notes&quot;] = df[&quot;Notes&quot;].replace(&quot;TEST&quot;, np.nan)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (6.7%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 1 placeholder values (&quot;TBD&quot;) in &quot;Notes&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;Notes&quot;] = df[&quot;Notes&quot;].replace(&quot;TBD&quot;, np.nan)</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "Preferred customer" appears 3 times (20.0%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;Notes&quot; = &quot;Preferred customer&quot; (20.0%) for manual review</div><pre class="fix-code">df[&quot;_Notes_review&quot;] = (
+    df[&quot;Notes&quot;] == &quot;Preferred customer&quot;
+)</pre></div></div></div><h3>Phantom &amp; Exact Duplicates</h3>
 <div class="dup-group">
     <span class="severity-badge Medium">Medium</span>
     <strong>Phantom Duplicate</strong> &mdash; 3 rows: 2, 8, 9
     <table class="format-table">
         <tr><th>CustomerID</th><th>FirstName</th><th>LastName</th><th>Email</th><th>Phone</th><th>JoinDate</th></tr>
-<tr><td>CUST-001</td><td>Alice</td><td>Johnson</td><td>alice@example.com</td><td>(555) 123-4567</td><td>2023-01-15</td></tr><tr><td>CUST-007</td><td>alice</td><td>johnson</td><td>alice@example.com</td><td>(555) 123-4567</td><td>2023-01-15</td></tr><tr><td>CUST-008</td><td> Alice </td><td> Johnson</td><td>ALICE@EXAMPLE.COM</td><td>(555) 123-4567</td><td>2023-01-15</td></tr></table><div class="why-box"><strong>Why this matters:</strong> These records look different on the surface (different casing, extra spaces, punctuation variations) but represent the same entity. They cause inflated counts, split transaction histories, and duplicate outreach — problems that compound over time.</div></div>
+<tr><td>CUST-001</td><td>Alice</td><td>Johnson</td><td>alice@example.com</td><td>(555) 123-4567</td><td>2023-01-15</td></tr><tr><td>CUST-007</td><td>alice</td><td>johnson</td><td>alice@example.com</td><td>(555) 123-4567</td><td>2023-01-15</td></tr><tr><td>CUST-008</td><td> Alice </td><td> Johnson</td><td>ALICE@EXAMPLE.COM</td><td>(555) 123-4567</td><td>2023-01-15</td></tr></table><div class="why-box"><strong>Why this matters:</strong> These records look different on the surface (different casing, extra spaces, punctuation variations) but represent the same entity. They cause inflated counts, split transaction histories, and duplicate outreach — problems that compound over time.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_and_dedup)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Normalize and deduplicate 3 phantom duplicate rows (rows 2, 8, 9)</div><pre class="fix-code"># Normalize text columns before deduplication
+text_cols = df.select_dtypes(include=&quot;object&quot;).columns
+for col in text_cols:
+    df[col] = df[col].str.strip().str.lower()
+df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div>
 <div class="dup-group">
     <span class="severity-badge Medium">Medium</span>
     <strong>Phantom Duplicate</strong> &mdash; 2 rows: 3, 10
     <table class="format-table">
         <tr><th>CustomerID</th><th>FirstName</th><th>LastName</th><th>Email</th><th>Phone</th><th>JoinDate</th></tr>
-<tr><td>CUST-002</td><td>Bob</td><td>Smith</td><td>bob.smith@example.com</td><td>555-234-5678</td><td>01/15/2023</td></tr><tr><td>CUST-009</td><td>Bob</td><td>Smith </td><td>bob.smith@example.com </td><td>555-234-5678</td><td>01/15/2023</td></tr></table><div class="why-box"><strong>Why this matters:</strong> These records look different on the surface (different casing, extra spaces, punctuation variations) but represent the same entity. They cause inflated counts, split transaction histories, and duplicate outreach — problems that compound over time.</div></div>
+<tr><td>CUST-002</td><td>Bob</td><td>Smith</td><td>bob.smith@example.com</td><td>555-234-5678</td><td>01/15/2023</td></tr><tr><td>CUST-009</td><td>Bob</td><td>Smith </td><td>bob.smith@example.com </td><td>555-234-5678</td><td>01/15/2023</td></tr></table><div class="why-box"><strong>Why this matters:</strong> These records look different on the surface (different casing, extra spaces, punctuation variations) but represent the same entity. They cause inflated counts, split transaction histories, and duplicate outreach — problems that compound over time.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_and_dedup)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Normalize and deduplicate 2 phantom duplicate rows (rows 3, 10)</div><pre class="fix-code"># Normalize text columns before deduplication
+text_cols = df.select_dtypes(include=&quot;object&quot;).columns
+for col in text_cols:
+    df[col] = df[col].str.strip().str.lower()
+df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div>
 <div class="dup-group">
     <span class="severity-badge High">High</span>
     <strong>Exact Duplicate</strong> &mdash; 3 rows: 11, 12, 13
     <table class="format-table">
         <tr><th>CustomerID</th><th>FirstName</th><th>LastName</th><th>Email</th><th>Phone</th><th>JoinDate</th></tr>
-<tr><td>CUST-010</td><td>Test</td><td>User</td><td>test@test.com</td><td>000-000-0000</td><td>2023-01-01</td></tr><tr><td>CUST-011</td><td>Test</td><td>User</td><td>test@test.com</td><td>000-000-0000</td><td>2023-01-01</td></tr><tr><td>CUST-012</td><td>Test</td><td>User</td><td>test@test.com</td><td>000-000-0000</td><td>2023-01-01</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Exact duplicate rows are the clearest sign of a data quality issue — they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.</div></div>
+<tr><td>CUST-010</td><td>Test</td><td>User</td><td>test@test.com</td><td>000-000-0000</td><td>2023-01-01</td></tr><tr><td>CUST-011</td><td>Test</td><td>User</td><td>test@test.com</td><td>000-000-0000</td><td>2023-01-01</td></tr><tr><td>CUST-012</td><td>Test</td><td>User</td><td>test@test.com</td><td>000-000-0000</td><td>2023-01-01</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Exact duplicate rows are the clearest sign of a data quality issue — they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (drop_exact_duplicates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Remove 3 exact duplicate rows (rows 11, 12, 13)</div><pre class="fix-code">df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div>
 <div class="dup-group">
     <span class="severity-badge High">High</span>
     <strong>Phantom Duplicate</strong> &mdash; 4 rows: 14, 19, 20, 21
     <table class="format-table">
         <tr><th>CustomerID</th><th>FirstName</th><th>LastName</th><th>Email</th><th>Phone</th><th>JoinDate</th></tr>
-<tr><td>CUST-013</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td></tr><tr><td>CUST-018</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td></tr><tr><td>CUST-019</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td></tr></table><div class="why-box"><strong>Why this matters:</strong> These records look different on the surface (different casing, extra spaces, punctuation variations) but represent the same entity. They cause inflated counts, split transaction histories, and duplicate outreach — problems that compound over time.</div></div>
+<tr><td>CUST-013</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td></tr><tr><td>CUST-018</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td></tr><tr><td>CUST-019</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td></tr></table><div class="why-box"><strong>Why this matters:</strong> These records look different on the surface (different casing, extra spaces, punctuation variations) but represent the same entity. They cause inflated counts, split transaction histories, and duplicate outreach — problems that compound over time.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_and_dedup)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Normalize and deduplicate 4 phantom duplicate rows (rows 14, 19, 20, 21)</div><pre class="fix-code"># Normalize text columns before deduplication
+text_cols = df.select_dtypes(include=&quot;object&quot;).columns
+for col in text_cols:
+    df[col] = df[col].str.strip().str.lower()
+df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div>
 <div class="dup-group">
     <span class="severity-badge High">High</span>
     <strong>Exact Duplicate</strong> &mdash; 2 rows: 25, 27
     <table class="format-table">
         <tr><th>CustomerID</th><th>FirstName</th><th>LastName</th><th>Email</th><th>Phone</th><th>JoinDate</th></tr>
-<tr><td>CUST-024</td><td>John</td><td>Doe</td><td>john@doe.com</td><td>555-555-5555</td><td>2023-01-01</td></tr><tr><td>CUST-026</td><td>John</td><td>Doe</td><td>john@doe.com</td><td>555-555-5555</td><td>2023-01-01</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Exact duplicate rows are the clearest sign of a data quality issue — they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.</div></div>
-<h2>Sheet: Orders</h2>
-<p style="color:var(--text-muted);margin-bottom:1rem;">10 rows &times; 6 columns</p>
+<tr><td>CUST-024</td><td>John</td><td>Doe</td><td>john@doe.com</td><td>555-555-5555</td><td>2023-01-01</td></tr><tr><td>CUST-026</td><td>John</td><td>Doe</td><td>john@doe.com</td><td>555-555-5555</td><td>2023-01-01</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Exact duplicate rows are the clearest sign of a data quality issue — they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (drop_exact_duplicates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Remove 2 exact duplicate rows (rows 25, 27)</div><pre class="fix-code">df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div></div></div>
+<div class="sheet-section" id="sheet-orders">
+<h2 class="sheet-toggle" onclick="toggleSheet(this)">Sheet: Orders
+    <span class="sheet-score" style="background:var(--high);color:#fff">65/100</span></h2>
+<div class="sheet-body">
+<p style="color:var(--text-muted);margin-bottom:1rem;">
+10 rows &times; 6 columns</p>
 
-<div class="field-card">
+<div class="field-card" data-field="orderid" data-severities="">
     <div class="field-header">
         <span class="field-name">OrderID</span>
         <span class="field-type">id</span>
@@ -311,9 +618,10 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 0 / 10 (0.0%)
         
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:0.0%;background:var(--low);"></div></div>
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:0.0%;background:var(--low);"></div></div>
 </div>
-<div class="field-card">
+<div class="field-card" data-field="customerid" data-severities="">
     <div class="field-header">
         <span class="field-name">CustomerID</span>
         <span class="field-type">id</span>
@@ -322,9 +630,10 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 0 / 10 (0.0%)
         
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:0.0%;background:var(--low);"></div></div>
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:0.0%;background:var(--low);"></div></div>
 </div>
-<div class="field-card">
+<div class="field-card" data-field="orderdate" data-severities="High">
     <div class="field-header">
         <span class="field-name">OrderDate</span>
         <span class="field-type">date</span>
@@ -333,9 +642,12 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 0 / 10 (0.0%)
         
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:0.0%;background:var(--low);"></div></div>
-<div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed date formats</strong> &mdash; 4 of 10 values deviate from dominant format (YYYY-MM-DD)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>YYYY-MM-DD</td><td>6</td></tr><tr><td>MM/DD/YYYY</td><td>1</td></tr><tr><td>Mon DD, YYYY</td><td>1</td></tr><tr><td>M/D/YYYY</td><td>1</td></tr><tr><td>YYYY/MM/DD</td><td>1</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (&quot;Jan 15, 2023&quot;) won&#x27;t sort chronologically next to &quot;2023-01-15&quot;. Downstream tools, APIs, and reports will misparse or reject inconsistent dates.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:0.0%;background:var(--low);"></div></div>
+<div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed date formats</strong> &mdash; 4 of 10 values deviate from dominant format (YYYY-MM-DD)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>YYYY-MM-DD</td><td>6</td></tr><tr><td>MM/DD/YYYY</td><td>1</td></tr><tr><td>Mon DD, YYYY</td><td>1</td></tr><tr><td>M/D/YYYY</td><td>1</td></tr><tr><td>YYYY/MM/DD</td><td>1</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (&quot;Jan 15, 2023&quot;) won&#x27;t sort chronologically next to &quot;2023-01-15&quot;. Downstream tools, APIs, and reports will misparse or reject inconsistent dates.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_dates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Standardize all dates in &quot;OrderDate&quot; to YYYY-MM-DD format</div><pre class="fix-code">df[&quot;OrderDate&quot;] = pd.to_datetime(
+    df[&quot;OrderDate&quot;], format=&quot;mixed&quot;, dayfirst=False
+).dt.strftime(&quot;%Y-%m-%d&quot;)</pre></div></div></div>
+<div class="field-card" data-field="amount" data-severities="Medium">
     <div class="field-header">
         <span class="field-name">Amount</span>
         <span class="field-type">currency</span>
@@ -344,9 +656,13 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 0 / 10 (0.0%)
         
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:0.0%;background:var(--low);"></div></div>
-<div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Mixed currency formats</strong> &mdash; 3 of 10 values deviate from dominant format ($X,XXX.XX)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>$X,XXX.XX</td><td>7</td></tr><tr><td>X,XXX (bare number)</td><td>2</td></tr><tr><td>$X,XXX</td><td>1</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Mixed currency formats (&quot;$1,250.00&quot; vs &quot;1250&quot; vs &quot;five thousand&quot;) prevent accurate aggregation and comparison. Summing a column with text-formatted currency returns errors or silently drops values, leading to wrong totals in financial reports.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:0.0%;background:var(--low);"></div></div>
+<div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Mixed currency formats</strong> &mdash; 3 of 10 values deviate from dominant format ($X,XXX.XX)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>$X,XXX.XX</td><td>7</td></tr><tr><td>X,XXX (bare number)</td><td>2</td></tr><tr><td>$X,XXX</td><td>1</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Mixed currency formats (&quot;$1,250.00&quot; vs &quot;1250&quot; vs &quot;five thousand&quot;) prevent accurate aggregation and comparison. Summing a column with text-formatted currency returns errors or silently drops values, leading to wrong totals in financial reports.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_currency)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Standardize all currency values in &quot;Amount&quot; to numeric format</div><pre class="fix-code">df[&quot;Amount&quot;] = (
+    df[&quot;Amount&quot;].str.replace(r&quot;[^\d.]&quot;, &quot;&quot;, regex=True)
+    .astype(float)
+)</pre></div></div></div>
+<div class="field-card" data-field="shipdate" data-severities="Low High">
     <div class="field-header">
         <span class="field-name">ShipDate</span>
         <span class="field-type">date</span>
@@ -355,9 +671,12 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 2 / 10 (20.0%)
         
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:20.0%;background:var(--medium);"></div></div>
-<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 2 of 10 values missing (20.0%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed date formats</strong> &mdash; 3 of 8 values deviate from dominant format (YYYY-MM-DD)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>YYYY-MM-DD</td><td>5</td></tr><tr><td>MM/DD/YYYY</td><td>1</td></tr><tr><td>Mon DD, YYYY</td><td>1</td></tr><tr><td>M/D/YYYY</td><td>1</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (&quot;Jan 15, 2023&quot;) won&#x27;t sort chronologically next to &quot;2023-01-15&quot;. Downstream tools, APIs, and reports will misparse or reject inconsistent dates.</div></div></div>
-<div class="field-card">
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:20.0%;background:var(--medium);"></div></div>
+<div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>High missing rate:</strong> 2 of 10 values missing (20.0%)<div class="why-box"><strong>Why this matters:</strong> High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (fill_missing)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Fill 2 missing values in &quot;ShipDate&quot; (20.0%)</div><pre class="fix-code">df[&quot;ShipDate&quot;] = df[&quot;ShipDate&quot;].fillna(df[&quot;ShipDate&quot;].mode()[0])</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Mixed date formats</strong> &mdash; 3 of 8 values deviate from dominant format (YYYY-MM-DD)<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>YYYY-MM-DD</td><td>5</td></tr><tr><td>MM/DD/YYYY</td><td>1</td></tr><tr><td>Mon DD, YYYY</td><td>1</td></tr><tr><td>M/D/YYYY</td><td>1</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (&quot;Jan 15, 2023&quot;) won&#x27;t sort chronologically next to &quot;2023-01-15&quot;. Downstream tools, APIs, and reports will misparse or reject inconsistent dates.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_dates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Standardize all dates in &quot;ShipDate&quot; to YYYY-MM-DD format</div><pre class="fix-code">df[&quot;ShipDate&quot;] = pd.to_datetime(
+    df[&quot;ShipDate&quot;], format=&quot;mixed&quot;, dayfirst=False
+).dt.strftime(&quot;%Y-%m-%d&quot;)</pre></div></div></div>
+<div class="field-card" data-field="status" data-severities="High Medium">
     <div class="field-header">
         <span class="field-name">Status</span>
         <span class="field-type">categorical</span>
@@ -366,21 +685,76 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         Missing: 0 / 10 (0.0%)
         
     </div>
-    <div class="null-bar"><div class="null-bar-fill" style="width:0.0%;background:var(--low);"></div></div>
-<div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Inconsistent casing in categorical values</strong> &mdash; e.g. "Shipped / shipped"<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Inconsistent casing in categorical values</strong> &mdash; e.g. "Delivered / delivered"<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Inconsistent casing in categorical values</strong> &mdash; e.g. "PENDING / Pending"<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "Test" appears 2 times (20.0%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div></div></div><h3>Phantom &amp; Exact Duplicates</h3>
+    <div class="null-bar"><div class="null-bar-fill"
+        style="width:0.0%;background:var(--low);"></div></div>
+<div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Inconsistent casing in categorical values</strong> &mdash; e.g. "Shipped / shipped"<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_misuse)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag misused values in &quot;Status&quot;: Inconsistent casing in categorical values</div><pre class="fix-code"># Review rows where Status contains unexpected data
+mask = df[&quot;Status&quot;].notna()
+suspect = df.loc[mask, &quot;Status&quot;]</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Inconsistent casing in categorical values</strong> &mdash; e.g. "Delivered / delivered"<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_misuse)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag misused values in &quot;Status&quot;: Inconsistent casing in categorical values</div><pre class="fix-code"># Review rows where Status contains unexpected data
+mask = df[&quot;Status&quot;].notna()
+suspect = df.loc[mask, &quot;Status&quot;]</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Inconsistent casing in categorical values</strong> &mdash; e.g. "PENDING / Pending"<div class="why-box"><strong>Why this matters:</strong> When a field is used for something other than its intended purpose — like storing reference codes in a name field or text in a currency field — it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_misuse)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag misused values in &quot;Status&quot;: Inconsistent casing in categorical values</div><pre class="fix-code"># Review rows where Status contains unexpected data
+mask = df[&quot;Status&quot;].notna()
+suspect = df.loc[mask, &quot;Status&quot;]</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "Test" appears 2 times (20.0%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 2 placeholder values (&quot;Test&quot;) in &quot;Status&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
+df[&quot;Status&quot;] = df[&quot;Status&quot;].replace(&quot;Test&quot;, np.nan)</pre></div></div></div><h3>Phantom &amp; Exact Duplicates</h3>
 <div class="dup-group">
     <span class="severity-badge High">High</span>
     <strong>Exact Duplicate</strong> &mdash; 2 rows: 5, 6
     <table class="format-table">
         <tr><th>OrderID</th><th>CustomerID</th><th>OrderDate</th><th>Amount</th><th>ShipDate</th><th>Status</th></tr>
-<tr><td>ORD-004</td><td>CUST-003</td><td>2023-07-01</td><td>$300.00</td><td>2023-07-03</td><td>Delivered</td></tr><tr><td>ORD-005</td><td>CUST-003</td><td>2023-07-01</td><td>$300.00</td><td>2023-07-03</td><td>Delivered</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Exact duplicate rows are the clearest sign of a data quality issue — they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.</div></div>
+<tr><td>ORD-004</td><td>CUST-003</td><td>2023-07-01</td><td>$300.00</td><td>2023-07-03</td><td>Delivered</td></tr><tr><td>ORD-005</td><td>CUST-003</td><td>2023-07-01</td><td>$300.00</td><td>2023-07-03</td><td>Delivered</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Exact duplicate rows are the clearest sign of a data quality issue — they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (drop_exact_duplicates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Remove 2 exact duplicate rows (rows 5, 6)</div><pre class="fix-code">df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div>
 <div class="dup-group">
     <span class="severity-badge High">High</span>
     <strong>Exact Duplicate</strong> &mdash; 2 rows: 7, 8
     <table class="format-table">
         <tr><th>OrderID</th><th>CustomerID</th><th>OrderDate</th><th>Amount</th><th>ShipDate</th><th>Status</th></tr>
-<tr><td>ORD-006</td><td>CUST-010</td><td>2023-01-01</td><td>$0.00</td><td>2023-01-01</td><td>Test</td></tr><tr><td>ORD-007</td><td>CUST-010</td><td>2023-01-01</td><td>$0.00</td><td>2023-01-01</td><td>Test</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Exact duplicate rows are the clearest sign of a data quality issue — they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.</div></div>
+<tr><td>ORD-006</td><td>CUST-010</td><td>2023-01-01</td><td>$0.00</td><td>2023-01-01</td><td>Test</td></tr><tr><td>ORD-007</td><td>CUST-010</td><td>2023-01-01</td><td>$0.00</td><td>2023-01-01</td><td>Test</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Exact duplicate rows are the clearest sign of a data quality issue — they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (drop_exact_duplicates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Remove 2 exact duplicate rows (rows 7, 8)</div><pre class="fix-code">df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div></div></div>
 <div class="footer">
-    Data Hygiene Audit &mdash; Generated 2026-05-15 12:42:05 &mdash; Lailara LLC
+    Data Hygiene Audit &mdash; Generated 2026-05-15 13:58:59 &mdash; Lailara LLC
 </div>
+
+<script>
+function filterSeverity(sev) {
+    document.querySelectorAll('.filter-btn').forEach(b => {
+        b.className = 'filter-btn';
+        if (b.dataset.severity === sev) {
+            b.classList.add(sev === 'all' ? 'active' : 'active-' + sev.toLowerCase());
+        }
+    });
+    document.querySelectorAll('.field-card').forEach(card => {
+        if (sev === 'all') {
+            card.classList.remove('hidden');
+        } else {
+            const sevs = card.dataset.severities || '';
+            card.classList.toggle('hidden', !sevs.includes(sev));
+        }
+    });
+}
+
+function searchFields(query) {
+    const q = query.toLowerCase();
+    document.querySelectorAll('.field-card').forEach(card => {
+        const field = card.dataset.field || '';
+        const text = card.textContent.toLowerCase();
+        card.classList.toggle('hidden', q && !field.includes(q) && !text.includes(q));
+    });
+    document.querySelectorAll('.filter-btn').forEach(b => {
+        b.className = 'filter-btn';
+        if (b.dataset.severity === 'all') b.classList.add('active');
+    });
+}
+
+function toggleSheet(el) {
+    el.classList.toggle('collapsed');
+    const body = el.nextElementSibling;
+    if (body) body.classList.toggle('hidden');
+}
+
+function copyFix(btn) {
+    const block = btn.closest('.fix-block');
+    const code = block.querySelector('.fix-code').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    });
+}
+</script>
 </body></html>
