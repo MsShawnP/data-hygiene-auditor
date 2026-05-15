@@ -1,0 +1,1547 @@
+{
+  "input_file": "sample_messy_data.xlsx",
+  "audit_timestamp": "2026-05-15 15:03:07",
+  "sheets": {
+    "Customers": {
+      "row_count": 30,
+      "col_count": 10,
+      "fields": {
+        "CustomerID": {
+          "inferred_type": "id",
+          "null_analysis": {
+            "null_count": 0,
+            "blank_count": 0,
+            "whitespace_only": 0,
+            "total_missing": 0,
+            "missing_pct": 0.0,
+            "total_rows": 30
+          },
+          "issues": [
+            {
+              "type": "wrong_purpose",
+              "severity": "High",
+              "detail": {
+                "issue": "Mixed ID formats",
+                "example": "29 coded (e.g. CUST-001) vs 1 bare numbers",
+                "row": null
+              },
+              "why": "When a field is used for something other than its intended purpose \u2014 like storing reference codes in a name field or text in a currency field \u2014 it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.",
+              "fix": {
+                "strategy": "standardize_ids",
+                "description": "Identify rows with inconsistent ID formats in \"CustomerID\" (29 coded (e.g. CUST-001) vs 1 bare numbers)",
+                "code": "df[\"_CustomerID_format\"] = df[\"CustomerID\"].apply(\n    lambda x: \"coded\" if isinstance(x, str)\n    and \"-\" in x else \"numeric\"\n)"
+              }
+            }
+          ]
+        },
+        "FirstName": {
+          "inferred_type": "name",
+          "null_analysis": {
+            "null_count": 3,
+            "blank_count": 0,
+            "whitespace_only": 1,
+            "total_missing": 4,
+            "missing_pct": 13.3,
+            "total_rows": 30
+          },
+          "issues": [
+            {
+              "type": "null_analysis",
+              "severity": "Low",
+              "detail": {
+                "null_count": 3,
+                "blank_count": 0,
+                "whitespace_only": 1,
+                "total_missing": 4,
+                "missing_pct": 13.3,
+                "total_rows": 30
+              },
+              "why": "High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.",
+              "fix": {
+                "strategy": "fill_missing",
+                "description": "Fill 4 missing values in \"FirstName\" (13.3%)",
+                "code": "df[\"FirstName\"] = df[\"FirstName\"].fillna(df[\"FirstName\"].mode()[0])"
+              }
+            },
+            {
+              "type": "wrong_purpose",
+              "severity": "High",
+              "detail": {
+                "issue": "Code/ID stuffed in name field",
+                "example": "REF-4421",
+                "row": 14
+              },
+              "why": "When a field is used for something other than its intended purpose \u2014 like storing reference codes in a name field or text in a currency field \u2014 it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.",
+              "fix": {
+                "strategy": "flag_misuse",
+                "description": "Flag misused values in \"FirstName\": Code/ID stuffed in name field",
+                "code": "# Review rows where FirstName contains unexpected data\nmask = df[\"FirstName\"].notna()\nsuspect = df.loc[mask, \"FirstName\"]"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Medium",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "Test",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 3 placeholder values (\"Test\") in \"FirstName\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"FirstName\"] = df[\"FirstName\"].replace(\"Test\", np.nan)"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Low",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "TBD",
+                "count": 1,
+                "pct": 3.8
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 1 placeholder values (\"TBD\") in \"FirstName\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"FirstName\"] = df[\"FirstName\"].replace(\"TBD\", np.nan)"
+              }
+            }
+          ]
+        },
+        "LastName": {
+          "inferred_type": "name",
+          "null_analysis": {
+            "null_count": 3,
+            "blank_count": 0,
+            "whitespace_only": 1,
+            "total_missing": 4,
+            "missing_pct": 13.3,
+            "total_rows": 30
+          },
+          "issues": [
+            {
+              "type": "null_analysis",
+              "severity": "Low",
+              "detail": {
+                "null_count": 3,
+                "blank_count": 0,
+                "whitespace_only": 1,
+                "total_missing": 4,
+                "missing_pct": 13.3,
+                "total_rows": 30
+              },
+              "why": "High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.",
+              "fix": {
+                "strategy": "fill_missing",
+                "description": "Fill 4 missing values in \"LastName\" (13.3%)",
+                "code": "df[\"LastName\"] = df[\"LastName\"].fillna(df[\"LastName\"].mode()[0])"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Low",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "TBD",
+                "count": 1,
+                "pct": 3.8
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 1 placeholder values (\"TBD\") in \"LastName\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"LastName\"] = df[\"LastName\"].replace(\"TBD\", np.nan)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "User",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"LastName\" = \"User\" (11.5%) for manual review",
+                "code": "df[\"_LastName_review\"] = (\n    df[\"LastName\"] == \"User\"\n)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "Doe",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"LastName\" = \"Doe\" (11.5%) for manual review",
+                "code": "df[\"_LastName_review\"] = (\n    df[\"LastName\"] == \"Doe\"\n)"
+              }
+            }
+          ]
+        },
+        "Email": {
+          "inferred_type": "email",
+          "null_analysis": {
+            "null_count": 3,
+            "blank_count": 0,
+            "whitespace_only": 1,
+            "total_missing": 4,
+            "missing_pct": 13.3,
+            "total_rows": 30
+          },
+          "issues": [
+            {
+              "type": "null_analysis",
+              "severity": "Low",
+              "detail": {
+                "null_count": 3,
+                "blank_count": 0,
+                "whitespace_only": 1,
+                "total_missing": 4,
+                "missing_pct": 13.3,
+                "total_rows": 30
+              },
+              "why": "High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.",
+              "fix": {
+                "strategy": "fill_missing",
+                "description": "Fill 4 missing values in \"Email\" (13.3%)",
+                "code": "df[\"Email\"] = df[\"Email\"].fillna(df[\"Email\"].mode()[0])"
+              }
+            },
+            {
+              "type": "wrong_purpose",
+              "severity": "High",
+              "detail": {
+                "issue": "Invalid email format",
+                "example": "henrylee",
+                "row": 16
+              },
+              "why": "When a field is used for something other than its intended purpose \u2014 like storing reference codes in a name field or text in a currency field \u2014 it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.",
+              "fix": {
+                "strategy": "flag_invalid_emails",
+                "description": "Flag invalid email addresses in \"Email\" for correction",
+                "code": "email_re = r\"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\"\ndf[\"_Email_invalid\"] = ~df[\"Email\"].str.match(\n    email_re, na=False\n)"
+              }
+            },
+            {
+              "type": "wrong_purpose",
+              "severity": "High",
+              "detail": {
+                "issue": "Invalid email format",
+                "example": "nancy w@example.com",
+                "row": 28
+              },
+              "why": "When a field is used for something other than its intended purpose \u2014 like storing reference codes in a name field or text in a currency field \u2014 it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.",
+              "fix": {
+                "strategy": "flag_invalid_emails",
+                "description": "Flag invalid email addresses in \"Email\" for correction",
+                "code": "email_re = r\"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\"\ndf[\"_Email_invalid\"] = ~df[\"Email\"].str.match(\n    email_re, na=False\n)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "test@test.com",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"Email\" = \"test@test.com\" (11.5%) for manual review",
+                "code": "df[\"_Email_review\"] = (\n    df[\"Email\"] == \"test@test.com\"\n)"
+              }
+            }
+          ]
+        },
+        "Phone": {
+          "inferred_type": "phone",
+          "null_analysis": {
+            "null_count": 3,
+            "blank_count": 0,
+            "whitespace_only": 1,
+            "total_missing": 4,
+            "missing_pct": 13.3,
+            "total_rows": 30
+          },
+          "issues": [
+            {
+              "type": "null_analysis",
+              "severity": "Low",
+              "detail": {
+                "null_count": 3,
+                "blank_count": 0,
+                "whitespace_only": 1,
+                "total_missing": 4,
+                "missing_pct": 13.3,
+                "total_rows": 30
+              },
+              "why": "High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.",
+              "fix": {
+                "strategy": "fill_missing",
+                "description": "Fill 4 missing values in \"Phone\" (13.3%)",
+                "code": "df[\"Phone\"] = df[\"Phone\"].fillna(df[\"Phone\"].mode()[0])"
+              }
+            },
+            {
+              "type": "mixed_format",
+              "severity": "High",
+              "detail": {
+                "field_type": "phone",
+                "format_distribution": {
+                  "(XXX) XXX-XXXX": 9,
+                  "XXX-XXX-XXXX": 8,
+                  "(non-standard)": 3,
+                  "+1-XXX-XXX-XXXX": 2,
+                  "XXXXXXXXXX": 1,
+                  "XXX.XXX.XXXX": 1,
+                  "XXX XXX XXXX": 1,
+                  "(XXX)XXXXXXX": 1
+                },
+                "dominant_format": "(XXX) XXX-XXXX",
+                "dominant_count": 9,
+                "inconsistent_count": 17,
+                "inconsistent_pct": 65.4,
+                "sample_nonstandard": [
+                  "TBD",
+                  "not available",
+                  "(555) 456 7890"
+                ]
+              },
+              "why": "Inconsistent phone formats break deduplication, prevent reliable search/lookup, and cause issues with automated dialers or SMS systems. Two records for the same person may appear as different contacts if one says \"(555) 123-4567\" and another says \"5551234567\".",
+              "fix": {
+                "strategy": "normalize_phones",
+                "description": "Standardize all phone numbers in \"Phone\" to (XXX) XXX-XXXX format",
+                "code": "digits = df[\"Phone\"].str.replace(r\"\\D\", \"\", regex=True)\ndigits = digits.str.slice(-10)\ndf[\"Phone\"] = (\n    \"(\" + digits.str[:3] + \") \"\n    + digits.str[3:6] + \"-\" + digits.str[6:]\n)"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Low",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "TBD",
+                "count": 1,
+                "pct": 3.8
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 1 placeholder values (\"TBD\") in \"Phone\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"Phone\"] = df[\"Phone\"].replace(\"TBD\", np.nan)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "(555) 123-4567",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"Phone\" = \"(555) 123-4567\" (11.5%) for manual review",
+                "code": "df[\"_Phone_review\"] = (\n    df[\"Phone\"] == \"(555) 123-4567\"\n)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "000-000-0000",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"Phone\" = \"000-000-0000\" (11.5%) for manual review",
+                "code": "df[\"_Phone_review\"] = (\n    df[\"Phone\"] == \"000-000-0000\"\n)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "555-555-5555",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"Phone\" = \"555-555-5555\" (11.5%) for manual review",
+                "code": "df[\"_Phone_review\"] = (\n    df[\"Phone\"] == \"555-555-5555\"\n)"
+              }
+            }
+          ]
+        },
+        "JoinDate": {
+          "inferred_type": "date",
+          "null_analysis": {
+            "null_count": 3,
+            "blank_count": 0,
+            "whitespace_only": 1,
+            "total_missing": 4,
+            "missing_pct": 13.3,
+            "total_rows": 30
+          },
+          "issues": [
+            {
+              "type": "null_analysis",
+              "severity": "Low",
+              "detail": {
+                "null_count": 3,
+                "blank_count": 0,
+                "whitespace_only": 1,
+                "total_missing": 4,
+                "missing_pct": 13.3,
+                "total_rows": 30
+              },
+              "why": "High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.",
+              "fix": {
+                "strategy": "fill_missing",
+                "description": "Fill 4 missing values in \"JoinDate\" (13.3%)",
+                "code": "df[\"JoinDate\"] = df[\"JoinDate\"].fillna(df[\"JoinDate\"].mode()[0])"
+              }
+            },
+            {
+              "type": "mixed_format",
+              "severity": "High",
+              "detail": {
+                "field_type": "date",
+                "format_distribution": {
+                  "YYYY-MM-DD": 14,
+                  "MM/DD/YYYY": 3,
+                  "Mon DD, YYYY": 3,
+                  "(non-standard)": 1,
+                  "YYYY/MM/DD": 1,
+                  "M/D/YYYY": 1,
+                  "DD-Mon-YYYY": 1,
+                  "YYYY.MM.DD": 1,
+                  "MM-DD-YYYY": 1
+                },
+                "dominant_format": "YYYY-MM-DD",
+                "dominant_count": 14,
+                "inconsistent_count": 12,
+                "inconsistent_pct": 46.2,
+                "sample_nonstandard": [
+                  "TBD"
+                ]
+              },
+              "why": "Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (\"Jan 15, 2023\") won't sort chronologically next to \"2023-01-15\". Downstream tools, APIs, and reports will misparse or reject inconsistent dates.",
+              "fix": {
+                "strategy": "normalize_dates",
+                "description": "Standardize all dates in \"JoinDate\" to YYYY-MM-DD format",
+                "code": "df[\"JoinDate\"] = pd.to_datetime(\n    df[\"JoinDate\"], format=\"mixed\", dayfirst=False\n).dt.strftime(\"%Y-%m-%d\")"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Low",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "TBD",
+                "count": 1,
+                "pct": 3.8
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 1 placeholder values (\"TBD\") in \"JoinDate\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"JoinDate\"] = df[\"JoinDate\"].replace(\"TBD\", np.nan)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "High",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "2023-01-01",
+                "count": 6,
+                "pct": 23.1
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 6 rows where \"JoinDate\" = \"2023-01-01\" (23.1%) for manual review",
+                "code": "df[\"_JoinDate_review\"] = (\n    df[\"JoinDate\"] == \"2023-01-01\"\n)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "2023-01-15",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"JoinDate\" = \"2023-01-15\" (11.5%) for manual review",
+                "code": "df[\"_JoinDate_review\"] = (\n    df[\"JoinDate\"] == \"2023-01-15\"\n)"
+              }
+            }
+          ]
+        },
+        "AccountBalance": {
+          "inferred_type": "currency",
+          "null_analysis": {
+            "null_count": 3,
+            "blank_count": 0,
+            "whitespace_only": 1,
+            "total_missing": 4,
+            "missing_pct": 13.3,
+            "total_rows": 30
+          },
+          "issues": [
+            {
+              "type": "null_analysis",
+              "severity": "Low",
+              "detail": {
+                "null_count": 3,
+                "blank_count": 0,
+                "whitespace_only": 1,
+                "total_missing": 4,
+                "missing_pct": 13.3,
+                "total_rows": 30
+              },
+              "why": "High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.",
+              "fix": {
+                "strategy": "fill_missing",
+                "description": "Fill 4 missing values in \"AccountBalance\" (13.3%)",
+                "code": "df[\"AccountBalance\"] = df[\"AccountBalance\"].fillna(df[\"AccountBalance\"].mode()[0])"
+              }
+            },
+            {
+              "type": "mixed_format",
+              "severity": "High",
+              "detail": {
+                "field_type": "currency",
+                "format_distribution": {
+                  "$X,XXX.XX": 15,
+                  "X,XXX.XX (no symbol)": 4,
+                  "$X,XXX": 3,
+                  "(non-standard)": 2,
+                  "$X,XXX.XX USD": 2
+                },
+                "dominant_format": "$X,XXX.XX",
+                "dominant_count": 15,
+                "inconsistent_count": 11,
+                "inconsistent_pct": 42.3,
+                "sample_nonstandard": [
+                  "TBD",
+                  "five thousand"
+                ]
+              },
+              "why": "Mixed currency formats (\"$1,250.00\" vs \"1250\" vs \"five thousand\") prevent accurate aggregation and comparison. Summing a column with text-formatted currency returns errors or silently drops values, leading to wrong totals in financial reports.",
+              "fix": {
+                "strategy": "normalize_currency",
+                "description": "Standardize all currency values in \"AccountBalance\" to numeric format",
+                "code": "df[\"AccountBalance\"] = (\n    df[\"AccountBalance\"].str.replace(r\"[^\\d.]\", \"\", regex=True)\n    .astype(float)\n)"
+              }
+            },
+            {
+              "type": "wrong_purpose",
+              "severity": "High",
+              "detail": {
+                "issue": "Text in currency field",
+                "example": "TBD",
+                "row": 13
+              },
+              "why": "When a field is used for something other than its intended purpose \u2014 like storing reference codes in a name field or text in a currency field \u2014 it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.",
+              "fix": {
+                "strategy": "flag_non_numeric",
+                "description": "Flag non-numeric values in currency field \"AccountBalance\"",
+                "code": "df[\"_AccountBalance_invalid\"] = ~df[\"AccountBalance\"].str.match(\n    r\"^[\\$\\d,\\.\\-]+$\", na=False\n)"
+              }
+            },
+            {
+              "type": "wrong_purpose",
+              "severity": "High",
+              "detail": {
+                "issue": "Text in currency field",
+                "example": "five thousand",
+                "row": 14
+              },
+              "why": "When a field is used for something other than its intended purpose \u2014 like storing reference codes in a name field or text in a currency field \u2014 it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.",
+              "fix": {
+                "strategy": "flag_non_numeric",
+                "description": "Flag non-numeric values in currency field \"AccountBalance\"",
+                "code": "df[\"_AccountBalance_invalid\"] = ~df[\"AccountBalance\"].str.match(\n    r\"^[\\$\\d,\\.\\-]+$\", na=False\n)"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Low",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "TBD",
+                "count": 1,
+                "pct": 3.8
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 1 placeholder values (\"TBD\") in \"AccountBalance\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"AccountBalance\"] = df[\"AccountBalance\"].replace(\"TBD\", np.nan)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "High",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "$0.00",
+                "count": 6,
+                "pct": 23.1
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 6 rows where \"AccountBalance\" = \"$0.00\" (23.1%) for manual review",
+                "code": "df[\"_AccountBalance_review\"] = (\n    df[\"AccountBalance\"] == \"$0.00\"\n)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "$1,250.00",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"AccountBalance\" = \"$1,250.00\" (11.5%) for manual review",
+                "code": "df[\"_AccountBalance_review\"] = (\n    df[\"AccountBalance\"] == \"$1,250.00\"\n)"
+              }
+            }
+          ]
+        },
+        "Status": {
+          "inferred_type": "categorical",
+          "null_analysis": {
+            "null_count": 3,
+            "blank_count": 0,
+            "whitespace_only": 1,
+            "total_missing": 4,
+            "missing_pct": 13.3,
+            "total_rows": 30
+          },
+          "issues": [
+            {
+              "type": "null_analysis",
+              "severity": "Low",
+              "detail": {
+                "null_count": 3,
+                "blank_count": 0,
+                "whitespace_only": 1,
+                "total_missing": 4,
+                "missing_pct": 13.3,
+                "total_rows": 30
+              },
+              "why": "High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.",
+              "fix": {
+                "strategy": "fill_missing",
+                "description": "Fill 4 missing values in \"Status\" (13.3%)",
+                "code": "df[\"Status\"] = df[\"Status\"].fillna(df[\"Status\"].mode()[0])"
+              }
+            },
+            {
+              "type": "wrong_purpose",
+              "severity": "High",
+              "detail": {
+                "issue": "Inconsistent casing in categorical values",
+                "example": "ACTIVE / Active / active",
+                "row": null
+              },
+              "why": "When a field is used for something other than its intended purpose \u2014 like storing reference codes in a name field or text in a currency field \u2014 it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.",
+              "fix": {
+                "strategy": "flag_misuse",
+                "description": "Flag misused values in \"Status\": Inconsistent casing in categorical values",
+                "code": "# Review rows where Status contains unexpected data\nmask = df[\"Status\"].notna()\nsuspect = df.loc[mask, \"Status\"]"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Low",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "TBD",
+                "count": 1,
+                "pct": 3.8
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 1 placeholder values (\"TBD\") in \"Status\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"Status\"] = df[\"Status\"].replace(\"TBD\", np.nan)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "High",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "Active",
+                "count": 18,
+                "pct": 69.2
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 18 rows where \"Status\" = \"Active\" (69.2%) for manual review",
+                "code": "df[\"_Status_review\"] = (\n    df[\"Status\"] == \"Active\"\n)"
+              }
+            }
+          ]
+        },
+        "ZipCode": {
+          "inferred_type": "zipcode",
+          "null_analysis": {
+            "null_count": 3,
+            "blank_count": 0,
+            "whitespace_only": 1,
+            "total_missing": 4,
+            "missing_pct": 13.3,
+            "total_rows": 30
+          },
+          "issues": [
+            {
+              "type": "null_analysis",
+              "severity": "Low",
+              "detail": {
+                "null_count": 3,
+                "blank_count": 0,
+                "whitespace_only": 1,
+                "total_missing": 4,
+                "missing_pct": 13.3,
+                "total_rows": 30
+              },
+              "why": "High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.",
+              "fix": {
+                "strategy": "fill_missing",
+                "description": "Fill 4 missing values in \"ZipCode\" (13.3%)",
+                "code": "df[\"ZipCode\"] = df[\"ZipCode\"].fillna(df[\"ZipCode\"].mode()[0])"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Medium",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "00000",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 3 placeholder values (\"00000\") in \"ZipCode\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"ZipCode\"] = df[\"ZipCode\"].replace(\"00000\", np.nan)"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Low",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "TBD",
+                "count": 1,
+                "pct": 3.8
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 1 placeholder values (\"TBD\") in \"ZipCode\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"ZipCode\"] = df[\"ZipCode\"].replace(\"TBD\", np.nan)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "30301",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"ZipCode\" = \"30301\" (11.5%) for manual review",
+                "code": "df[\"_ZipCode_review\"] = (\n    df[\"ZipCode\"] == \"30301\"\n)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "12345",
+                "count": 3,
+                "pct": 11.5
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"ZipCode\" = \"12345\" (11.5%) for manual review",
+                "code": "df[\"_ZipCode_review\"] = (\n    df[\"ZipCode\"] == \"12345\"\n)"
+              }
+            }
+          ]
+        },
+        "Notes": {
+          "inferred_type": "freetext",
+          "null_analysis": {
+            "null_count": 14,
+            "blank_count": 0,
+            "whitespace_only": 1,
+            "total_missing": 15,
+            "missing_pct": 50.0,
+            "total_rows": 30
+          },
+          "issues": [
+            {
+              "type": "null_analysis",
+              "severity": "Medium",
+              "detail": {
+                "null_count": 14,
+                "blank_count": 0,
+                "whitespace_only": 1,
+                "total_missing": 15,
+                "missing_pct": 50.0,
+                "total_rows": 30
+              },
+              "why": "High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.",
+              "fix": {
+                "strategy": "impute_or_flag",
+                "description": "Fill 15 missing values in \"Notes\" (50.0%)",
+                "code": "# Option A: Fill with most common value\ndf[\"Notes\"] = df[\"Notes\"].fillna(df[\"Notes\"].mode()[0])\n\n# Option B: Fill with a sentinel\ndf[\"Notes\"] = df[\"Notes\"].fillna(\"MISSING\")"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Medium",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "TEST",
+                "count": 3,
+                "pct": 20.0
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 3 placeholder values (\"TEST\") in \"Notes\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"Notes\"] = df[\"Notes\"].replace(\"TEST\", np.nan)"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Medium",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "TBD",
+                "count": 1,
+                "pct": 6.7
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 1 placeholder values (\"TBD\") in \"Notes\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"Notes\"] = df[\"Notes\"].replace(\"TBD\", np.nan)"
+              }
+            },
+            {
+              "type": "suspicious_repetition",
+              "severity": "Medium",
+              "detail": {
+                "type": "suspicious_repetition",
+                "value": "Preferred customer",
+                "count": 3,
+                "pct": 20.0
+              },
+              "why": "When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.",
+              "fix": {
+                "strategy": "flag_repetitions",
+                "description": "Flag 3 rows where \"Notes\" = \"Preferred customer\" (20.0%) for manual review",
+                "code": "df[\"_Notes_review\"] = (\n    df[\"Notes\"] == \"Preferred customer\"\n)"
+              }
+            }
+          ]
+        }
+      },
+      "phantom_duplicates": [
+        {
+          "rows": [
+            2,
+            8,
+            9
+          ],
+          "group_size": 3,
+          "exact_match": false,
+          "sample_data": [
+            {
+              "CustomerID": "CUST-001",
+              "FirstName": "Alice",
+              "LastName": "Johnson",
+              "Email": "alice@example.com",
+              "Phone": "(555) 123-4567",
+              "JoinDate": "2023-01-15"
+            },
+            {
+              "CustomerID": "CUST-007",
+              "FirstName": "alice",
+              "LastName": "johnson",
+              "Email": "alice@example.com",
+              "Phone": "(555) 123-4567",
+              "JoinDate": "2023-01-15"
+            },
+            {
+              "CustomerID": "CUST-008",
+              "FirstName": " Alice ",
+              "LastName": " Johnson",
+              "Email": "ALICE@EXAMPLE.COM",
+              "Phone": "(555) 123-4567",
+              "JoinDate": "2023-01-15"
+            }
+          ],
+          "matched_on": [
+            "FirstName",
+            "LastName",
+            "Email",
+            "Phone",
+            "JoinDate",
+            "AccountBalance",
+            "Status",
+            "ZipCode",
+            "Notes"
+          ],
+          "excluded_id_cols": [
+            "CustomerID"
+          ],
+          "type": "phantom_duplicate",
+          "severity": "Medium",
+          "why": "These records look different on the surface (different casing, extra spaces, punctuation variations) but represent the same entity. They cause inflated counts, split transaction histories, and duplicate outreach \u2014 problems that compound over time.",
+          "fix": {
+            "strategy": "normalize_and_dedup",
+            "description": "Normalize and deduplicate 3 phantom duplicate rows (rows 2, 8, 9)",
+            "code": "# Normalize text columns before deduplication\ntext_cols = df.select_dtypes(include=\"object\").columns\nfor col in text_cols:\n    df[col] = df[col].str.strip().str.lower()\ndf = df.drop_duplicates(keep=\"first\").reset_index(drop=True)"
+          }
+        },
+        {
+          "rows": [
+            3,
+            10
+          ],
+          "group_size": 2,
+          "exact_match": false,
+          "sample_data": [
+            {
+              "CustomerID": "CUST-002",
+              "FirstName": "Bob",
+              "LastName": "Smith",
+              "Email": "bob.smith@example.com",
+              "Phone": "555-234-5678",
+              "JoinDate": "01/15/2023"
+            },
+            {
+              "CustomerID": "CUST-009",
+              "FirstName": "Bob",
+              "LastName": "Smith ",
+              "Email": "bob.smith@example.com ",
+              "Phone": "555-234-5678",
+              "JoinDate": "01/15/2023"
+            }
+          ],
+          "matched_on": [
+            "FirstName",
+            "LastName",
+            "Email",
+            "Phone",
+            "JoinDate",
+            "AccountBalance",
+            "Status",
+            "ZipCode",
+            "Notes"
+          ],
+          "excluded_id_cols": [
+            "CustomerID"
+          ],
+          "type": "phantom_duplicate",
+          "severity": "Medium",
+          "why": "These records look different on the surface (different casing, extra spaces, punctuation variations) but represent the same entity. They cause inflated counts, split transaction histories, and duplicate outreach \u2014 problems that compound over time.",
+          "fix": {
+            "strategy": "normalize_and_dedup",
+            "description": "Normalize and deduplicate 2 phantom duplicate rows (rows 3, 10)",
+            "code": "# Normalize text columns before deduplication\ntext_cols = df.select_dtypes(include=\"object\").columns\nfor col in text_cols:\n    df[col] = df[col].str.strip().str.lower()\ndf = df.drop_duplicates(keep=\"first\").reset_index(drop=True)"
+          }
+        },
+        {
+          "rows": [
+            11,
+            12,
+            13
+          ],
+          "group_size": 3,
+          "exact_match": true,
+          "sample_data": [
+            {
+              "CustomerID": "CUST-010",
+              "FirstName": "Test",
+              "LastName": "User",
+              "Email": "test@test.com",
+              "Phone": "000-000-0000",
+              "JoinDate": "2023-01-01"
+            },
+            {
+              "CustomerID": "CUST-011",
+              "FirstName": "Test",
+              "LastName": "User",
+              "Email": "test@test.com",
+              "Phone": "000-000-0000",
+              "JoinDate": "2023-01-01"
+            },
+            {
+              "CustomerID": "CUST-012",
+              "FirstName": "Test",
+              "LastName": "User",
+              "Email": "test@test.com",
+              "Phone": "000-000-0000",
+              "JoinDate": "2023-01-01"
+            }
+          ],
+          "matched_on": [
+            "FirstName",
+            "LastName",
+            "Email",
+            "Phone",
+            "JoinDate",
+            "AccountBalance",
+            "Status",
+            "ZipCode",
+            "Notes"
+          ],
+          "excluded_id_cols": [
+            "CustomerID"
+          ],
+          "type": "exact_duplicate",
+          "severity": "High",
+          "why": "Exact duplicate rows are the clearest sign of a data quality issue \u2014 they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.",
+          "fix": {
+            "strategy": "drop_exact_duplicates",
+            "description": "Remove 3 exact duplicate rows (rows 11, 12, 13)",
+            "code": "df = df.drop_duplicates(keep=\"first\").reset_index(drop=True)"
+          }
+        },
+        {
+          "rows": [
+            14,
+            19,
+            20,
+            21
+          ],
+          "group_size": 4,
+          "exact_match": false,
+          "sample_data": [
+            {
+              "CustomerID": "CUST-013",
+              "FirstName": "nan",
+              "LastName": "nan",
+              "Email": "nan",
+              "Phone": "nan",
+              "JoinDate": "nan"
+            },
+            {
+              "CustomerID": "CUST-018",
+              "FirstName": "nan",
+              "LastName": "nan",
+              "Email": "nan",
+              "Phone": "nan",
+              "JoinDate": "nan"
+            },
+            {
+              "CustomerID": "CUST-019",
+              "FirstName": "nan",
+              "LastName": "nan",
+              "Email": "nan",
+              "Phone": "nan",
+              "JoinDate": "nan"
+            }
+          ],
+          "matched_on": [
+            "FirstName",
+            "LastName",
+            "Email",
+            "Phone",
+            "JoinDate",
+            "AccountBalance",
+            "Status",
+            "ZipCode",
+            "Notes"
+          ],
+          "excluded_id_cols": [
+            "CustomerID"
+          ],
+          "type": "phantom_duplicate",
+          "severity": "High",
+          "why": "These records look different on the surface (different casing, extra spaces, punctuation variations) but represent the same entity. They cause inflated counts, split transaction histories, and duplicate outreach \u2014 problems that compound over time.",
+          "fix": {
+            "strategy": "normalize_and_dedup",
+            "description": "Normalize and deduplicate 4 phantom duplicate rows (rows 14, 19, 20, 21)",
+            "code": "# Normalize text columns before deduplication\ntext_cols = df.select_dtypes(include=\"object\").columns\nfor col in text_cols:\n    df[col] = df[col].str.strip().str.lower()\ndf = df.drop_duplicates(keep=\"first\").reset_index(drop=True)"
+          }
+        },
+        {
+          "rows": [
+            25,
+            27
+          ],
+          "group_size": 2,
+          "exact_match": true,
+          "sample_data": [
+            {
+              "CustomerID": "CUST-024",
+              "FirstName": "John",
+              "LastName": "Doe",
+              "Email": "john@doe.com",
+              "Phone": "555-555-5555",
+              "JoinDate": "2023-01-01"
+            },
+            {
+              "CustomerID": "CUST-026",
+              "FirstName": "John",
+              "LastName": "Doe",
+              "Email": "john@doe.com",
+              "Phone": "555-555-5555",
+              "JoinDate": "2023-01-01"
+            }
+          ],
+          "matched_on": [
+            "FirstName",
+            "LastName",
+            "Email",
+            "Phone",
+            "JoinDate",
+            "AccountBalance",
+            "Status",
+            "ZipCode",
+            "Notes"
+          ],
+          "excluded_id_cols": [
+            "CustomerID"
+          ],
+          "type": "exact_duplicate",
+          "severity": "High",
+          "why": "Exact duplicate rows are the clearest sign of a data quality issue \u2014 they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.",
+          "fix": {
+            "strategy": "drop_exact_duplicates",
+            "description": "Remove 2 exact duplicate rows (rows 25, 27)",
+            "code": "df = df.drop_duplicates(keep=\"first\").reset_index(drop=True)"
+          }
+        }
+      ],
+      "fuzzy_duplicates": [],
+      "schema_violations": [
+        {
+          "type": "schema_completeness_violation",
+          "severity": "Medium",
+          "column": "Email",
+          "detail": {
+            "column": "Email",
+            "max_missing_pct": 10,
+            "actual_missing_pct": 13.3
+          },
+          "why": "Column 'Email' has 13.3% missing values, exceeding the schema threshold of 10%. This violates the data completeness requirement defined in the schema."
+        }
+      ],
+      "health_score": 0
+    },
+    "Orders": {
+      "row_count": 10,
+      "col_count": 6,
+      "fields": {
+        "OrderID": {
+          "inferred_type": "id",
+          "null_analysis": {
+            "null_count": 0,
+            "blank_count": 0,
+            "whitespace_only": 0,
+            "total_missing": 0,
+            "missing_pct": 0.0,
+            "total_rows": 10
+          },
+          "issues": []
+        },
+        "CustomerID": {
+          "inferred_type": "id",
+          "null_analysis": {
+            "null_count": 0,
+            "blank_count": 0,
+            "whitespace_only": 0,
+            "total_missing": 0,
+            "missing_pct": 0.0,
+            "total_rows": 10
+          },
+          "issues": []
+        },
+        "OrderDate": {
+          "inferred_type": "date",
+          "null_analysis": {
+            "null_count": 0,
+            "blank_count": 0,
+            "whitespace_only": 0,
+            "total_missing": 0,
+            "missing_pct": 0.0,
+            "total_rows": 10
+          },
+          "issues": [
+            {
+              "type": "mixed_format",
+              "severity": "High",
+              "detail": {
+                "field_type": "date",
+                "format_distribution": {
+                  "YYYY-MM-DD": 6,
+                  "MM/DD/YYYY": 1,
+                  "Mon DD, YYYY": 1,
+                  "M/D/YYYY": 1,
+                  "YYYY/MM/DD": 1
+                },
+                "dominant_format": "YYYY-MM-DD",
+                "dominant_count": 6,
+                "inconsistent_count": 4,
+                "inconsistent_pct": 40.0,
+                "sample_nonstandard": []
+              },
+              "why": "Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (\"Jan 15, 2023\") won't sort chronologically next to \"2023-01-15\". Downstream tools, APIs, and reports will misparse or reject inconsistent dates.",
+              "fix": {
+                "strategy": "normalize_dates",
+                "description": "Standardize all dates in \"OrderDate\" to YYYY-MM-DD format",
+                "code": "df[\"OrderDate\"] = pd.to_datetime(\n    df[\"OrderDate\"], format=\"mixed\", dayfirst=False\n).dt.strftime(\"%Y-%m-%d\")"
+              }
+            }
+          ]
+        },
+        "Amount": {
+          "inferred_type": "currency",
+          "null_analysis": {
+            "null_count": 0,
+            "blank_count": 0,
+            "whitespace_only": 0,
+            "total_missing": 0,
+            "missing_pct": 0.0,
+            "total_rows": 10
+          },
+          "issues": [
+            {
+              "type": "mixed_format",
+              "severity": "Medium",
+              "detail": {
+                "field_type": "currency",
+                "format_distribution": {
+                  "$X,XXX.XX": 7,
+                  "X,XXX (bare number)": 2,
+                  "$X,XXX": 1
+                },
+                "dominant_format": "$X,XXX.XX",
+                "dominant_count": 7,
+                "inconsistent_count": 3,
+                "inconsistent_pct": 30.0,
+                "sample_nonstandard": []
+              },
+              "why": "Mixed currency formats (\"$1,250.00\" vs \"1250\" vs \"five thousand\") prevent accurate aggregation and comparison. Summing a column with text-formatted currency returns errors or silently drops values, leading to wrong totals in financial reports.",
+              "fix": {
+                "strategy": "normalize_currency",
+                "description": "Standardize all currency values in \"Amount\" to numeric format",
+                "code": "df[\"Amount\"] = (\n    df[\"Amount\"].str.replace(r\"[^\\d.]\", \"\", regex=True)\n    .astype(float)\n)"
+              }
+            }
+          ]
+        },
+        "ShipDate": {
+          "inferred_type": "date",
+          "null_analysis": {
+            "null_count": 2,
+            "blank_count": 0,
+            "whitespace_only": 0,
+            "total_missing": 2,
+            "missing_pct": 20.0,
+            "total_rows": 10
+          },
+          "issues": [
+            {
+              "type": "null_analysis",
+              "severity": "Low",
+              "detail": {
+                "null_count": 2,
+                "blank_count": 0,
+                "whitespace_only": 0,
+                "total_missing": 2,
+                "missing_pct": 20.0,
+                "total_rows": 10
+              },
+              "why": "High rates of missing data reduce the reliability of any analysis built on this field. Missing values can skew averages, break joins between tables, and cause downstream systems to error out or produce incomplete results.",
+              "fix": {
+                "strategy": "fill_missing",
+                "description": "Fill 2 missing values in \"ShipDate\" (20.0%)",
+                "code": "df[\"ShipDate\"] = df[\"ShipDate\"].fillna(df[\"ShipDate\"].mode()[0])"
+              }
+            },
+            {
+              "type": "mixed_format",
+              "severity": "High",
+              "detail": {
+                "field_type": "date",
+                "format_distribution": {
+                  "YYYY-MM-DD": 5,
+                  "MM/DD/YYYY": 1,
+                  "Mon DD, YYYY": 1,
+                  "M/D/YYYY": 1
+                },
+                "dominant_format": "YYYY-MM-DD",
+                "dominant_count": 5,
+                "inconsistent_count": 3,
+                "inconsistent_pct": 37.5,
+                "sample_nonstandard": []
+              },
+              "why": "Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (\"Jan 15, 2023\") won't sort chronologically next to \"2023-01-15\". Downstream tools, APIs, and reports will misparse or reject inconsistent dates.",
+              "fix": {
+                "strategy": "normalize_dates",
+                "description": "Standardize all dates in \"ShipDate\" to YYYY-MM-DD format",
+                "code": "df[\"ShipDate\"] = pd.to_datetime(\n    df[\"ShipDate\"], format=\"mixed\", dayfirst=False\n).dt.strftime(\"%Y-%m-%d\")"
+              }
+            }
+          ]
+        },
+        "Status": {
+          "inferred_type": "categorical",
+          "null_analysis": {
+            "null_count": 0,
+            "blank_count": 0,
+            "whitespace_only": 0,
+            "total_missing": 0,
+            "missing_pct": 0.0,
+            "total_rows": 10
+          },
+          "issues": [
+            {
+              "type": "wrong_purpose",
+              "severity": "High",
+              "detail": {
+                "issue": "Inconsistent casing in categorical values",
+                "example": "Shipped / shipped",
+                "row": null
+              },
+              "why": "When a field is used for something other than its intended purpose \u2014 like storing reference codes in a name field or text in a currency field \u2014 it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.",
+              "fix": {
+                "strategy": "flag_misuse",
+                "description": "Flag misused values in \"Status\": Inconsistent casing in categorical values",
+                "code": "# Review rows where Status contains unexpected data\nmask = df[\"Status\"].notna()\nsuspect = df.loc[mask, \"Status\"]"
+              }
+            },
+            {
+              "type": "wrong_purpose",
+              "severity": "High",
+              "detail": {
+                "issue": "Inconsistent casing in categorical values",
+                "example": "Delivered / delivered",
+                "row": null
+              },
+              "why": "When a field is used for something other than its intended purpose \u2014 like storing reference codes in a name field or text in a currency field \u2014 it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.",
+              "fix": {
+                "strategy": "flag_misuse",
+                "description": "Flag misused values in \"Status\": Inconsistent casing in categorical values",
+                "code": "# Review rows where Status contains unexpected data\nmask = df[\"Status\"].notna()\nsuspect = df.loc[mask, \"Status\"]"
+              }
+            },
+            {
+              "type": "wrong_purpose",
+              "severity": "High",
+              "detail": {
+                "issue": "Inconsistent casing in categorical values",
+                "example": "PENDING / Pending",
+                "row": null
+              },
+              "why": "When a field is used for something other than its intended purpose \u2014 like storing reference codes in a name field or text in a currency field \u2014 it corrupts both the misused field and whatever field should have held that data. This makes the data unreliable for any analysis.",
+              "fix": {
+                "strategy": "flag_misuse",
+                "description": "Flag misused values in \"Status\": Inconsistent casing in categorical values",
+                "code": "# Review rows where Status contains unexpected data\nmask = df[\"Status\"].notna()\nsuspect = df.loc[mask, \"Status\"]"
+              }
+            },
+            {
+              "type": "placeholder_value",
+              "severity": "Medium",
+              "detail": {
+                "type": "placeholder_value",
+                "value": "Test",
+                "count": 2,
+                "pct": 20.0
+              },
+              "why": "Placeholder values (\"Test\", \"N/A\", \"TBD\") that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.",
+              "fix": {
+                "strategy": "replace_placeholders",
+                "description": "Replace 2 placeholder values (\"Test\") in \"Status\" with NaN for proper missing-data handling",
+                "code": "import numpy as np\ndf[\"Status\"] = df[\"Status\"].replace(\"Test\", np.nan)"
+              }
+            }
+          ]
+        }
+      },
+      "phantom_duplicates": [
+        {
+          "rows": [
+            5,
+            6
+          ],
+          "group_size": 2,
+          "exact_match": true,
+          "sample_data": [
+            {
+              "OrderID": "ORD-004",
+              "CustomerID": "CUST-003",
+              "OrderDate": "2023-07-01",
+              "Amount": "$300.00",
+              "ShipDate": "2023-07-03",
+              "Status": "Delivered"
+            },
+            {
+              "OrderID": "ORD-005",
+              "CustomerID": "CUST-003",
+              "OrderDate": "2023-07-01",
+              "Amount": "$300.00",
+              "ShipDate": "2023-07-03",
+              "Status": "Delivered"
+            }
+          ],
+          "matched_on": [
+            "OrderDate",
+            "Amount",
+            "ShipDate",
+            "Status"
+          ],
+          "excluded_id_cols": [
+            "CustomerID",
+            "OrderID"
+          ],
+          "type": "exact_duplicate",
+          "severity": "High",
+          "why": "Exact duplicate rows are the clearest sign of a data quality issue \u2014 they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.",
+          "fix": {
+            "strategy": "drop_exact_duplicates",
+            "description": "Remove 2 exact duplicate rows (rows 5, 6)",
+            "code": "df = df.drop_duplicates(keep=\"first\").reset_index(drop=True)"
+          }
+        },
+        {
+          "rows": [
+            7,
+            8
+          ],
+          "group_size": 2,
+          "exact_match": true,
+          "sample_data": [
+            {
+              "OrderID": "ORD-006",
+              "CustomerID": "CUST-010",
+              "OrderDate": "2023-01-01",
+              "Amount": "$0.00",
+              "ShipDate": "2023-01-01",
+              "Status": "Test"
+            },
+            {
+              "OrderID": "ORD-007",
+              "CustomerID": "CUST-010",
+              "OrderDate": "2023-01-01",
+              "Amount": "$0.00",
+              "ShipDate": "2023-01-01",
+              "Status": "Test"
+            }
+          ],
+          "matched_on": [
+            "OrderDate",
+            "Amount",
+            "ShipDate",
+            "Status"
+          ],
+          "excluded_id_cols": [
+            "CustomerID",
+            "OrderID"
+          ],
+          "type": "exact_duplicate",
+          "severity": "High",
+          "why": "Exact duplicate rows are the clearest sign of a data quality issue \u2014 they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.",
+          "fix": {
+            "strategy": "drop_exact_duplicates",
+            "description": "Remove 2 exact duplicate rows (rows 7, 8)",
+            "code": "df = df.drop_duplicates(keep=\"first\").reset_index(drop=True)"
+          }
+        }
+      ],
+      "fuzzy_duplicates": [],
+      "schema_violations": [
+        {
+          "type": "schema_missing_column",
+          "severity": "High",
+          "column": "FirstName",
+          "detail": {
+            "expected_column": "FirstName",
+            "expected_type": "name"
+          },
+          "why": "Required column 'FirstName' defined in the schema is missing from the data. This may indicate a structural change in the data source or an incorrect column mapping."
+        },
+        {
+          "type": "schema_missing_column",
+          "severity": "High",
+          "column": "LastName",
+          "detail": {
+            "expected_column": "LastName",
+            "expected_type": "name"
+          },
+          "why": "Required column 'LastName' defined in the schema is missing from the data. This may indicate a structural change in the data source or an incorrect column mapping."
+        },
+        {
+          "type": "schema_missing_column",
+          "severity": "High",
+          "column": "Email",
+          "detail": {
+            "expected_column": "Email",
+            "expected_type": "email"
+          },
+          "why": "Required column 'Email' defined in the schema is missing from the data. This may indicate a structural change in the data source or an incorrect column mapping."
+        }
+      ],
+      "health_score": 56
+    }
+  },
+  "overall_score": 28,
+  "schema": {
+    "source": "samples/input/sample_schema.json",
+    "validated": true
+  }
+}
