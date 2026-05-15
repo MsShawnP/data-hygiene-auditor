@@ -22,6 +22,9 @@ def generate_html(results, output_path):
         for d in sheet['phantom_duplicates']:
             total_issues += 1
             severity_totals[d['severity']] += 1
+        for f in sheet.get('fuzzy_duplicates', []):
+            total_issues += 1
+            severity_totals[f['severity']] += 1
 
     parts = []
     parts.append(f"""<!DOCTYPE html>
@@ -542,6 +545,74 @@ color:#fff">{ss}/100</span></h2>
                     '<div class="why-box">'
                     '<strong>Why this matters:</strong>'
                     f' {_h(dup["why"])}</div>'
+                )
+                parts.append('</div>')
+
+        if sheet_data.get('fuzzy_duplicates'):
+            parts.append('<h3>Fuzzy Duplicates</h3>')
+            for fuzz in sheet_data['fuzzy_duplicates']:
+                sev = fuzz['severity']
+                method = fuzz['match_method'].title()
+                parts.append(f"""
+<div class="dup-group">
+    <span class="severity-badge {sev}">{sev}</span>
+    <strong>Fuzzy Match ({method})</strong> &mdash;\
+ {fuzz['group_size']} rows:\
+ {', '.join(str(r) for r in fuzz['rows'])}""")
+                if fuzz.get('sample_data'):
+                    parts.append(
+                        '<table class="format-table"><tr>'
+                        + ''.join(
+                            f'<th>{_h(k)}</th>'
+                            for k in fuzz['sample_data'][0].keys()
+                        )
+                        + '</tr>'
+                    )
+                    for row in fuzz['sample_data']:
+                        parts.append(
+                            '<tr>'
+                            + ''.join(
+                                f'<td>{_h(v)}</td>'
+                                for v in row.values()
+                            )
+                            + '</tr>'
+                        )
+                    parts.append('</table>')
+                diffs = fuzz.get('field_differences', {})
+                if diffs:
+                    parts.append(
+                        '<div style="font-size:0.85rem;'
+                        'margin-top:0.3rem;">'
+                        '<strong>Differences:</strong><ul'
+                        ' style="margin:0.2rem 0;">'
+                    )
+                    for col, diff in diffs.items():
+                        if isinstance(diff, dict):
+                            vals = ', '.join(
+                                f'"{_h(v)}"'
+                                for v in diff.get('values', [])
+                            )
+                            sim = diff.get('similarity')
+                            sim_str = (
+                                f' (similarity: {sim})'
+                                if sim is not None else ''
+                            )
+                            parts.append(
+                                f'<li>{_h(col)}: {vals}'
+                                f'{sim_str}</li>'
+                            )
+                        else:
+                            vals = ', '.join(
+                                f'"{_h(v)}"' for v in diff
+                            )
+                            parts.append(
+                                f'<li>{_h(col)}: {vals}</li>'
+                            )
+                    parts.append('</ul></div>')
+                parts.append(
+                    '<div class="why-box">'
+                    '<strong>Why this matters:</strong>'
+                    f' {_h(fuzz["why"])}</div>'
                 )
                 parts.append('</div>')
 

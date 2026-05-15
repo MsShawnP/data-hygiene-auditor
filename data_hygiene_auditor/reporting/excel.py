@@ -142,6 +142,49 @@ def generate_excel(results, output_path):
                     )
             row_num += 1
 
+        for fuzz in sheet_data.get('fuzzy_duplicates', []):
+            method = fuzz['match_method'].title()
+            desc = (
+                f"Fuzzy match ({method}):"
+                f" {fuzz['group_size']} rows are near-duplicates"
+            )
+            diffs = fuzz.get('field_differences', {})
+            diff_parts = []
+            for col, diff in diffs.items():
+                if isinstance(diff, dict):
+                    vals = diff.get('values', [])
+                    diff_parts.append(
+                        f"{col}: {', '.join(str(v) for v in vals)}"
+                    )
+                else:
+                    diff_parts.append(
+                        f"{col}: {', '.join(str(v) for v in diff)}"
+                    )
+            example = (
+                f"Rows: {', '.join(str(r) for r in fuzz['rows'])}"
+            )
+            if diff_parts:
+                example += f" | Diffs: {'; '.join(diff_parts)}"
+            values = [
+                sheet_name, "(row-level)", "—",
+                "Fuzzy Duplicate", fuzz['severity'],
+                desc, example, fuzz.get('why', ''),
+            ]
+            for col_idx, val in enumerate(values, 1):
+                cell = ws.cell(
+                    row=row_num, column=col_idx, value=val,
+                )
+                cell.font = Font(name="Arial", size=10)
+                cell.alignment = Alignment(
+                    vertical="top", wrap_text=True,
+                )
+                cell.border = thin_border
+                if col_idx == 5:
+                    cell.fill = sev_fills.get(
+                        fuzz['severity'], PatternFill(),
+                    )
+            row_num += 1
+
     ws.column_dimensions['A'].width = 14
     ws.column_dimensions['B'].width = 18
     ws.column_dimensions['C'].width = 14

@@ -7,6 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from .detection import (
+    analyze_fuzzy_duplicates,
     analyze_mixed_formats,
     analyze_nulls,
     analyze_phantom_duplicates,
@@ -51,6 +52,12 @@ WHY_IT_MATTERS = {
         "These records look different on the surface (different casing, extra spaces, punctuation "
         "variations) but represent the same entity. They cause inflated counts, split transaction "
         "histories, and duplicate outreach — problems that compound over time."
+    ),
+    'fuzzy_duplicate': (
+        "These records are not exact matches but are similar enough to likely represent the same "
+        "entity — differing only by typos, abbreviations, or word reordering (e.g. \"Jon Smith\" vs "
+        "\"John Smith\", \"St.\" vs \"Street\"). Fuzzy duplicates are harder to catch but cause the "
+        "same problems as exact duplicates: inflated counts, split histories, and wasted outreach."
     ),
     'exact_duplicate': (
         "Exact duplicate rows are the clearest sign of a data quality issue — they can result from "
@@ -175,6 +182,19 @@ def run_audit(input_path):
             )
         sheet_results['phantom_duplicates'] = dupes
 
+        phantom_row_sets = [
+            frozenset(i - 2 for i in d['rows'])
+            for d in dupes
+        ]
+        fuzzy = analyze_fuzzy_duplicates(
+            df, sheet_name, field_types,
+            phantom_row_sets=phantom_row_sets,
+        )
+        for f in fuzzy:
+            f['severity'] = rate_severity('fuzzy_duplicate', f)
+            f['why'] = WHY_IT_MATTERS['fuzzy_duplicate']
+        sheet_results['fuzzy_duplicates'] = fuzzy
+
         sheet_results['health_score'] = _compute_health_score(
             sheet_results,
         )
@@ -216,5 +236,9 @@ def _compute_health_score(sheet_data):
         else:
             score -= 3.0
         score -= severity_penalty.get(dup['severity'], 1.0)
+
+    for fuzz in sheet_data.get('fuzzy_duplicates', []):
+        score -= 1.5
+        score -= severity_penalty.get(fuzz['severity'], 0.5)
 
     return max(0, round(score))
