@@ -26,11 +26,25 @@ dependencies = [
     "reportlab>=4.0",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4"]
+
 [tool.setuptools]
 py-modules = ["audit"]
 
 [project.scripts]
 data-hygiene-audit = "audit:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 120
+exclude = ["generate_sample.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
 
 [project.urls]
 Homepage = "https://github.com/MsShawnP/Data-Hygiene-Auditor"

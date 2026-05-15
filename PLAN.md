@@ -145,6 +145,50 @@ All 4 goals are independent of each other — work in any order. Within each goa
 
 ---
 
+## Decomposition: Sprint 2
+
+Goal: Build the engineering foundation — tests, package structure, CI — so future sprints can move fast without breaking things.
+
+Order: Tests first (lock behavior), restructure second (with safety net), CI last (automate it).
+
+### A. Test Suite
+
+- [ ] A1: Add pytest dependency and test scaffold
+    - Depends on: none
+    - Done when: `pytest` in pyproject.toml dev deps; `tests/` dir exists; `pytest` runs with 0 tests collected
+- [ ] A2: Tests for detection engines (infer_field_type, analyze_nulls, analyze_mixed_formats)
+    - Depends on: A1
+    - Done when: tests cover type inference for all 9 field types, null counting with the disjoint blank/whitespace logic, and mixed format detection for date/phone/currency
+- [ ] A3: Tests for remaining engines (wrong_purpose, placeholders, phantom_duplicates)
+    - Depends on: A1
+    - Done when: tests cover misused field detection, placeholder matching, and both exact and phantom duplicate detection
+- [ ] A4: Integration test — full audit on sample data
+    - Depends on: A2, A3
+    - Done when: test runs `run_audit()` on `samples/input/sample_messy_data.xlsx`, asserts 59 total issues with correct severity breakdown (23/20/16)
+- [ ] A5: Edge case tests
+    - Depends on: A1
+    - Done when: tests cover single-row sheets, all-null columns, empty sheets, CSV input
+
+### B. Package Restructure
+
+- [ ] B1: Create package skeleton and move detection engines
+    - Depends on: A4
+    - Done when: `data_hygiene_auditor/` package exists with `detection.py` containing all analysis functions; imports work; all tests still pass
+- [ ] B2: Move report generators into separate modules
+    - Depends on: B1
+    - Done when: `reporting/html.py`, `reporting/excel.py`, `reporting/pdf.py` each contain their generator; all tests still pass
+- [ ] B3: Extract models and CLI
+    - Depends on: B2
+    - Done when: `models.py` has typed dataclasses for findings; `cli.py` has the entry point; `audit.py` root becomes thin wrapper; all tests still pass
+
+### C. CI/CD
+
+- [ ] C1: Add GitHub Actions workflow + ruff config
+    - Depends on: A4
+    - Done when: `.github/workflows/ci.yml` runs lint + test on push; `ruff` configured in pyproject.toml; passes locally
+
+---
+
 ## Sprint 2: Foundation
 
 ### Goal: Package Restructure
