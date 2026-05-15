@@ -10,6 +10,24 @@ def _h(val):
     return _html_escape(str(val), quote=True)
 
 
+def _render_fix(fix):
+    """Render a fix suggestion as an HTML code block with copy button."""
+    desc = _h(fix.get('description', ''))
+    code = _h(fix.get('code', ''))
+    strategy = _h(fix.get('strategy', 'fix'))
+    return (
+        '<div class="fix-block">'
+        '<div class="fix-header">'
+        f'<span>Suggested Fix ({strategy})</span>'
+        '<button class="fix-copy"'
+        ' onclick="copyFix(this)">Copy</button>'
+        '</div>'
+        f'<div class="fix-desc">{desc}</div>'
+        f'<pre class="fix-code">{code}</pre>'
+        '</div>'
+    )
+
+
 def generate_html(results, output_path):
     """Generate a client-readable HTML report."""
     total_issues = 0
@@ -279,6 +297,48 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 .sheet-toggle.collapsed::before {{ content: '▶ '; }}
 .sheet-body.hidden {{ display: none; }}
 .field-card.hidden {{ display: none; }}
+.fix-block {{
+    margin-top: 0.5rem;
+    background: #1a1a2e;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    overflow: hidden;
+}}
+.fix-header {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    background: rgba(212, 165, 116, 0.15);
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 600;
+}}
+.fix-copy {{
+    cursor: pointer;
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.75rem;
+}}
+.fix-copy:hover {{ background: rgba(212, 165, 116, 0.2); }}
+.fix-code {{
+    padding: 0.6rem 0.8rem;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.8rem;
+    color: #e0e0e0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.4;
+}}
+.fix-desc {{
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 0.3rem 0.8rem 0;
+    font-style: italic;
+}}
 .footer {{
     margin-top: 3rem;
     padding-top: 1rem;
@@ -511,6 +571,9 @@ color:#fff">{ss}/100</span></h2>
                         '<strong>Why this matters:</strong>'
                         f' {_h(why)}</div>'
                     )
+                fix = issue.get('fix')
+                if fix:
+                    parts.append(_render_fix(fix))
                 parts.append('</div>')
 
             parts.append('</div>')
@@ -546,6 +609,9 @@ color:#fff">{ss}/100</span></h2>
                     '<strong>Why this matters:</strong>'
                     f' {_h(dup["why"])}</div>'
                 )
+                dup_fix = dup.get('fix')
+                if dup_fix:
+                    parts.append(_render_fix(dup_fix))
                 parts.append('</div>')
 
         if sheet_data.get('fuzzy_duplicates'):
@@ -614,6 +680,9 @@ color:#fff">{ss}/100</span></h2>
                     '<strong>Why this matters:</strong>'
                     f' {_h(fuzz["why"])}</div>'
                 )
+                fuzz_fix = fuzz.get('fix')
+                if fuzz_fix:
+                    parts.append(_render_fix(fuzz_fix))
                 parts.append('</div>')
 
         parts.append('</div></div>')  # close sheet-body, sheet-section
@@ -659,6 +728,15 @@ function toggleSheet(el) {{
     el.classList.toggle('collapsed');
     const body = el.nextElementSibling;
     if (body) body.classList.toggle('hidden');
+}}
+
+function copyFix(btn) {{
+    const block = btn.closest('.fix-block');
+    const code = block.querySelector('.fix-code').textContent;
+    navigator.clipboard.writeText(code).then(() => {{
+        btn.textContent = 'Copied!';
+        setTimeout(() => {{ btn.textContent = 'Copy'; }}, 2000);
+    }});
 }}
 </script>
 </body></html>""")
