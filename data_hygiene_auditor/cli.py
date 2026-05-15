@@ -61,6 +61,10 @@ Outputs three files:
         '--json', action='store_true',
         help='Also output raw JSON results',
     )
+    parser.add_argument(
+        '--threshold', '-t', type=float, default=0.85,
+        help='Fuzzy duplicate similarity threshold (0.0-1.0, default: 0.85)',
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.input):
@@ -86,7 +90,7 @@ Outputs three files:
     print(f"\n  {_c('Data Hygiene Auditor', '1')}")
     print(f"  Auditing: {_c(args.input, '36')}\n")
 
-    results = run_audit(args.input)
+    results = run_audit(args.input, fuzzy_threshold=args.threshold)
     sheet_count = len(results['sheets'])
     for i, (name, sdata) in enumerate(results['sheets'].items(), 1):
         score = sdata['health_score']

@@ -230,17 +230,19 @@ def _describe_issue(issue_type: str, detail: dict) -> str:
     return str(issue_type)
 
 
-def audit_file(path: str) -> AuditResult:
+def audit_file(path: str, fuzzy_threshold: float = 0.85) -> AuditResult:
     """Audit an Excel or CSV file and return typed results.
 
     Args:
         path: Path to an .xlsx, .xls, .csv, or .tsv file.
+        fuzzy_threshold: Similarity threshold (0.0-1.0) for
+            Levenshtein fuzzy duplicate matching. Default 0.85.
 
     Returns:
         AuditResult with typed access to all findings, scores,
         and report generation methods.
     """
-    raw = run_audit(path)
+    raw = run_audit(path, fuzzy_threshold=fuzzy_threshold)
 
     sheets = []
     for sheet_name, sheet_data in raw['sheets'].items():

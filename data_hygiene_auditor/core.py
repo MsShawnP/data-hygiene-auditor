@@ -90,7 +90,7 @@ def _load_sheets(input_path):
         }
 
 
-def run_audit(input_path):
+def run_audit(input_path, fuzzy_threshold=0.85):
     """Run all checks against an Excel or CSV file. Returns structured audit results."""
     sheets = _load_sheets(input_path)
     results = {
@@ -208,6 +208,7 @@ def run_audit(input_path):
         ]
         fuzzy = analyze_fuzzy_duplicates(
             df, sheet_name, field_types,
+            threshold=fuzzy_threshold,
             phantom_row_sets=phantom_row_sets,
         )
         for f in fuzzy:
