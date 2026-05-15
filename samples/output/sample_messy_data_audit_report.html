@@ -292,6 +292,31 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
     padding: 0.3rem 0.8rem 0;
     font-style: italic;
 }
+.trend-banner {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(74, 144, 217, 0.08);
+    border: 1px solid var(--info);
+    border-radius: 8px;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+.trend-banner .delta {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+.delta.positive { color: var(--low); }
+.delta.negative { color: var(--high); }
+.delta.neutral { color: var(--text-muted); }
+.schema-violation {
+    border-left: 3px solid var(--accent);
+    padding: 0.75rem 1rem;
+    margin: 0.75rem 0;
+    background: rgba(233, 69, 96, 0.05);
+    border-radius: 0 6px 6px 0;
+}
 .footer {
     margin-top: 3rem;
     padding-top: 1rem;
@@ -311,7 +336,7 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
 <body>
 
 <h1>Data Hygiene Audit Report</h1>
-<p class="subtitle">sample_messy_data.xlsx &mdash; 2026-05-15 14:41:31</p>
+<p class="subtitle">sample_messy_data.xlsx &mdash; 2026-05-15 15:03:29</p>
 
 <div class="score-hero">
     <div class="score-ring">
@@ -329,6 +354,16 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
         <div class="score-label">Significant Issues</div>
         <div class="score-desc">This dataset has serious quality problems.</div>
     </div>
+</div>
+
+
+<div class="trend-banner">
+    <div>
+        <span class="delta positive">↑4</span>
+        <span> vs baseline (2026-05-15 15:03:07)</span>
+    </div>
+    <div>Score: 28 → 32</div>
+    <div>Issues: 63 → 59 (-4)</div>
 </div>
 
 <div class="summary-grid">
@@ -385,7 +420,7 @@ h3 { color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
     lambda x: &quot;coded&quot; if isinstance(x, str)
     and &quot;-&quot; in x else &quot;numeric&quot;
 )</pre></div></div></div>
-<div class="field-card" data-field="firstname" data-severities="Medium High Low">
+<div class="field-card" data-field="firstname" data-severities="Low High Medium">
     <div class="field-header">
         <span class="field-name">FirstName</span>
         <span class="field-type">name</span>
@@ -401,7 +436,7 @@ mask = df[&quot;FirstName&quot;].notna()
 suspect = df.loc[mask, &quot;FirstName&quot;]</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Placeholder detected:</strong> "Test" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 3 placeholder values (&quot;Test&quot;) in &quot;FirstName&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
 df[&quot;FirstName&quot;] = df[&quot;FirstName&quot;].replace(&quot;Test&quot;, np.nan)</pre></div></div><div class="issue severity-Low"><span class="severity-badge Low">Low</span> <strong>Placeholder detected:</strong> "TBD" appears 1 times (3.8%)<div class="why-box"><strong>Why this matters:</strong> Placeholder values (&quot;Test&quot;, &quot;N/A&quot;, &quot;TBD&quot;) that persist in production data inflate counts, skew averages, and create phantom records. They often indicate incomplete data entry or inadequate validation at the point of capture.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (replace_placeholders)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Replace 1 placeholder values (&quot;TBD&quot;) in &quot;FirstName&quot; with NaN for proper missing-data handling</div><pre class="fix-code">import numpy as np
 df[&quot;FirstName&quot;] = df[&quot;FirstName&quot;].replace(&quot;TBD&quot;, np.nan)</pre></div></div></div>
-<div class="field-card" data-field="lastname" data-severities="Medium Low">
+<div class="field-card" data-field="lastname" data-severities="Low Medium">
     <div class="field-header">
         <span class="field-name">LastName</span>
         <span class="field-type">name</span>
@@ -418,7 +453,7 @@ df[&quot;LastName&quot;] = df[&quot;LastName&quot;].replace(&quot;TBD&quot;, np.
 )</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "Doe" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;LastName&quot; = &quot;Doe&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_LastName_review&quot;] = (
     df[&quot;LastName&quot;] == &quot;Doe&quot;
 )</pre></div></div></div>
-<div class="field-card" data-field="email" data-severities="Medium High Low">
+<div class="field-card" data-field="email" data-severities="Low High Medium">
     <div class="field-header">
         <span class="field-name">Email</span>
         <span class="field-type">email</span>
@@ -438,7 +473,7 @@ df[&quot;_Email_invalid&quot;] = ~df[&quot;Email&quot;].str.match(
 )</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "test@test.com" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;Email&quot; = &quot;test@test.com&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_Email_review&quot;] = (
     df[&quot;Email&quot;] == &quot;test@test.com&quot;
 )</pre></div></div></div>
-<div class="field-card" data-field="phone" data-severities="Medium High Low">
+<div class="field-card" data-field="phone" data-severities="Low High Medium">
     <div class="field-header">
         <span class="field-name">Phone</span>
         <span class="field-type">phone</span>
@@ -462,7 +497,7 @@ df[&quot;Phone&quot;] = df[&quot;Phone&quot;].replace(&quot;TBD&quot;, np.nan)</
 )</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "555-555-5555" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;Phone&quot; = &quot;555-555-5555&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_Phone_review&quot;] = (
     df[&quot;Phone&quot;] == &quot;555-555-5555&quot;
 )</pre></div></div></div>
-<div class="field-card" data-field="joindate" data-severities="Medium High Low">
+<div class="field-card" data-field="joindate" data-severities="Low High Medium">
     <div class="field-header">
         <span class="field-name">JoinDate</span>
         <span class="field-type">date</span>
@@ -481,7 +516,7 @@ df[&quot;JoinDate&quot;] = df[&quot;JoinDate&quot;].replace(&quot;TBD&quot;, np.
 )</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "2023-01-15" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;JoinDate&quot; = &quot;2023-01-15&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_JoinDate_review&quot;] = (
     df[&quot;JoinDate&quot;] == &quot;2023-01-15&quot;
 )</pre></div></div></div>
-<div class="field-card" data-field="accountbalance" data-severities="Medium High Low">
+<div class="field-card" data-field="accountbalance" data-severities="Low High Medium">
     <div class="field-header">
         <span class="field-name">AccountBalance</span>
         <span class="field-type">currency</span>
@@ -505,7 +540,7 @@ df[&quot;AccountBalance&quot;] = df[&quot;AccountBalance&quot;].replace(&quot;TB
 )</pre></div></div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Suspicious repetition:</strong> "$1,250.00" appears 3 times (11.5%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 3 rows where &quot;AccountBalance&quot; = &quot;$1,250.00&quot; (11.5%) for manual review</div><pre class="fix-code">df[&quot;_AccountBalance_review&quot;] = (
     df[&quot;AccountBalance&quot;] == &quot;$1,250.00&quot;
 )</pre></div></div></div>
-<div class="field-card" data-field="status" data-severities="High Low">
+<div class="field-card" data-field="status" data-severities="Low High">
     <div class="field-header">
         <span class="field-name">Status</span>
         <span class="field-type">categorical</span>
@@ -522,7 +557,7 @@ suspect = df.loc[mask, &quot;Status&quot;]</pre></div></div><div class="issue se
 df[&quot;Status&quot;] = df[&quot;Status&quot;].replace(&quot;TBD&quot;, np.nan)</pre></div></div><div class="issue severity-High"><span class="severity-badge High">High</span> <strong>Suspicious repetition:</strong> "Active" appears 18 times (69.2%)<div class="why-box"><strong>Why this matters:</strong> When the same value appears far more often than expected, it may indicate a default value that was never updated, a copy-paste error, or a system glitch that stamped the same data across multiple records.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (flag_repetitions)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Flag 18 rows where &quot;Status&quot; = &quot;Active&quot; (69.2%) for manual review</div><pre class="fix-code">df[&quot;_Status_review&quot;] = (
     df[&quot;Status&quot;] == &quot;Active&quot;
 )</pre></div></div></div>
-<div class="field-card" data-field="zipcode" data-severities="Medium Low">
+<div class="field-card" data-field="zipcode" data-severities="Low Medium">
     <div class="field-header">
         <span class="field-name">ZipCode</span>
         <span class="field-type">zipcode</span>
@@ -662,7 +697,7 @@ df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></di
     df[&quot;Amount&quot;].str.replace(r&quot;[^\d.]&quot;, &quot;&quot;, regex=True)
     .astype(float)
 )</pre></div></div></div>
-<div class="field-card" data-field="shipdate" data-severities="High Low">
+<div class="field-card" data-field="shipdate" data-severities="Low High">
     <div class="field-header">
         <span class="field-name">ShipDate</span>
         <span class="field-type">date</span>
@@ -708,7 +743,7 @@ df[&quot;Status&quot;] = df[&quot;Status&quot;].replace(&quot;Test&quot;, np.nan
         <tr><th>OrderID</th><th>CustomerID</th><th>OrderDate</th><th>Amount</th><th>ShipDate</th><th>Status</th></tr>
 <tr><td>ORD-006</td><td>CUST-010</td><td>2023-01-01</td><td>$0.00</td><td>2023-01-01</td><td>Test</td></tr><tr><td>ORD-007</td><td>CUST-010</td><td>2023-01-01</td><td>$0.00</td><td>2023-01-01</td><td>Test</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Exact duplicate rows are the clearest sign of a data quality issue — they can result from double-submissions, ETL failures, or missing unique constraints. Every duplicate inflates counts and distorts any metric built on this data.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (drop_exact_duplicates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Remove 2 exact duplicate rows (rows 7, 8)</div><pre class="fix-code">df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div></div></div>
 <div class="footer">
-    Data Hygiene Audit &mdash; Generated 2026-05-15 14:41:31 &mdash; Lailara LLC
+    Data Hygiene Audit &mdash; Generated 2026-05-15 15:03:29 &mdash; Lailara LLC
 </div>
 
 <script>

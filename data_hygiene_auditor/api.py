@@ -112,6 +112,7 @@ class SheetResult:
     fields: List[FieldResult] = field(default_factory=list)
     duplicates: List[Duplicate] = field(default_factory=list)
     fuzzy_duplicates: List[FuzzyDuplicate] = field(default_factory=list)
+    schema_violations: List[SchemaViolation] = field(default_factory=list)
 
     @property
     def findings(self) -> List[Finding]:
@@ -127,6 +128,7 @@ class SheetResult:
             len(self.findings)
             + len(self.duplicates)
             + len(self.fuzzy_duplicates)
+            + len(self.schema_violations)
         )
 
 
@@ -138,6 +140,7 @@ class AuditResult:
     audit_timestamp: str
     overall_score: int
     sheets: List[SheetResult] = field(default_factory=list)
+    trend: Optional[TrendData] = None
 
     @property
     def total_issues(self) -> int:
@@ -201,6 +204,31 @@ class AuditResult:
         return generate_pdf(self._raw, output_path)
 
 
+@dataclass
+class SchemaViolation:
+    """A schema validation violation."""
+
+    violation_type: str
+    severity: str
+    column: str
+    why: str
+    detail: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class TrendData:
+    """Trend comparison against a baseline audit."""
+
+    baseline_file: str
+    baseline_timestamp: str
+    overall_score_delta: int
+    overall_score_previous: int
+    total_issues_delta: int
+    total_issues_previous: int
+    severity_deltas: Dict[str, int] = field(default_factory=dict)
+    sheets: Dict[str, Any] = field(default_factory=dict)
+
+
 def _describe_issue(issue_type: str, detail: dict) -> str:
     """Generate a human-readable description for an issue."""
     if issue_type == 'mixed_format':
@@ -230,19 +258,33 @@ def _describe_issue(issue_type: str, detail: dict) -> str:
     return str(issue_type)
 
 
-def audit_file(path: str, fuzzy_threshold: float = 0.85) -> AuditResult:
+def audit_file(
+    path: str,
+    fuzzy_threshold: float = 0.85,
+    schema_path: Optional[str] = None,
+    baseline_path: Optional[str] = None,
+) -> AuditResult:
     """Audit an Excel or CSV file and return typed results.
 
     Args:
         path: Path to an .xlsx, .xls, .csv, or .tsv file.
         fuzzy_threshold: Similarity threshold (0.0-1.0) for
             Levenshtein fuzzy duplicate matching. Default 0.85.
+        schema_path: Optional path to a JSON schema file for
+            type/completeness validation.
+        baseline_path: Optional path to a previous audit JSON
+            for trend comparison.
 
     Returns:
         AuditResult with typed access to all findings, scores,
         and report generation methods.
     """
-    raw = run_audit(path, fuzzy_threshold=fuzzy_threshold)
+    raw = run_audit(
+        path,
+        fuzzy_threshold=fuzzy_threshold,
+        schema_path=schema_path,
+        baseline_path=baseline_path,
+    )
 
     sheets = []
     for sheet_name, sheet_data in raw['sheets'].items():
@@ -324,6 +366,16 @@ def audit_file(path: str, fuzzy_threshold: float = 0.85) -> AuditResult:
                 fix=fix_obj,
             ))
 
+        schema_viols = []
+        for sv in sheet_data.get('schema_violations', []):
+            schema_viols.append(SchemaViolation(
+                violation_type=sv['type'],
+                severity=sv['severity'],
+                column=sv['column'],
+                why=sv.get('why', ''),
+                detail=sv.get('detail', {}),
+            ))
+
         sheets.append(SheetResult(
             name=sheet_name,
             row_count=sheet_data['row_count'],
@@ -332,13 +384,29 @@ def audit_file(path: str, fuzzy_threshold: float = 0.85) -> AuditResult:
             fields=fields,
             duplicates=duplicates,
             fuzzy_duplicates=fuzzy_dups,
+            schema_violations=schema_viols,
         ))
+
+    trend_obj = None
+    raw_trend = raw.get('trend')
+    if raw_trend:
+        trend_obj = TrendData(
+            baseline_file=raw_trend['baseline_file'],
+            baseline_timestamp=raw_trend['baseline_timestamp'],
+            overall_score_delta=raw_trend['overall_score_delta'],
+            overall_score_previous=raw_trend['overall_score_previous'],
+            total_issues_delta=raw_trend['total_issues_delta'],
+            total_issues_previous=raw_trend['total_issues_previous'],
+            severity_deltas=raw_trend.get('severity_deltas', {}),
+            sheets=raw_trend.get('sheets', {}),
+        )
 
     result = AuditResult(
         input_file=raw['input_file'],
         audit_timestamp=raw['audit_timestamp'],
         overall_score=raw['overall_score'],
         sheets=sheets,
+        trend=trend_obj,
     )
     result._raw = raw
     return result

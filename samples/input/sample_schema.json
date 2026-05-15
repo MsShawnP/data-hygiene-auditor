@@ -1,0 +1,18 @@
+{
+  "columns": {
+    "FirstName": {"type": "name", "required": true},
+    "LastName": {"type": "name", "required": true},
+    "Email": {"type": "email", "required": true, "max_missing_pct": 10},
+    "Phone": {"type": "phone"},
+    "JoinDate": {"type": "date"},
+    "Status": {"type": "categorical"}
+  },
+  "sheets": {
+    "Orders": {
+      "columns": {
+        "OrderDate": {"type": "date", "required": true},
+        "Amount": {"type": "currency", "required": true}
+      }
+    }
+  }
+}

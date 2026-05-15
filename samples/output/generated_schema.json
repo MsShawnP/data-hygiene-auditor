@@ -1,0 +1,60 @@
+{
+  "columns": {
+    "CustomerID": {
+      "type": "id",
+      "required": false
+    },
+    "FirstName": {
+      "type": "name",
+      "required": false
+    },
+    "LastName": {
+      "type": "name",
+      "required": false
+    },
+    "Email": {
+      "type": "email",
+      "required": false
+    },
+    "Phone": {
+      "type": "phone",
+      "required": false
+    },
+    "JoinDate": {
+      "type": "date",
+      "required": false
+    },
+    "AccountBalance": {
+      "type": "currency",
+      "required": false
+    },
+    "Status": {
+      "type": "categorical",
+      "required": false
+    },
+    "ZipCode": {
+      "type": "zipcode",
+      "required": false
+    },
+    "Notes": {
+      "type": "freetext",
+      "required": false
+    },
+    "OrderID": {
+      "type": "id",
+      "required": false
+    },
+    "OrderDate": {
+      "type": "date",
+      "required": false
+    },
+    "Amount": {
+      "type": "currency",
+      "required": false
+    },
+    "ShipDate": {
+      "type": "date",
+      "required": false
+    }
+  }
+}

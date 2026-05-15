@@ -43,6 +43,9 @@ def generate_html(results, output_path):
         for f in sheet.get('fuzzy_duplicates', []):
             total_issues += 1
             severity_totals[f['severity']] += 1
+        for sv in sheet.get('schema_violations', []):
+            total_issues += 1
+            severity_totals[sv['severity']] += 1
 
     parts = []
     parts.append(f"""<!DOCTYPE html>
@@ -339,6 +342,31 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     padding: 0.3rem 0.8rem 0;
     font-style: italic;
 }}
+.trend-banner {{
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(74, 144, 217, 0.08);
+    border: 1px solid var(--info);
+    border-radius: 8px;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}}
+.trend-banner .delta {{
+    font-size: 1.3rem;
+    font-weight: 700;
+}}
+.delta.positive {{ color: var(--low); }}
+.delta.negative {{ color: var(--high); }}
+.delta.neutral {{ color: var(--text-muted); }}
+.schema-violation {{
+    border-left: 3px solid var(--accent);
+    padding: 0.75rem 1rem;
+    margin: 0.75rem 0;
+    background: rgba(233, 69, 96, 0.05);
+    border-radius: 0 6px 6px 0;
+}}
 .footer {{
     margin-top: 3rem;
     padding-top: 1rem;
@@ -399,6 +427,34 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     </div>
 </div>
 
+""")
+
+    trend = results.get('trend')
+    if trend:
+        delta = trend['overall_score_delta']
+        if delta > 0:
+            delta_cls = 'positive'
+            arrow = f'↑{delta}'
+        elif delta < 0:
+            delta_cls = 'negative'
+            arrow = f'↓{abs(delta)}'
+        else:
+            delta_cls = 'neutral'
+            arrow = '='
+        td = trend['total_issues_delta']
+        td_str = f"+{td}" if td > 0 else str(td)
+        parts.append(f"""
+<div class="trend-banner">
+    <div>
+        <span class="delta {delta_cls}">{arrow}</span>
+        <span> vs baseline ({_h(trend['baseline_timestamp'])})</span>
+    </div>
+    <div>Score: {trend['overall_score_previous']} → {overall}</div>
+    <div>Issues: {trend['total_issues_previous']} → {total_issues} ({td_str})</div>
+</div>
+""")
+
+    parts.append(f"""
 <div class="summary-grid">
     <div class="summary-card info">
         <div class="number">{total_issues}</div>
@@ -683,6 +739,45 @@ color:#fff">{ss}/100</span></h2>
                 fuzz_fix = fuzz.get('fix')
                 if fuzz_fix:
                     parts.append(_render_fix(fuzz_fix))
+                parts.append('</div>')
+
+        if sheet_data.get('schema_violations'):
+            parts.append('<h3>Schema Violations</h3>')
+            for sv in sheet_data['schema_violations']:
+                sev = sv['severity']
+                svtype = sv['type']
+                detail = sv.get('detail', {})
+                if svtype == 'schema_type_mismatch':
+                    desc = (
+                        f"Column <strong>{_h(detail.get('column', ''))}</strong>:"
+                        f" expected <em>{_h(detail.get('expected_type', ''))}</em>,"
+                        f" got <em>{_h(detail.get('actual_type', ''))}</em>"
+                    )
+                elif svtype == 'schema_missing_column':
+                    desc = (
+                        f"Required column <strong>"
+                        f"{_h(detail.get('expected_column', ''))}</strong> is missing"
+                    )
+                elif svtype == 'schema_completeness_violation':
+                    desc = (
+                        f"Column <strong>{_h(detail.get('column', ''))}</strong>:"
+                        f" {detail.get('actual_missing_pct', 0)}% missing"
+                        f" (max {detail.get('max_missing_pct', 0)}%)"
+                    )
+                else:
+                    desc = _h(svtype)
+                parts.append(
+                    f'<div class="schema-violation">'
+                    f'<span class="severity-badge {sev}">{sev}</span> '
+                    f'{desc}'
+                )
+                why = sv.get('why', '')
+                if why:
+                    parts.append(
+                        '<div class="why-box">'
+                        '<strong>Why this matters:</strong>'
+                        f' {_h(why)}</div>'
+                    )
                 parts.append('</div>')
 
         parts.append('</div></div>')  # close sheet-body, sheet-section

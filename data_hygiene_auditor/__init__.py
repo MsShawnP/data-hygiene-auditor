@@ -7,7 +7,9 @@ from .api import (
     Finding,
     FixSuggestion,
     FuzzyDuplicate,
+    SchemaViolation,
     SheetResult,
+    TrendData,
     audit_file,
 )
 from .core import SUPPORTED_EXTENSIONS, WHY_IT_MATTERS, _load_sheets, run_audit
@@ -22,6 +24,8 @@ from .detection import (
     rate_severity,
 )
 from .reporting import generate_excel, generate_html, generate_pdf
+from .schema import generate_schema, load_schema, validate_schema
+from .trend import compute_trend, load_baseline
 
 __all__ = [
     'audit_file',
@@ -31,7 +35,9 @@ __all__ = [
     'Duplicate',
     'FuzzyDuplicate',
     'FieldResult',
+    'SchemaViolation',
     'SheetResult',
+    'TrendData',
     'run_audit',
     '_load_sheets',
     'SUPPORTED_EXTENSIONS',
@@ -47,4 +53,9 @@ __all__ = [
     'generate_html',
     'generate_excel',
     'generate_pdf',
+    'load_schema',
+    'generate_schema',
+    'validate_schema',
+    'load_baseline',
+    'compute_trend',
 ]

@@ -16,7 +16,9 @@ from .detection import (
     infer_field_type,
     rate_severity,
 )
+from .schema import validate_schema
 from .suggestions import generate_dup_fix, generate_fix
+from .trend import compute_trend, load_baseline
 
 WHY_IT_MATTERS = {
     'mixed_format_date': (
@@ -90,8 +92,13 @@ def _load_sheets(input_path):
         }
 
 
-def run_audit(input_path, fuzzy_threshold=0.85):
+def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=None):
     """Run all checks against an Excel or CSV file. Returns structured audit results."""
+    schema = None
+    if schema_path:
+        from .schema import load_schema
+        schema = load_schema(schema_path)
+
     sheets = _load_sheets(input_path)
     results = {
         'input_file': os.path.basename(input_path),
@@ -219,6 +226,13 @@ def run_audit(input_path, fuzzy_threshold=0.85):
                 f['fix'] = fix
         sheet_results['fuzzy_duplicates'] = fuzzy
 
+        if schema:
+            sheet_results['schema_violations'] = validate_schema(
+                sheet_results, schema, sheet_name,
+            )
+        else:
+            sheet_results['schema_violations'] = []
+
         sheet_results['health_score'] = _compute_health_score(
             sheet_results,
         )
@@ -229,6 +243,13 @@ def run_audit(input_path, fuzzy_threshold=0.85):
         results['overall_score'] = round(sum(scores) / len(scores))
     else:
         results['overall_score'] = 100
+
+    if schema:
+        results['schema'] = {'source': schema_path, 'validated': True}
+
+    if baseline_path:
+        baseline = load_baseline(baseline_path)
+        results['trend'] = compute_trend(results, baseline)
 
     return results
 
@@ -264,5 +285,8 @@ def _compute_health_score(sheet_data):
     for fuzz in sheet_data.get('fuzzy_duplicates', []):
         score -= 1.5
         score -= severity_penalty.get(fuzz['severity'], 0.5)
+
+    for sv in sheet_data.get('schema_violations', []):
+        score -= severity_penalty.get(sv['severity'], 1.0)
 
     return max(0, round(score))

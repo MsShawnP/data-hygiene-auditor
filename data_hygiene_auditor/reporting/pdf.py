@@ -105,6 +105,9 @@ def generate_pdf(results, output_path):
         for f in sheet.get('fuzzy_duplicates', []):
             total_issues += 1
             severity_totals[f['severity']] += 1
+        for sv in sheet.get('schema_violations', []):
+            total_issues += 1
+            severity_totals[sv['severity']] += 1
 
     summary_data = [
         ['Total Issues', 'High', 'Medium', 'Low'],
@@ -129,6 +132,25 @@ def generate_pdf(results, output_path):
     ]))
     story.append(t)
     story.append(Spacer(1, 16))
+
+    trend = results.get('trend')
+    if trend:
+        delta = trend['overall_score_delta']
+        sign = '+' if delta > 0 else ''
+        td = trend['total_issues_delta']
+        td_sign = '+' if td > 0 else ''
+        story.append(Paragraph(
+            f"<b>Trend vs Baseline</b> ({_p(trend['baseline_timestamp'])})",
+            styles['FieldHead'],
+        ))
+        story.append(Paragraph(
+            f"Score: {trend['overall_score_previous']} → "
+            f"{results.get('overall_score', 0)} ({sign}{delta})  |  "
+            f"Issues: {trend['total_issues_previous']} → "
+            f"{total_issues} ({td_sign}{td})",
+            styles['SmallBody'],
+        ))
+        story.append(Spacer(1, 8))
 
     for sheet_name, sheet_data in results['sheets'].items():
         story.append(Paragraph(
@@ -338,6 +360,45 @@ def generate_pdf(results, output_path):
                     story.append(Paragraph(
                         f"<b>Suggested fix:</b>"
                         f" {_p(fuzz_fix['description'])}",
+                        styles['WhyBox'],
+                    ))
+
+        if sheet_data.get('schema_violations'):
+            story.append(Paragraph(
+                "Schema Violations", styles['FieldHead'],
+            ))
+            for sv in sheet_data['schema_violations']:
+                sev = sv['severity']
+                svtype = sv['type']
+                detail = sv.get('detail', {})
+                if svtype == 'schema_type_mismatch':
+                    text = (
+                        f"[{sev}] Column '{_p(detail.get('column', ''))}'"
+                        f": expected {_p(detail.get('expected_type', ''))}"
+                        f", got {_p(detail.get('actual_type', ''))}"
+                    )
+                elif svtype == 'schema_missing_column':
+                    text = (
+                        f"[{sev}] Required column"
+                        f" '{_p(detail.get('expected_column', ''))}'"
+                        f" is missing"
+                    )
+                elif svtype == 'schema_completeness_violation':
+                    text = (
+                        f"[{sev}] Column '{_p(detail.get('column', ''))}'"
+                        f": {detail.get('actual_missing_pct', 0)}% missing"
+                        f" (max {detail.get('max_missing_pct', 0)}%)"
+                    )
+                else:
+                    text = f"[{sev}] {_p(svtype)}"
+                story.append(Paragraph(
+                    text,
+                    styles.get(f'Sev{sev}', styles['SmallBody']),
+                ))
+                why = sv.get('why', '')
+                if why:
+                    story.append(Paragraph(
+                        f"<b>Why:</b> {_p(why)}",
                         styles['WhyBox'],
                     ))
 
