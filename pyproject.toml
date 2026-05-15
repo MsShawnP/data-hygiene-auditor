@@ -32,6 +32,9 @@ dev = ["pytest>=8.0", "ruff>=0.4"]
 [tool.setuptools.packages.find]
 include = ["data_hygiene_auditor*"]
 
+[tool.setuptools.package-data]
+data_hygiene_auditor = ["py.typed"]
+
 [project.scripts]
 data-hygiene-audit = "data_hygiene_auditor.cli:main"
 

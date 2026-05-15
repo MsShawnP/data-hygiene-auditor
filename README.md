@@ -16,7 +16,13 @@ A single run produces three reports tailored to three audiences: an **HTML repor
 
 **Phantom Duplicates** — Finds records that appear different on the surface due to casing, whitespace, or punctuation but represent the same entity after normalization. ID columns are automatically excluded from matching, so two records with different surrogate keys but identical content are still caught.
 
+**Fuzzy Duplicates** — Goes beyond normalization with fingerprint clustering (catches token reordering like "Smith John" vs "John Smith") and Levenshtein distance matching (catches typos like "Johnathan" vs "Jonathon"). Configurable similarity threshold.
+
 **Completeness Baseline** — Every field receives a null/missing analysis with severity rating, including detection of whitespace-only values that look populated but carry no data.
+
+**Health Score** — Every sheet and the overall file receive a 0-100 hygiene score. 90+ is clean, 70-89 needs attention, below 70 has significant issues. The score appears in all three reports and on the CLI.
+
+**Fix Suggestions** — Every finding includes a copyable pandas code snippet: date normalization scripts, phone reformatting, placeholder replacement, dedup strategies. The HTML report has one-click copy buttons; the Excel report adds a "Suggested Fix" column.
 
 ## Design Decisions
 
@@ -97,6 +103,7 @@ Supports `.xlsx`, `.xls`, `.csv`, and `.tsv` files.
 | `--input`, `-i` | Path to the file to audit — `.xlsx`, `.csv`, or `.tsv` (required) |
 | `--output`, `-o` | Directory for generated reports (required) |
 | `--json` | Also output the raw findings as structured JSON |
+| `--threshold`, `-t` | Fuzzy duplicate similarity threshold, 0.0-1.0 (default: 0.85) |
 
 ### Example
 
@@ -119,6 +126,48 @@ python audit.py --input samples/input/sample_messy_data.xlsx --output ./reports
   Audit complete: 59 issues found
     High: 23 | Medium: 20 | Low: 16
 ```
+
+## Use as a Library
+
+After `pip install .`, the auditor is importable as a Python library with typed results:
+
+```python
+from data_hygiene_auditor import audit_file
+
+result = audit_file("customers.xlsx")
+print(f"Health Score: {result.overall_score}/100")
+
+for sheet in result.sheets:
+    print(f"\n{sheet.name}: {sheet.health_score}/100")
+    for finding in sheet.findings:
+        print(f"  [{finding.severity}] {finding.field}: {finding.description}")
+        if finding.fix:
+            print(f"    Fix: {finding.fix.description}")
+```
+
+The `audit_file()` function returns an `AuditResult` with typed access to all findings:
+
+```python
+result = audit_file("data.xlsx")
+
+# Filter by severity
+critical = result.high_issues
+warnings = result.medium_issues
+
+# Access raw dict for custom processing
+raw = result.to_dict()
+
+# Generate reports programmatically
+result.generate_html("report.html")
+result.generate_excel("findings.xlsx")
+result.generate_pdf("report.pdf")
+
+# Adjust fuzzy matching sensitivity
+strict = audit_file("data.xlsx", fuzzy_threshold=0.95)
+loose = audit_file("data.xlsx", fuzzy_threshold=0.70)
+```
+
+Works in Jupyter notebooks — call `audit_file()` in a cell and explore the typed results interactively.
 
 ## Regenerating the Sample Data
 
