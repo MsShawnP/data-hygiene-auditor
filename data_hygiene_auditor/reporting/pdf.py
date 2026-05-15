@@ -102,6 +102,9 @@ def generate_pdf(results, output_path):
         for d in sheet['phantom_duplicates']:
             total_issues += 1
             severity_totals[d['severity']] += 1
+        for f in sheet.get('fuzzy_duplicates', []):
+            total_issues += 1
+            severity_totals[f['severity']] += 1
 
     summary_data = [
         ['Total Issues', 'High', 'Medium', 'Low'],
@@ -264,6 +267,52 @@ def generate_pdf(results, output_path):
                 if dup.get('why'):
                     story.append(Paragraph(
                         f"<b>Why this matters:</b> {_p(dup['why'])}",
+                        styles['WhyBox'],
+                    ))
+
+        if sheet_data.get('fuzzy_duplicates'):
+            story.append(Paragraph(
+                "Fuzzy Duplicates", styles['FieldHead'],
+            ))
+            for fuzz in sheet_data['fuzzy_duplicates']:
+                sev = fuzz['severity']
+                method = _p(fuzz['match_method'].title())
+                text = (
+                    f"[{sev}] Fuzzy Match ({method})"
+                    f" — {fuzz['group_size']} rows:"
+                    f" {', '.join(str(r) for r in fuzz['rows'])}"
+                )
+                story.append(Paragraph(
+                    text,
+                    styles.get(f'Sev{sev}', styles['SmallBody']),
+                ))
+                diffs = fuzz.get('field_differences', {})
+                if diffs:
+                    diff_parts = []
+                    for col, diff in diffs.items():
+                        if isinstance(diff, dict):
+                            vals = diff.get('values', [])
+                            val_str = ', '.join(
+                                f'"{_p(v)}"' for v in vals
+                            )
+                            diff_parts.append(
+                                f"{_p(col)}: {val_str}"
+                            )
+                        else:
+                            val_str = ', '.join(
+                                f'"{_p(v)}"' for v in diff
+                            )
+                            diff_parts.append(
+                                f"{_p(col)}: {val_str}"
+                            )
+                    story.append(Paragraph(
+                        "Differences: " + "; ".join(diff_parts),
+                        styles['SmallBody'],
+                    ))
+                if fuzz.get('why'):
+                    story.append(Paragraph(
+                        f"<b>Why this matters:</b>"
+                        f" {_p(fuzz['why'])}",
                         styles['WhyBox'],
                     ))
 

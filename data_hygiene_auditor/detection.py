@@ -398,8 +398,192 @@ def analyze_phantom_duplicates(df, sheet_name, field_types=None):
     return findings
 
 
+_FINGERPRINT_PUNCT = re.compile(r'[^\w\s]')
+
+
+def _fingerprint(val):
+    """Key-collision fingerprint: lowercase, strip all punctuation, sort tokens."""
+    if pd.isna(val):
+        return ''
+    s = str(val).strip().lower()
+    s = _FINGERPRINT_PUNCT.sub('', s)
+    tokens = sorted(s.split())
+    return ' '.join(tokens)
+
+
+def _levenshtein_distance(s1, s2):
+    """Compute Levenshtein edit distance between two strings."""
+    if len(s1) < len(s2):
+        return _levenshtein_distance(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+    prev = list(range(len(s2) + 1))
+    for i, c1 in enumerate(s1):
+        curr = [i + 1]
+        for j, c2 in enumerate(s2):
+            curr.append(min(
+                prev[j + 1] + 1,
+                curr[j] + 1,
+                prev[j] + (c1 != c2),
+            ))
+        prev = curr
+    return prev[-1]
+
+
+def _levenshtein_similarity(s1, s2):
+    """Similarity ratio (0.0-1.0) based on Levenshtein distance."""
+    max_len = max(len(s1), len(s2))
+    if max_len == 0:
+        return 1.0
+    return 1.0 - _levenshtein_distance(s1, s2) / max_len
+
+
+def analyze_fuzzy_duplicates(
+    df, sheet_name, field_types=None, threshold=0.85,
+    phantom_row_sets=None,
+):
+    """Detect fuzzy duplicates via fingerprint clustering and Levenshtein.
+
+    Finds matches that normalize-and-hash misses: token reordering,
+    abbreviations, and typos.
+    """
+    findings = []
+    if df.empty or len(df) < 2:
+        return findings
+
+    field_types = field_types or {}
+    phantom_row_sets = phantom_row_sets or []
+
+    already_matched = set()
+    for row_set in phantom_row_sets:
+        already_matched.update(row_set)
+
+    id_cols = set()
+    for col in df.columns:
+        ft = field_types.get(col, infer_field_type(col, df[col].values))
+        if ft == 'id':
+            id_cols.add(col)
+        elif df[col].nunique() == len(df):
+            id_cols.add(col)
+
+    content_cols = [c for c in df.columns if c not in id_cols]
+    if not content_cols:
+        content_cols = list(df.columns)
+
+    fingerprinted = df[content_cols].apply(lambda col: col.map(_fingerprint))
+    combined_fp = fingerprinted.iloc[:, 0].astype(str)
+    for col in content_cols[1:]:
+        combined_fp = combined_fp + '||' + fingerprinted[col].astype(str)
+
+    fp_groups = defaultdict(list)
+    for idx, fp in combined_fp.items():
+        fp_groups[fp].append(idx)
+
+    fp_matched = set()
+    for fp, indices in fp_groups.items():
+        if len(indices) < 2:
+            continue
+        index_set = frozenset(indices)
+        if index_set.issubset(already_matched):
+            continue
+
+        fp_matched.update(indices)
+        row_nums = [i + 2 for i in indices]
+        sample_rows = []
+        for i in indices[:3]:
+            sample_rows.append(
+                {col: str(df.iloc[i][col]) for col in df.columns[:6]},
+            )
+
+        differences = {}
+        for col in content_cols:
+            vals = [str(df.iloc[i][col]) for i in indices]
+            unique_vals = list(dict.fromkeys(vals))
+            if len(unique_vals) > 1:
+                differences[col] = unique_vals[:5]
+
+        findings.append({
+            'rows': row_nums,
+            'group_size': len(indices),
+            'match_method': 'fingerprint',
+            'sample_data': sample_rows,
+            'field_differences': differences,
+            'matched_on': content_cols,
+            'excluded_id_cols': list(id_cols),
+            'type': 'fuzzy_duplicate',
+        })
+
+    skip = already_matched | fp_matched
+    unmatched = [i for i in range(len(df)) if i not in skip]
+
+    if len(unmatched) >= 2 and len(unmatched) <= 500:
+        norm_strings = {}
+        for idx in unmatched:
+            parts = [
+                str(df.iloc[idx][c]).strip().lower() for c in content_cols
+            ]
+            norm_strings[idx] = '||'.join(parts)
+
+        used = set()
+        for pos, idx_a in enumerate(unmatched):
+            if idx_a in used:
+                continue
+            group = [idx_a]
+            for idx_b in unmatched[pos + 1:]:
+                if idx_b in used:
+                    continue
+                sim = _levenshtein_similarity(
+                    norm_strings[idx_a], norm_strings[idx_b],
+                )
+                if sim >= threshold:
+                    group.append(idx_b)
+                    used.add(idx_b)
+            if len(group) < 2:
+                continue
+            used.add(idx_a)
+
+            row_nums = [i + 2 for i in group]
+            sample_rows = []
+            for i in group[:3]:
+                sample_rows.append(
+                    {col: str(df.iloc[i][col]) for col in df.columns[:6]},
+                )
+
+            differences = {}
+            for col in content_cols:
+                vals = [str(df.iloc[i][col]).strip() for i in group]
+                unique_vals = list(dict.fromkeys(vals))
+                if len(unique_vals) > 1:
+                    sim = _levenshtein_similarity(
+                        unique_vals[0].lower(), unique_vals[1].lower(),
+                    )
+                    differences[col] = {
+                        'values': unique_vals[:5],
+                        'similarity': round(sim, 2),
+                    }
+
+            findings.append({
+                'rows': row_nums,
+                'group_size': len(group),
+                'match_method': 'levenshtein',
+                'similarity_threshold': threshold,
+                'sample_data': sample_rows,
+                'field_differences': differences,
+                'matched_on': content_cols,
+                'excluded_id_cols': list(id_cols),
+                'type': 'fuzzy_duplicate',
+            })
+
+    return findings
+
+
 def rate_severity(finding_type, details):
     """Assign High / Medium / Low severity."""
+    if finding_type == 'fuzzy_duplicate':
+        if details.get('match_method') == 'fingerprint':
+            return 'Medium'
+        return 'Low'
+
     if finding_type == 'phantom_duplicate':
         if details.get('type') == 'exact_duplicate':
             return 'High'

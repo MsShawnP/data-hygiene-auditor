@@ -1,7 +1,17 @@
 """Data Hygiene Auditor — Detect data quality issues in Excel and CSV files."""
 
+from .api import (
+    AuditResult,
+    Duplicate,
+    FieldResult,
+    Finding,
+    FuzzyDuplicate,
+    SheetResult,
+    audit_file,
+)
 from .core import SUPPORTED_EXTENSIONS, WHY_IT_MATTERS, _load_sheets, run_audit
 from .detection import (
+    analyze_fuzzy_duplicates,
     analyze_mixed_formats,
     analyze_nulls,
     analyze_phantom_duplicates,
@@ -13,6 +23,13 @@ from .detection import (
 from .reporting import generate_excel, generate_html, generate_pdf
 
 __all__ = [
+    'audit_file',
+    'AuditResult',
+    'Finding',
+    'Duplicate',
+    'FuzzyDuplicate',
+    'FieldResult',
+    'SheetResult',
     'run_audit',
     '_load_sheets',
     'SUPPORTED_EXTENSIONS',
@@ -22,6 +39,7 @@ __all__ = [
     'analyze_mixed_formats',
     'analyze_wrong_purpose',
     'analyze_placeholders',
+    'analyze_fuzzy_duplicates',
     'analyze_phantom_duplicates',
     'rate_severity',
     'generate_html',
