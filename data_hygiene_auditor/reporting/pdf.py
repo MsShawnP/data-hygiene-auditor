@@ -75,7 +75,22 @@ def generate_pdf(results, output_path):
         f"{_p(results['input_file'])} — {results['audit_timestamp']}",
         styles['Normal'],
     ))
-    story.append(Spacer(1, 12))
+    overall = results.get('overall_score', 100)
+    if overall >= 90:
+        score_label = 'Clean'
+    elif overall >= 70:
+        score_label = 'Needs Attention'
+    else:
+        score_label = 'Significant Issues'
+    story.append(Paragraph(
+        f"<b>Health Score: {overall}/100</b>"
+        f" — {score_label}",
+        ParagraphStyle(
+            name='ScoreHead', parent=styles['Heading2'],
+            fontSize=16, spaceAfter=12,
+        ),
+    ))
+    story.append(Spacer(1, 8))
 
     total_issues = 0
     severity_totals = Counter()

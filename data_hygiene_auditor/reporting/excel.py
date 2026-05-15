@@ -157,17 +157,36 @@ def generate_excel(results, output_path):
     ws2 = wb.create_sheet("Summary", 0)
     ws2['A1'] = "Data Hygiene Audit Summary"
     ws2['A1'].font = Font(bold=True, size=14, name="Arial")
-    ws2['A3'] = "File:"
-    ws2['B3'] = results['input_file']
-    ws2['A4'] = "Audit Date:"
-    ws2['B4'] = results['audit_timestamp']
-    ws2['A5'] = "Total Issues:"
-    ws2['B5'] = row_num - 2
-    for r in range(3, 6):
+    ws2['A3'] = "Health Score:"
+    ws2['B3'] = f"{results.get('overall_score', 'N/A')}/100"
+    ws2['B3'].font = Font(bold=True, name="Arial", size=12)
+    ws2['A4'] = "File:"
+    ws2['B4'] = results['input_file']
+    ws2['A5'] = "Audit Date:"
+    ws2['B5'] = results['audit_timestamp']
+    ws2['A6'] = "Total Issues:"
+    ws2['B6'] = row_num - 2
+    for r in range(3, 7):
         ws2.cell(row=r, column=1).font = Font(
             bold=True, name="Arial", size=10,
         )
+        if r != 3:
+            ws2.cell(row=r, column=2).font = Font(
+                name="Arial", size=10,
+            )
+
+    r = 8
+    for sname, sdata in results['sheets'].items():
+        ws2.cell(row=r, column=1, value=f"Sheet: {sname}")
+        ws2.cell(row=r, column=1).font = Font(
+            bold=True, name="Arial", size=10,
+        )
+        ws2.cell(
+            row=r, column=2,
+            value=f"Score: {sdata.get('health_score', 'N/A')}/100",
+        )
         ws2.cell(row=r, column=2).font = Font(name="Arial", size=10)
+        r += 1
 
     ws2.column_dimensions['A'].width = 16
     ws2.column_dimensions['B'].width = 40

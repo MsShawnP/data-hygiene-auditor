@@ -88,8 +88,13 @@ Outputs three files:
 
     results = run_audit(args.input)
     sheet_count = len(results['sheets'])
-    for i, name in enumerate(results['sheets'], 1):
-        print(f"  [{i}/{sheet_count}] Analyzed sheet: {_c(name, '36')}")
+    for i, (name, sdata) in enumerate(results['sheets'].items(), 1):
+        score = sdata['health_score']
+        score_color = '32' if score >= 90 else ('33' if score >= 70 else '31')
+        print(
+            f"  [{i}/{sheet_count}] Analyzed sheet: {_c(name, '36')}"
+            f"  (score: {_c(str(score), score_color)})"
+        )
 
     html_path = os.path.join(
         args.output, f"{basename}_audit_report.html",
@@ -135,12 +140,14 @@ Outputs three files:
     med = severity_totals.get('Medium', 0)
     low = severity_totals.get('Low', 0)
 
+    overall = results['overall_score']
+    score_color = '32' if overall >= 90 else ('33' if overall >= 70 else '31')
     print(
-        f"\n  Audit complete:"
-        f" {_c(str(total_issues) + ' issues found', '1')}"
+        f"\n  Health Score: {_c(str(overall) + '/100', score_color)}"
     )
     print(
-        f"    {_c(f'High: {high}', '31')}"
+        f"  {_c(str(total_issues) + ' issues found', '1')}"
+        f"  —  {_c(f'High: {high}', '31')}"
         f" | {_c(f'Medium: {med}', '33')}"
         f" | {_c(f'Low: {low}', '32')}\n"
     )
