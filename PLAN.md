@@ -2,7 +2,7 @@
 
 **Source:** Full project audit (2025-05-15)
 **Tier:** Medium
-**Status:** Complete — all sprints + stretch goal shipped (PRs #1-#6, 2025-05-15)
+**Status:** Complete — all sprints, stretch goals, and optimization shipped (PRs #1-#9, 2025-05-15)
 
 ---
 
@@ -345,20 +345,21 @@ Phase 3: Most Python tools (ydata-profiling, pandera, Great Expectations) are im
 
 ---
 
-## Future / Stretch
+## Completed Stretch Goals
 
-### Goal: AI-Powered Fix Suggestions
-**Category:** Leapfrog
-**Priority:** 13 (stretch)
+### Vectorize Detection (PR #9)
+- All 6 detection functions vectorized with pandas `.str` methods
+- 100K-row benchmark: 18.6s -> 5.5s (3.4x speedup)
 
-#### Objective
-Generate actionable fix scripts or transformation suggestions for each finding.
+### Schema Validation (PR #9)
+- `--schema` flag for type/completeness/required validation
+- `--generate-schema` to bootstrap from inferred types
+- Shorthand + full form JSON, global + per-sheet overrides
 
-#### Success Criteria
-- For mixed formats: suggest a normalization script (e.g., "standardize all phones to (XXX) XXX-XXXX")
-- For placeholders: suggest replacement strategy
-- For duplicates: suggest merge/dedup approach
-- Output as copyable code snippets in the HTML report
+### Trend Comparison (PR #9)
+- `--baseline` flag compares current audit against previous JSON output
+- Score deltas, issue deltas, per-sheet breakdown, new/removed sheet detection
 
-#### Context
-Phase 3 Category Trends: AI-powered fix suggestions are emerging but nobody does them well. This is the leapfrog opportunity — but only after foundation and presentation are solid.
+### Fix Suggestions (PR #6)
+- Deterministic pandas code templates per finding
+- Copy-to-clipboard in HTML report

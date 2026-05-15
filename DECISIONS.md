@@ -24,3 +24,23 @@
 **Context:** Interactive HTML report needs filters, search, collapsible sections.
 **Decision:** All CSS and JS inline in one HTML file. No external dependencies, no build step.
 **Rationale:** Report must be shareable as a single file (email, Slack, etc.). Client-side JS means no server needed. Dark theme with accent color matches the audit-tool aesthetic.
+
+## 2025-05-15: Vectorize detection — pandas .str over Python loops
+**Context:** 100K-row benchmark showed 18.6s runtime, with all 6 detection functions bottlenecked on per-element Python iteration.
+**Decision:** Replace all `[str(v) for v in values]` patterns with `Series.dropna().astype(str).str.strip()` and `Series.str.match()`. Replace `df.apply(lambda col: col.map(normalize))` with chained `.str` operations.
+**Rationale:** 3.4x speedup (18.6s → 5.5s) with zero behavioral changes. Pandas vectorized string ops delegate to compiled C — the improvement is free once you match the API.
+
+## 2025-05-15: Schema validation — shorthand + full form JSON
+**Context:** Needed a schema format for validating expected column types, required columns, and completeness thresholds.
+**Decision:** JSON schema with shorthand (`"col": "type"`) and full form (`"col": {"type": "phone", "required": true, "max_missing_pct": 5.0}`). Global columns with per-sheet overrides under `"sheets"`.
+**Rationale:** Shorthand lowers the entry barrier — users can start with `{"columns": {"Phone": "phone"}}` and add constraints incrementally. Per-sheet overrides handle multi-sheet Excel files where the same column name has different semantics.
+
+## 2025-05-15: Trend comparison — baseline JSON approach
+**Context:** Users want to track data quality over time. Options: embedded database, file-pair comparison, or persistent store.
+**Decision:** Compare current audit against a previous `--json` output passed via `--baseline`. No database, no state management.
+**Rationale:** Stateless design — the user controls storage. Works with any CI pipeline (save JSON as artifact, pass to next run). Zero new dependencies. Handles new/removed sheets gracefully.
+
+## 2025-05-15: CLI output — ASCII-only for Windows compatibility
+**Context:** Trend display initially used Unicode arrows (↑↓) which fail on Windows cp1252 terminals.
+**Decision:** Use `+N`/`-N` format in CLI. Keep Unicode in HTML reports (which declare UTF-8).
+**Rationale:** The project runs on Windows. Terminal encoding limits are real. HTML has no such constraint.
