@@ -1,39 +1,23 @@
 # Handoff
 
-## Current State
-**Date:** 2025-05-15
-**Phase:** Complete — all 4 sprints + stretch goal shipped and merged (PRs #1-#6)
+## 2026-05-16 18:50
 
-## What Was Done
+**Started from:** Sprints 5-7 merged (PR #10). `--export-fixes` implemented but uncommitted.
 
-Full project improvement process: 4-phase audit → 4-sprint plan → implementation → stretch goal.
+**Did:** Shipped Sprints 8-10: mypy CI + type fixes (PR #11), PyPI publish workflow + "data linter" positioning (PR #11), published v1.0.0 to PyPI, bumped to v1.1.0 with n-gram blocking for fuzzy matching 500→50K rows (PR #12), published v1.1.0 to PyPI.
 
-### PRs Shipped
-1. **#1** Sprint 1 — Bug fixes, CSV/TSV support, colored CLI, pyproject.toml
-2. **#2** Sprint 2a — 73-test pytest suite, GitHub Actions CI, ruff linting
-3. **#3** Sprint 2b — Package restructure (monolith → 7 modules with backward-compatible shim)
-4. **#4** Sprint 3 — Health score (0-100), interactive HTML (filters/search/TOC/collapsible), vectorized perf
-5. **#5** Sprint 4 — Fuzzy duplicate matching (fingerprint + Levenshtein), typed Python API (`audit_file()`)
-6. **#6** Stretch — Fix suggestion engine (pandas code snippets per finding, copy-to-clipboard in HTML)
+**State:** v1.1.0 live on PyPI (`pip install data-hygiene-auditor`). 220 tests, ruff + mypy clean. CI: lint → type check → tests. Automated release: push `v*` tag → publish. All audit items complete.
 
-### Key Artifacts
-- `data_hygiene_auditor/` — 8 modules: `__init__`, `api`, `cli`, `core`, `detection`, `suggestions`, `reporting/{html,excel,pdf}`
-- `audit.py` — thin backward-compatible shim
-- `tests/` — 141 tests across 5 files
-- `.github/workflows/ci.yml` — lint + test on push
-- `AUDIT.md` — full 4-phase audit results
-- `PLAN.md` — improvement plan (all items complete)
-- `DECISIONS.md` — key architectural decisions
+**Next:** Project shipped. Options: use on real consulting data, collect feedback, create GitHub Release with notes for v1.1.0, or move to another project.
 
-### Test Coverage
-- 141 tests: detection engines, integration, edge cases, API, fuzzy matching, suggestions, report generation
-- All pass on latest main
+---
 
-## What's Next (if continuing)
-- Update README with library usage examples (`audit_file()` API)
-- Add type stubs or py.typed marker for IDE support
-- Consider `--threshold` CLI flag to expose fuzzy matching sensitivity
-- Performance: benchmark on 100K+ row files, optimize if needed
-- The audit identified additional stretch goals not yet started:
-  - Schema validation rules (define expected types per column)
-  - Trend analysis (compare audits over time)
+## 2025-05-15
+
+**Started from:** Fresh project — single-file CLI, no tests, no packaging.
+
+**Did:** Full audit → 4-sprint plan → implementation → stretch goal (PRs #1-#6). Then re-audit → Sprints 5-7 (PR #7-#10): bug fixes, custom rules, profiling, multi-file, CI, schema validation, trend comparison.
+
+**State:** All planned features complete. 212 tests, CI green.
+
+**Next:** PyPI publication, type checking, fuzzy scaling.

@@ -24,3 +24,15 @@
 **Context:** Interactive HTML report needs filters, search, collapsible sections.
 **Decision:** All CSS and JS inline in one HTML file. No external dependencies, no build step.
 **Rationale:** Report must be shareable as a single file (email, Slack, etc.). Client-side JS means no server needed. Dark theme with accent color matches the audit-tool aesthetic.
+
+## 2026-05-16: N-gram blocking for fuzzy matching (50K limit)
+**Context:** Brute-force pairwise Levenshtein is O(n²) — caps at 500 rows. Needed to scale without adding external dependencies.
+**Decision:** Use character trigram inverted index to generate candidate pairs, reducing comparisons to near-linear. Limit raised from 500 to 50,000 rows. Brute-force still used for ≤500 rows where it's faster than building the index.
+**Rationale:** N-gram blocking preserves the "no external deps" decision while making fuzzy matching usable on real consulting datasets (typically 5K–50K rows).
+**Do not:** Remove the 50K cap without profiling — beyond that, even blocked pairs may overwhelm memory. If needed, switch to LSH or external dedup library.
+
+## 2026-05-16: Keep "data-hygiene-auditor" as package name
+**Context:** Considered renaming after PyPI publication. "data-hygiene-auditor" felt long; "lint" terminology felt too technical for non-developer users. Alternatives considered: "datalint-excelsheet-scan" and others.
+**Decision:** Keep "data-hygiene-auditor" as-is.
+**Rationale:** Already published on PyPI, established in GitHub, and "hygiene" communicates the consulting-oriented positioning. Alternatives were either too technical ("lint") or too narrow. Name change after PyPI publication is costly (new package + deprecation notice on old).
+**Do not:** Rename without a migration plan — PyPI doesn't allow renames; would need a new package with deprecation notice on the old one.
