@@ -29,5 +29,8 @@ jobs:
       - name: Lint with ruff
         run: ruff check .
 
+      - name: Type check with mypy
+        run: mypy data_hygiene_auditor/
+
       - name: Run tests
         run: pytest -v

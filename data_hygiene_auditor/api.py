@@ -14,9 +14,10 @@ Usage::
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -42,7 +43,7 @@ class Finding:
     severity: str
     description: str
     why: str
-    detail: Dict[str, Any] = field(default_factory=dict)
+    detail: Dict[str, Any] = dataclasses.field(default_factory=dict)
     fix: Optional[FixSuggestion] = None
 
     @property
@@ -67,7 +68,7 @@ class Duplicate:
     rows: List[int]
     group_size: int
     why: str
-    sample_data: List[Dict[str, str]] = field(default_factory=list)
+    sample_data: List[Dict[str, str]] = dataclasses.field(default_factory=list)
     fix: Optional[FixSuggestion] = None
 
 
@@ -80,8 +81,8 @@ class FuzzyDuplicate:
     rows: List[int]
     group_size: int
     why: str
-    field_differences: Dict[str, Any] = field(default_factory=dict)
-    sample_data: List[Dict[str, str]] = field(default_factory=list)
+    field_differences: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    sample_data: List[Dict[str, str]] = dataclasses.field(default_factory=list)
     similarity_threshold: Optional[float] = None
     fix: Optional[FixSuggestion] = None
 
@@ -115,7 +116,7 @@ class FieldResult:
     total_missing: int
     missing_pct: float
     total_rows: int
-    findings: List[Finding] = field(default_factory=list)
+    findings: List[Finding] = dataclasses.field(default_factory=list)
     profile: Optional[ColumnProfile] = None
 
 
@@ -127,10 +128,10 @@ class SheetResult:
     row_count: int
     col_count: int
     health_score: int
-    fields: List[FieldResult] = field(default_factory=list)
-    duplicates: List[Duplicate] = field(default_factory=list)
-    fuzzy_duplicates: List[FuzzyDuplicate] = field(default_factory=list)
-    schema_violations: List[SchemaViolation] = field(default_factory=list)
+    fields: List[FieldResult] = dataclasses.field(default_factory=list)
+    duplicates: List[Duplicate] = dataclasses.field(default_factory=list)
+    fuzzy_duplicates: List[FuzzyDuplicate] = dataclasses.field(default_factory=list)
+    schema_violations: List[SchemaViolation] = dataclasses.field(default_factory=list)
 
     @property
     def findings(self) -> List[Finding]:
@@ -157,9 +158,9 @@ class AuditResult:
     input_file: str
     audit_timestamp: str
     overall_score: int
-    sheets: List[SheetResult] = field(default_factory=list)
+    sheets: List[SheetResult] = dataclasses.field(default_factory=list)
     trend: Optional[TrendData] = None
-    _raw: Dict[str, Any] = field(default_factory=dict, repr=False)
+    _raw: Dict[str, Any] = dataclasses.field(default_factory=dict, repr=False)
 
     @property
     def total_issues(self) -> int:
@@ -231,7 +232,7 @@ class SchemaViolation:
     severity: str
     column: str
     why: str
-    detail: Dict[str, Any] = field(default_factory=dict)
+    detail: Dict[str, Any] = dataclasses.field(default_factory=dict)
 
 
 @dataclass
@@ -244,8 +245,8 @@ class TrendData:
     overall_score_previous: int
     total_issues_delta: int
     total_issues_previous: int
-    severity_deltas: Dict[str, int] = field(default_factory=dict)
-    sheets: Dict[str, Any] = field(default_factory=dict)
+    severity_deltas: Dict[str, int] = dataclasses.field(default_factory=dict)
+    sheets: Dict[str, Any] = dataclasses.field(default_factory=dict)
 
 
 def _describe_issue(issue_type: str, detail: dict) -> str:
@@ -257,7 +258,7 @@ def _describe_issue(issue_type: str, detail: dict) -> str:
             f" deviate from {detail.get('dominant_format', '')}"
         )
     if issue_type == 'wrong_purpose':
-        return detail.get('issue', 'Wrong purpose')
+        return str(detail.get('issue', 'Wrong purpose'))
     if issue_type in ('placeholder_value', 'placeholder'):
         return (
             f"Placeholder \"{detail.get('value', '')}\" found"

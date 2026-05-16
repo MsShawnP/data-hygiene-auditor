@@ -20,7 +20,7 @@ def load_schema(path):
     with open(path) as f:
         raw = json.load(f)
 
-    schema = {'columns': {}, 'sheets': {}}
+    schema: dict = {'columns': {}, 'sheets': {}}
 
     for col, spec in raw.get('columns', {}).items():
         schema['columns'][col] = _normalize_spec(spec)
@@ -65,7 +65,7 @@ def generate_schema(results):
 
 def validate_schema(sheet_data, schema, sheet_name):
     """Validate a sheet against a schema. Returns list of violation dicts."""
-    findings = []
+    findings: list[dict] = []
 
     col_specs = dict(schema.get('columns', {}))
     sheet_spec = schema.get('sheets', {}).get(sheet_name, {})

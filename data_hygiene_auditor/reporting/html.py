@@ -29,7 +29,7 @@ def _render_fix(fix):
     )
 
 
-def generate_html(results, output_path):
+def generate_html(results: dict, output_path: str) -> str:
     """Generate a client-readable HTML report."""
     counts = count_issues(results)
     total_issues = counts.get('total', 0)

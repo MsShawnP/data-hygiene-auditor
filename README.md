@@ -1,8 +1,15 @@
 # Data Hygiene Auditor
 
+**A linter for your data.** Point it at a spreadsheet, get back every inconsistency, placeholder, and hidden duplicate — with severity ratings, root causes, and fix code.
+
+```
+pip install data-hygiene-auditor
+data-hygiene-audit --input customers.xlsx --output ./reports
+```
+
 Phone numbers stored seven different ways in the same column. "TBD" sitting in a status field for three years. A customer record that looks unique until you notice that whitespace and casing are the only things separating it from four others. These are the issues consultants inherit when they take over someone else's spreadsheet — and the ones nobody finds until they're already in production.
 
-The Data Hygiene Auditor is a Python CLI that scans Excel workbooks for the specific real-world failure modes that show up in actual consulting engagements: mixed-format inconsistencies, fields used for the wrong purpose, placeholder values that escaped into production, and phantom duplicates hiding behind cosmetic differences.
+The Data Hygiene Auditor scans Excel, CSV, and TSV files for the specific real-world failure modes that show up in actual consulting engagements: mixed-format inconsistencies, fields used for the wrong purpose, placeholder values that escaped into production, and phantom duplicates hiding behind cosmetic differences.
 
 A single run produces three reports tailored to three audiences: an **HTML report** for the stakeholder meeting, an **Excel findings file** for the person doing the cleanup, and a **PDF** for the deliverable folder.
 
@@ -73,13 +80,13 @@ python audit.py --input samples/input/sample_messy_data.xlsx --output samples/ou
 ## Installation
 
 ```
+pip install data-hygiene-auditor
+```
+
+Or install from source:
+
+```
 pip install .
-```
-
-Or install dependencies directly:
-
-```
-pip install -r requirements.txt
 ```
 
 ## Usage
@@ -109,6 +116,7 @@ Supports `.xlsx`, `.xls`, `.csv`, and `.tsv` files.
 | `--baseline`, `-b` | Path to a previous audit JSON for trend comparison (shows deltas) |
 | `--rules`, `-r` | Path to custom rules JSON for additional checks |
 | `--sarif` | Output findings in SARIF format (for GitHub Code Scanning) |
+| `--export-fixes` | Export remediation plan as CSV (sorted by severity, with fix code) |
 | `--fail-under` | Exit with code 1 if health score is below this threshold (0-100) |
 | `--quiet`, `-q` | Suppress all terminal output (just write report files) |
 | `--force` | Process files exceeding the 2M row safety limit |
@@ -289,6 +297,20 @@ python generate_sample.py
 - pandas
 - openpyxl
 - reportlab
+
+## Releasing
+
+To publish a new version to PyPI:
+
+1. Update `version` in `pyproject.toml`
+2. Add a release entry to `CHANGELOG.md`
+3. Commit, tag, and push:
+   ```
+   git tag v1.1.0
+   git push origin v1.1.0
+   ```
+
+The `publish.yml` workflow builds, tests, and uploads to PyPI automatically on version tags.
 
 ## License
 

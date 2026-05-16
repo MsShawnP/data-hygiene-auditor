@@ -6,7 +6,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 
-def generate_excel(results, output_path):
+def generate_excel(results: dict, output_path: str) -> str:
     """Generate sortable/filterable Excel findings file."""
     wb = Workbook()
     ws = wb.active

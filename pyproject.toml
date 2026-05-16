@@ -5,19 +5,26 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "data-hygiene-auditor"
 version = "1.0.0"
-description = "Detect data quality issues in Excel and CSV files — mixed formats, misused fields, placeholder floods, and phantom duplicates"
+description = "A linter for your data — detect mixed formats, misused fields, placeholder floods, and phantom duplicates in Excel and CSV files"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
 authors = [
     {name = "Lailara LLC"},
 ]
-keywords = ["data-quality", "excel", "csv", "audit", "data-hygiene", "data-profiling"]
+keywords = ["data-quality", "data-linter", "excel", "csv", "audit", "data-hygiene", "data-profiling", "data-validation"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 dependencies = [
@@ -27,7 +34,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.4"]
+dev = ["pytest>=8.0", "ruff>=0.4", "mypy>=1.10", "pandas-stubs>=2.0"]
 
 [tool.setuptools.packages.find]
 include = ["data_hygiene_auditor*"]
@@ -41,6 +48,24 @@ data-hygiene-audit = "data_hygiene_auditor.cli:main"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.mypy]
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "data_hygiene_auditor.api"
+disallow_untyped_defs = true
+warn_return_any = true
+
+[[tool.mypy.overrides]]
+module = "data_hygiene_auditor.rules"
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["data_hygiene_auditor.reporting.*", "data_hygiene_auditor.cli"]
+check_untyped_defs = false
+
 [tool.ruff]
 target-version = "py39"
 line-length = 120
@@ -52,3 +77,5 @@ select = ["E", "F", "W", "I"]
 [project.urls]
 Homepage = "https://github.com/MsShawnP/Data-Hygiene-Auditor"
 Repository = "https://github.com/MsShawnP/Data-Hygiene-Auditor"
+Issues = "https://github.com/MsShawnP/Data-Hygiene-Auditor/issues"
+Changelog = "https://github.com/MsShawnP/Data-Hygiene-Auditor/blob/main/CHANGELOG.md"

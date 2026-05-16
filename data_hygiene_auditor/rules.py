@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import pandas as pd
+
 VALID_CONDITIONS = {
     'regex_match',
     'not_regex_match',
@@ -152,7 +154,7 @@ def _parse_rule(entry: Dict[str, Any], index: int) -> Rule:
     )
 
 
-def evaluate_rule(rule: Rule, series, col_name: str) -> Optional[Dict[str, Any]]:
+def evaluate_rule(rule: Rule, series: pd.Series, col_name: str) -> Optional[Dict[str, Any]]:
     """Evaluate a single rule against a column. Returns a finding dict or None."""
     if not rule.matches_column(col_name):
         return None

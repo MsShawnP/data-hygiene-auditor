@@ -86,7 +86,7 @@ def count_issues(results):
     Returns dict with keys: 'total', 'High', 'Medium', 'Low', 'schema'.
     """
     from collections import Counter
-    totals = Counter()
+    totals: Counter[str] = Counter()
     schema_count = 0
     for sheet in results['sheets'].values():
         for field_data in sheet['fields'].values():
@@ -145,7 +145,7 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
         if df.empty:
             continue
 
-        sheet_results = {
+        sheet_results: dict = {
             'row_count': len(df),
             'col_count': len(df.columns),
             'fields': {},
