@@ -36,6 +36,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Minimum Python version raised from 3.8 to 3.9
 - mypy type checking added to CI (public API and rules module strictly typed)
 - PyPI classifiers expanded (license, Python versions, `Typing :: Typed`)
+- Automated PyPI publish workflow (push `v*` tag → build → test → publish)
+- README refreshed with "data linter" positioning and quick-start install
 
 ## [1.0.0] - 2026-05-09
 
