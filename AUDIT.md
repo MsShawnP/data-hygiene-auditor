@@ -290,3 +290,200 @@ Move #13. AI-powered fix suggestions. Only attempt after the foundation and pres
 - **Don't build a GUI/web app yet.** The interactive HTML report gives you most of the "explorable" benefit without the deployment/hosting/auth complexity. A web app is a different product.
 - **Don't chase pipeline integration** (dbt, Airflow, CI). Your audience is consultants with spreadsheets, not data engineers with warehouses. Pipeline integration dilutes your focus without serving your users.
 - **Don't refactor before testing.** The temptation is to restructure first (it's messy!), but write tests against the current behavior first. Then refactor with confidence.
+
+---
+
+# Audit Round 2 (2026-05-16)
+
+All items from the 2025 audit were shipped (PRs #1-#9). This round assesses the project's current state after that work, with fresh landscape data.
+
+## Phase 1: Baseline Assessment (2026)
+**Date:** 2026-05-16
+**Project:** Data Hygiene Auditor v1.0.0
+
+### What Exists Today
+
+A well-structured Python CLI + library (10 modules, ~3,750 LOC) that scans Excel/CSV/TSV files for data quality issues and produces interactive HTML, Excel, and PDF reports. Features shipped since last audit: schema validation, trend comparison, vectorized detection (3.4x speedup), fuzzy duplicate matching, typed Python API, health scores, interactive HTML, fix suggestions.
+
+### Current Architecture
+
+| Module | LOC | Purpose |
+|--------|-----|---------|
+| `detection.py` | 654 | 7 detection engines |
+| `reporting/html.py` | 841 | Interactive HTML report |
+| `reporting/pdf.py` | 418 | PDF deliverable |
+| `reporting/excel.py` | 335 | Excel findings file |
+| `api.py` | 412 | Typed Python API (dataclasses) |
+| `core.py` | 292 | Orchestrator + data loading |
+| `suggestions.py` | 285 | Fix suggestion engine |
+| `cli.py` | 202 | CLI with colored output |
+| `schema.py` | 144 | Schema validation |
+| `trend.py` | 103 | Trend comparison |
+| **Tests** | 1,576 | 167 tests across 8 files |
+
+### Health Indicators
+
+| Dimension | Status |
+|-----------|--------|
+| Tests | 167 passing, all detection engines covered |
+| CI | GitHub Actions: ruff + pytest on 3.9/3.12/3.13 |
+| Packaging | pyproject.toml, pip-installable, `data-hygiene-audit` CLI |
+| API | `audit_file()` with typed dataclasses, py.typed marker |
+| Docs | Comprehensive README with screenshots and library examples |
+| Performance | Vectorized detection, 3.4x improvement on large files |
+
+### Gap Analysis
+
+**Resolved from 2025 audit:** CSV support, tests, CI, packaging, interactive HTML, health score, vectorized perf, fuzzy matching, typed API, fix suggestions, schema validation, trend comparison — all shipped.
+
+**Remaining or new issues:**
+1. CLI under-counts issues (missing fuzzy duplicates in total)
+2. `_raw` attribute set outside dataclass `__init__` — type-unsafe
+3. Tests import via backward-compat shim, not package directly
+4. No type checker in CI despite py.typed marker
+5. Python 3.8 claimed but untested
+6. Fuzzy matching silently skipped above 500 rows
+7. No CHANGELOG or release tags
+
+## Phase 2: Internal Review (2026)
+**Date:** 2026-05-16
+**Dimensions:** Code Quality, Architecture, Tests, Documentation, Performance, Security, UX, DevEx
+
+### Top Opportunities
+
+| # | Finding | Dimension | Impact | Effort | Leverage | Severity |
+|---|---------|-----------|--------|--------|----------|----------|
+| 1 | CLI missing fuzzy_duplicates in issue count — under-reports total | Code Quality | 3 | 1 | 3.0 | bug |
+| 2 | `AuditResult._raw` monkey-patched outside `__init__` | Code Quality | 4 | 1 | 4.0 | important |
+| 3 | Issue-counting logic still duplicated 3x (cli, html, excel) | Code Quality | 3 | 1 | 3.0 | important |
+| 4 | `requires-python >= 3.8` but CI tests 3.9+ only | DevEx | 3 | 1 | 3.0 | important |
+| 5 | Tests import from `audit` shim, not `data_hygiene_auditor` | Tests | 3 | 2 | 1.5 | important |
+| 6 | No type checker in CI despite py.typed marker | DevEx | 3 | 2 | 1.5 | important |
+| 7 | Levenshtein O(n²) hard-capped at 500 rows — silently skips | Performance | 3 | 3 | 1.0 | important |
+| 8 | No file size guard — OOM on large crafted input | Security | 3 | 2 | 1.5 | important |
+| 9 | `_load_sheets` exported in public `__all__` | Architecture | 2 | 1 | 2.0 | minor |
+| 10 | `--schema`/`--baseline` undocumented in README options table | Documentation | 2 | 1 | 2.0 | minor |
+| 11 | No `--quiet`/`--version` flags | UX | 2 | 1 | 2.0 | minor |
+| 12 | No CHANGELOG | Documentation | 2 | 1 | 2.0 | minor |
+
+### Summary
+
+The project is in strong shape. The 2025 audit's critical issues (monolith, no tests, XSS, no CSV, no packaging) are all resolved. What remains is polish-tier work: a counting bug, a type safety issue, test import paths, and CI completeness. The architecture is clean and the detection logic is solid.
+
+## Phase 3: Landscape Scan (2026)
+**Date:** 2026-05-16
+**Method:** Web research (verified through May 2026)
+
+### Key Landscape Changes (2025 → 2026)
+
+1. **ydata-profiling rebranded to fg-data-profiling** (v4.19.1, Apr 2026). Package/import renamed. Signals stewardship instability.
+2. **GX added ExpectAI** — AI-generated expectations from data patterns. Possible acquisition May 2026 (unconfirmed).
+3. **Data contracts became dominant framing** — Soda Core repositioned as "Data Contracts engine." Irrelevant to file-audit use case.
+4. **Enterprise consolidation** — Metaplane → Datadog, SYNQ → Coalesce, Select Star → Snowflake. Affects $50K+ tier only.
+5. **AI/LLM integration is commercial-tier only** — ExpectAI, SodaGPT. No OSS tool has AI fix suggestions. Window still open.
+6. **DQX (Databricks Labs)** — new PySpark-native DQ framework. Not relevant to file-based auditing.
+7. **DQOps** — OSS + commercial ($499/mo). 150+ built-in checks. Warehouse-only, no file support.
+
+### Competitive Position (2026)
+
+**Unique to this project (confirmed still unmatched):**
+- Placeholder/test data detection
+- Misused field detection (cross-column semantic validation)
+- Triple output format (HTML + Excel + PDF)
+- Severity ratings + plain-English explanations for non-technical stakeholders
+- Health score (0-100)
+- Deterministic fix suggestions with copy-paste code
+- Schema validation + trend comparison (closes previous gaps)
+
+**The consultant gap remains completely unoccupied.** Every competitor is a warehouse connector for engineers, a profiler for data scientists, or an interactive GUI for researchers. No tool takes a file and produces a credentialed audit report with severity ratings and fix language for a client meeting.
+
+### Feature Parity Check
+
+| Table Stakes | Status |
+|-------------|--------|
+| CSV/TSV support | ✅ Shipped |
+| Null/completeness analysis | ✅ |
+| CLI + Python API | ✅ Both |
+| Large file handling (100K+) | 🟡 Vectorized but fuzzy capped at 500 |
+| Interactive report | ✅ Filters, search, TOC, collapsible |
+
+## Phase 4: Differentiation & Next Moves (2026)
+**Date:** 2026-05-16
+
+### Cross-Reference Summary
+
+The situation has inverted since the 2025 audit. A year ago, the project had strong detection but weak everything else. Now:
+- **Foundation:** solid (tests, CI, packaging, clean architecture)
+- **Presentation:** strong (interactive HTML, health score ring, fix suggestions)
+- **Detection:** comprehensive (7 engines + schema + trend)
+- **Competitive position:** unique and uncontested
+
+The remaining work is no longer transformative — it's **incremental quality improvements and strategic positioning**. The highest-impact moves are now about reach (getting the tool in front of users) and polish (fixing the few rough edges that undermine professional credibility).
+
+### Ranked Next Moves
+
+| # | Move | Category | Strategic | Internal | Effort | Score | Description |
+|---|------|----------|-----------|----------|--------|-------|-------------|
+| 1 | Fix CLI fuzzy dup counting bug | Correctness | 1 | 4 | 1 | 5.0 | CLI under-reports total issues by omitting fuzzy duplicates from count. One missing loop. |
+| 2 | Fix `_raw` type safety | Code Quality | 1 | 3 | 1 | 4.0 | Move `_raw` into `AuditResult.__init__` as a proper field. Fixes mypy, IDE autocomplete. |
+| 3 | Extract shared issue-counting helper | Code Quality | 1 | 3 | 1 | 4.0 | Single function used by CLI, HTML, and Excel. Prevents future counting bugs. |
+| 4 | Document `--schema`/`--baseline` in README | Documentation | 2 | 2 | 1 | 4.0 | Features exist but aren't discoverable in README options table. |
+| 5 | Add `--version` and `--quiet` flags | UX | 2 | 2 | 1 | 4.0 | Professional CLI conventions. `--quiet` enables scripted/CI usage. |
+| 6 | Align Python version (drop 3.8 claim or add CI) | DevEx | 2 | 3 | 1 | 5.0 | Either add 3.8 to CI matrix or bump requires-python to >=3.9. |
+| 7 | Add mypy/pyright to CI | DevEx | 2 | 3 | 2 | 2.5 | py.typed marker promises type safety — CI should enforce it. |
+| 8 | Migrate test imports to `data_hygiene_auditor` | Tests | 1 | 3 | 2 | 2.0 | Tests should exercise the package, not the backward-compat shim. |
+| 9 | Warn when fuzzy matching is skipped (>500 rows) | UX | 3 | 2 | 1 | 5.0 | User should know a detection pass was omitted on large sheets. |
+| 10 | Scale fuzzy matching beyond 500 rows | Performance | 4 | 3 | 3 | 2.3 | Locality-sensitive hashing or blocking strategy to handle 10K+ rows. |
+| 11 | Add CHANGELOG and release tagging | DevEx | 3 | 2 | 1 | 5.0 | Version tracking for users. Signal active maintenance. |
+| 12 | PyPI publication | Reach | 5 | 1 | 2 | 3.0 | `pip install data-hygiene-auditor` from anywhere. Major discoverability boost. |
+| 13 | "Data linter" positioning + README refresh | Reach | 4 | 1 | 2 | 2.5 | Adopt the "linter for data" framing that resonates with the developer audience. Keywords for discoverability. |
+| 14 | File size guard / row limit warning | Security | 2 | 2 | 1 | 4.0 | Warn at 500K rows, refuse at 2M unless `--force`. Prevents OOM. |
+| 15 | Remove `_load_sheets` from public `__all__` | Architecture | 1 | 2 | 1 | 3.0 | Private helper shouldn't be in the public API surface. |
+
+### Recommended Sequence
+
+**Sprint 5: Bug Fixes & Polish (half day)**
+Moves #1-6, #9, #11, #14, #15. All effort-1 items. Brings the project to "no rough edges" state.
+- Fix CLI counting bug
+- Fix `_raw` type safety
+- Extract issue-counting helper
+- Document `--schema`/`--baseline` in README
+- Add `--version` and `--quiet`
+- Align Python version requirement
+- Warn on skipped fuzzy matching
+- Add CHANGELOG
+- File size guard
+- Remove `_load_sheets` from `__all__`
+
+**Sprint 6: Engineering Rigor (1 day)**
+Moves #7, #8. Type checking + test migration.
+- Add mypy/pyright to CI
+- Migrate test imports to package
+
+**Sprint 7: Reach (1-2 days)**
+Moves #12, #13. Get the tool in front of users.
+- Publish to PyPI
+- README refresh with "data linter" positioning
+
+**Sprint 8: Scale (2-3 days)**
+Move #10. Requires algorithmic work.
+- Scale fuzzy matching with LSH or blocking
+
+### What NOT to Do (2026 Update)
+
+Previous "don't do" items that were done anyway and **worked out:**
+- ~~Don't add schema validation~~ → Added (PR #9). Lightweight, optional, complements rather than competes with GX/pandera. **Correct call to add it.**
+
+Updated guidance:
+- **Don't add statistical profiling.** fg-data-profiling still owns this despite the rebrand. Your strength is consulting-specific findings.
+- **Don't build a web app.** The interactive HTML file is self-contained, shareable, and zero-deployment. A server-side app is a different product for a different audience.
+- **Don't chase pipeline integration.** The market moved further toward warehouse-native observability (DQOps, Soda, GX Cloud). That's their game. Yours is file-native audit reports.
+- **Don't add LLM-powered features yet.** The deterministic fix suggestions already work well. LLM adds latency, API key requirements, and cost for marginal improvement. Revisit when local models are fast enough to run offline.
+- **Don't over-engineer the fuzzy cap.** The 500-row Levenshtein cap is a reasonable default for spreadsheet-sized data. Add a warning, not a complex distributed algorithm. Only invest in scaling if real users hit the limit.
+- **Don't compete on star count or downloads.** The niche is small but uncontested. One glowing testimonial from a consultant who used it on a real engagement is worth more than 1K GitHub stars from drive-by visitors.
+
+### Strategic Summary
+
+The project has successfully executed its transformation from "Claude Chat artifact" to "genuinely differentiated tool." The 2025 audit's thesis — that the detection was the moat but needed a stage — has been validated. The stage is now built. The next phase is about **credibility and reach**: fixing the remaining rough edges, publishing to PyPI, and positioning the tool where its target audience (consultants, analysts, data teams inheriting messy spreadsheets) can find it.
+
+The competitive landscape has moved *away* from this project's niche (toward warehouse observability and data contracts), which is strategically favorable — it means less competition, not more. The window for "file-native, consultant-focused, severity-rated audit reports" remains wide open with no credible competitor in 2026.

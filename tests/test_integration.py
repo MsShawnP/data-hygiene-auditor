@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 
 from audit import _load_sheets, generate_excel, generate_html, generate_pdf, run_audit
+from data_hygiene_auditor.core import count_issues
 
 SAMPLE_PATH = Path(__file__).parent.parent / "samples" / "input" / "sample_messy_data.xlsx"
 
@@ -168,3 +169,54 @@ class TestEdgeCases:
             assert len(results["sheets"]) == 1
         finally:
             os.unlink(f.name)
+
+
+class TestCountIssues:
+    def test_counts_all_issue_sources(self):
+        results = run_audit(str(SAMPLE_PATH))
+        counts = count_issues(results)
+        assert counts['total'] == counts.get('High', 0) + counts.get('Medium', 0) + counts.get('Low', 0)
+        assert counts['total'] > 0
+
+    def test_matches_manual_count(self):
+        results = run_audit(str(SAMPLE_PATH))
+        counts = count_issues(results)
+        manual_total = 0
+        for sheet in results["sheets"].values():
+            for field in sheet["fields"].values():
+                manual_total += len(field["issues"])
+            manual_total += len(sheet["phantom_duplicates"])
+            manual_total += len(sheet.get("fuzzy_duplicates", []))
+            manual_total += len(sheet.get("schema_violations", []))
+        assert counts['total'] == manual_total
+
+    def test_includes_fuzzy_duplicates(self):
+        results = run_audit(str(SAMPLE_PATH))
+        has_fuzzy = any(
+            len(sheet.get("fuzzy_duplicates", [])) > 0
+            for sheet in results["sheets"].values()
+        )
+        if has_fuzzy:
+            counts = count_issues(results)
+            no_fuzzy_total = 0
+            for sheet in results["sheets"].values():
+                for field in sheet["fields"].values():
+                    no_fuzzy_total += len(field["issues"])
+                no_fuzzy_total += len(sheet["phantom_duplicates"])
+                no_fuzzy_total += len(sheet.get("schema_violations", []))
+            assert counts['total'] > no_fuzzy_total
+
+    def test_schema_count_tracked(self):
+        counts = count_issues({'sheets': {
+            'Sheet1': {
+                'fields': {},
+                'phantom_duplicates': [],
+                'fuzzy_duplicates': [],
+                'schema_violations': [
+                    {'severity': 'High', 'type': 'schema_type_mismatch'},
+                ],
+            },
+        }})
+        assert counts['schema'] == 1
+        assert counts['total'] == 1
+        assert counts['High'] == 1

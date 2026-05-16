@@ -1,8 +1,9 @@
 # Data Hygiene Auditor — Improvement Plan
 
-**Source:** Full project audit (2025-05-15)
+**Source:** Full project audit (2025-05-15), re-audited 2026-05-16
 **Tier:** Medium
-**Status:** Complete — all sprints + stretch goal shipped (PRs #1-#6, 2025-05-15)
+**Status:** Sprints 1-4 + stretch complete. Sprint 5 (polish) in progress.
+**Current focus:** Sprint 5 — Bug fixes, polish, and DevEx improvements
 
 ---
 
@@ -362,3 +363,87 @@ Generate actionable fix scripts or transformation suggestions for each finding.
 
 #### Context
 Phase 3 Category Trends: AI-powered fix suggestions are emerging but nobody does them well. This is the leapfrog opportunity — but only after foundation and presentation are solid.
+
+---
+
+## Sprint 5: Polish & DevEx
+
+**Source:** Audit Round 2 (2026-05-16)
+**Priority:** Next
+**Estimated effort:** Half day
+
+### Decomposition: Sprint 5
+
+Goal: Fix remaining rough edges so the project has zero known bugs and professional-grade CLI/packaging.
+
+All items are independent unless noted — can be done in any order.
+
+---
+
+#### A: Fix issue-counting (bug + dedup)
+
+- [ ] A1: Extract shared issue-counting helper into `core.py`
+    - Depends on: none
+    - Done when: a function `count_issues(results) -> dict` exists in `core.py` that returns `{'total': N, 'High': N, 'Medium': N, 'Low': N}` counting all issue sources (field issues, phantom dupes, fuzzy dupes, schema violations); unit test passes
+- [ ] A2: Fix CLI counting bug — add fuzzy duplicates to total
+    - Depends on: A1
+    - Done when: `cli.py` uses the shared helper; running `data-hygiene-audit` on the sample file reports the same total as the HTML report
+- [ ] A3: Migrate html.py and excel.py to use the shared helper
+    - Depends on: A1
+    - Done when: `html.py` and `excel.py` import and use `count_issues()`; all tests pass; HTML report totals unchanged
+
+#### B: Fix `_raw` type safety
+
+- [ ] B1: Make `_raw` a proper field on `AuditResult`
+    - Depends on: none
+    - Done when: `AuditResult` has `_raw: Dict[str, Any] = field(repr=False, default_factory=dict)` (or `init=False`); `audit_file()` sets it normally; `mypy --strict data_hygiene_auditor/api.py` produces no `_raw` errors; all tests pass
+
+#### C: Public API cleanup
+
+- [ ] C1: Remove `_load_sheets` from `__all__` in `__init__.py`
+    - Depends on: none
+    - Done when: `_load_sheets` is not in `__all__`; `from data_hygiene_auditor import _load_sheets` still works (it's not deleted, just not advertised); tests pass
+
+#### D: CLI improvements
+
+- [ ] D1: Add `--version` flag
+    - Depends on: none
+    - Done when: `data-hygiene-audit --version` prints `data-hygiene-auditor 1.0.0`; test or manual verification passes
+- [ ] D2: Add `--quiet` flag
+    - Depends on: none
+    - Done when: `data-hygiene-audit --input ... --output ... --quiet` produces no stdout (only writes files); exit code 0 on success; test confirms no output
+
+#### E: Detection warnings and guards
+
+- [ ] E1: Warn when fuzzy matching is skipped (>500 rows)
+    - Depends on: none
+    - Done when: running on a file with >500 rows prints a warning like "Note: Fuzzy matching skipped for sheet X (501 rows > 500 limit)"; warning included in JSON output as metadata; test confirms warning appears
+- [ ] E2: Add file size / row count guard
+    - Depends on: none
+    - Done when: files >500K rows print a warning "Large file: N rows. Processing may be slow."; files >2M rows exit with error unless `--force` is passed; test confirms both behaviors
+
+#### F: DevEx alignment
+
+- [ ] F1: Align Python version requirement
+    - Depends on: none
+    - Done when: `requires-python` in pyproject.toml set to `>=3.9`; CI matrix remains 3.9/3.12/3.13; README updated if it mentions 3.8
+- [ ] F2: Add CHANGELOG.md
+    - Depends on: none
+    - Done when: `CHANGELOG.md` exists with entries for v1.0.0 (initial feature set) and unreleased section for current work; follows Keep a Changelog format
+
+#### G: Documentation
+
+- [ ] G1: Document `--schema`, `--baseline`, `--generate-schema` in README options table
+    - Depends on: none
+    - Done when: README options table includes all 7 flags (--input, --output, --json, --threshold, --schema, --baseline, --generate-schema) with descriptions
+
+---
+
+### Sprint 5 complete when:
+
+- [ ] All sub-tasks checked off
+- [ ] `pytest` passes (167+ tests)
+- [ ] `ruff check .` passes
+- [ ] `data-hygiene-audit --version` works
+- [ ] `data-hygiene-audit --input samples/input/sample_messy_data.xlsx --output samples/output/ --quiet` produces files with no stdout
+- [ ] CLI issue count matches HTML report issue count on sample data

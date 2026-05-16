@@ -4,10 +4,9 @@ import argparse
 import json
 import os
 import sys
-from collections import Counter
 from pathlib import Path
 
-from .core import SUPPORTED_EXTENSIONS, run_audit
+from .core import SUPPORTED_EXTENSIONS, count_issues, run_audit
 from .reporting import generate_excel, generate_html, generate_pdf
 
 
@@ -30,6 +29,15 @@ def _c(text, code):
     return f"\033[{code}m{text}\033[0m"
 
 
+def _get_version():
+    """Get package version from metadata."""
+    from importlib.metadata import PackageNotFoundError, version
+    try:
+        return version('data-hygiene-auditor')
+    except PackageNotFoundError:
+        return '1.0.0'
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=(
@@ -48,6 +56,10 @@ Outputs three files:
   - audit_findings.xlsx (sortable/filterable issue list)
   - audit_report.pdf    (email-ready deliverable)
         """,
+    )
+    parser.add_argument(
+        '--version', '-V', action='version',
+        version=f'%(prog)s {_get_version()}',
     )
     parser.add_argument(
         '--input', '-i', required=True,
@@ -77,6 +89,14 @@ Outputs three files:
         '--baseline', '-b',
         help='Path to previous audit JSON for trend comparison',
     )
+    parser.add_argument(
+        '--quiet', '-q', action='store_true',
+        help='Suppress all terminal output (just write report files)',
+    )
+    parser.add_argument(
+        '--force', action='store_true',
+        help='Process files exceeding the 2M row safety limit',
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.input):
@@ -98,9 +118,31 @@ Outputs three files:
 
     os.makedirs(args.output, exist_ok=True)
 
+    def _log(msg=''):
+        if not args.quiet:
+            print(msg)
+
+    from .core import _load_sheets
+    ROW_WARN = 500_000
+    ROW_LIMIT = 2_000_000
+    sheets_preview = _load_sheets(args.input)
+    total_rows = sum(len(df) for df in sheets_preview.values())
+    if total_rows > ROW_LIMIT and not args.force:
+        print(
+            f"Error: File has {total_rows:,} rows (limit: {ROW_LIMIT:,})."
+            f" Use --force to process anyway.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    if total_rows > ROW_WARN:
+        _log(
+            f"  {_c('Warning:', '33')} Large file ({total_rows:,} rows)."
+            f" Processing may be slow."
+        )
+
     basename = Path(args.input).stem
-    print(f"\n  {_c('Data Hygiene Auditor', '1')}")
-    print(f"  Auditing: {_c(args.input, '36')}\n")
+    _log(f"\n  {_c('Data Hygiene Auditor', '1')}")
+    _log(f"  Auditing: {_c(args.input, '36')}\n")
 
     results = run_audit(
         args.input,
@@ -112,7 +154,7 @@ Outputs three files:
     for i, (name, sdata) in enumerate(results['sheets'].items(), 1):
         score = sdata['health_score']
         score_color = '32' if score >= 90 else ('33' if score >= 70 else '31')
-        print(
+        _log(
             f"  [{i}/{sheet_count}] Analyzed sheet: {_c(name, '36')}"
             f"  (score: {_c(str(score), score_color)})"
         )
@@ -127,16 +169,16 @@ Outputs three files:
         args.output, f"{basename}_audit_report.pdf",
     )
 
-    print("\n  Generating reports...")
+    _log("\n  Generating reports...")
 
     generate_html(results, html_path)
-    print(f"    {_c('HTML', '32')}  -> {html_path}")
+    _log(f"    {_c('HTML', '32')}  -> {html_path}")
 
     generate_excel(results, xlsx_path)
-    print(f"    {_c('Excel', '32')} -> {xlsx_path}")
+    _log(f"    {_c('Excel', '32')} -> {xlsx_path}")
 
     generate_pdf(results, pdf_path)
-    print(f"    {_c('PDF', '32')}   -> {pdf_path}")
+    _log(f"    {_c('PDF', '32')}   -> {pdf_path}")
 
     if args.json:
         json_path = os.path.join(
@@ -144,34 +186,21 @@ Outputs three files:
         )
         with open(json_path, 'w') as f:
             json.dump(results, f, indent=2, default=str)
-        print(f"    {_c('JSON', '32')}  -> {json_path}")
+        _log(f"    {_c('JSON', '32')}  -> {json_path}")
 
     if args.generate_schema:
         from .schema import generate_schema
         schema_data = generate_schema(results)
         with open(args.generate_schema, 'w') as f:
             json.dump(schema_data, f, indent=2)
-        print(f"    {_c('Schema', '32')} -> {args.generate_schema}")
+        _log(f"    {_c('Schema', '32')} -> {args.generate_schema}")
 
-    total_issues = 0
-    severity_totals = Counter()
-    schema_count = 0
-    for sheet in results['sheets'].values():
-        for field in sheet['fields'].values():
-            for issue in field['issues']:
-                total_issues += 1
-                severity_totals[issue['severity']] += 1
-        for d in sheet['phantom_duplicates']:
-            total_issues += 1
-            severity_totals[d['severity']] += 1
-        for sv in sheet.get('schema_violations', []):
-            total_issues += 1
-            severity_totals[sv['severity']] += 1
-            schema_count += 1
-
-    high = severity_totals.get('High', 0)
-    med = severity_totals.get('Medium', 0)
-    low = severity_totals.get('Low', 0)
+    counts = count_issues(results)
+    total_issues = counts.get('total', 0)
+    high = counts.get('High', 0)
+    med = counts.get('Medium', 0)
+    low = counts.get('Low', 0)
+    schema_count = counts.get('schema', 0)
 
     overall = results['overall_score']
     score_color = '32' if overall >= 90 else ('33' if overall >= 70 else '31')
@@ -182,7 +211,7 @@ Outputs three files:
         delta = trend['overall_score_delta']
         arrow = _c(f'+{delta}', '32') if delta > 0 else _c(f'{delta}', '31') if delta < 0 else '='
         score_str += f" ({arrow} from baseline)"
-    print(
+    _log(
         f"\n  Health Score: {_c(score_str, score_color)}"
     )
     issue_line = (
@@ -196,7 +225,9 @@ Outputs three files:
         if td != 0:
             sign = '+' if td > 0 else ''
             issue_line += f"  ({sign}{td} from baseline)"
-    print(issue_line)
+    _log(issue_line)
     if schema_count:
-        print(f"  Schema violations: {_c(str(schema_count), '31')}")
-    print()
+        _log(f"  Schema violations: {_c(str(schema_count), '31')}")
+    for w in results.get('warnings', []):
+        _log(f"  {_c('Note:', '33')} {w['message']}")
+    _log()

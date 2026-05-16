@@ -549,6 +549,13 @@ def analyze_fuzzy_duplicates(
     skip = already_matched | fp_matched
     unmatched = [i for i in range(len(df)) if i not in skip]
 
+    if len(unmatched) > 500:
+        findings.append({
+            'type': '_levenshtein_skipped',
+            'unmatched_count': len(unmatched),
+            'limit': 500,
+        })
+
     if len(unmatched) >= 2 and len(unmatched) <= 500:
         norm_strings = {}
         for idx in unmatched:

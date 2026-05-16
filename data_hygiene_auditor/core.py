@@ -77,6 +77,36 @@ WHY_IT_MATTERS = {
 SUPPORTED_EXTENSIONS = {'.xlsx', '.xls', '.csv', '.tsv'}
 
 
+def count_issues(results):
+    """Count total and per-severity issues across all sheets.
+
+    Counts all issue sources: field issues, phantom duplicates,
+    fuzzy duplicates, and schema violations.
+
+    Returns dict with keys: 'total', 'High', 'Medium', 'Low', 'schema'.
+    """
+    from collections import Counter
+    totals = Counter()
+    schema_count = 0
+    for sheet in results['sheets'].values():
+        for field_data in sheet['fields'].values():
+            for issue in field_data['issues']:
+                totals['total'] += 1
+                totals[issue['severity']] += 1
+        for d in sheet['phantom_duplicates']:
+            totals['total'] += 1
+            totals[d['severity']] += 1
+        for f in sheet.get('fuzzy_duplicates', []):
+            totals['total'] += 1
+            totals[f['severity']] += 1
+        for sv in sheet.get('schema_violations', []):
+            totals['total'] += 1
+            totals[sv['severity']] += 1
+            schema_count += 1
+    totals['schema'] = schema_count
+    return dict(totals)
+
+
 def _load_sheets(input_path):
     """Load tabular data as a dict of {sheet_name: DataFrame}."""
     ext = Path(input_path).suffix.lower()
@@ -213,17 +243,32 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
             frozenset(i - 2 for i in d['rows'])
             for d in dupes
         ]
-        fuzzy = analyze_fuzzy_duplicates(
+        fuzzy_raw = analyze_fuzzy_duplicates(
             df, sheet_name, field_types,
             threshold=fuzzy_threshold,
             phantom_row_sets=phantom_row_sets,
         )
-        for f in fuzzy:
+        fuzzy = []
+        for f in fuzzy_raw:
+            if f.get('type') == '_levenshtein_skipped':
+                results.setdefault('warnings', []).append({
+                    'type': 'levenshtein_skipped',
+                    'sheet': sheet_name,
+                    'unmatched_rows': f['unmatched_count'],
+                    'limit': f['limit'],
+                    'message': (
+                        f"Fuzzy (Levenshtein) matching skipped for sheet"
+                        f" '{sheet_name}': {f['unmatched_count']} unmatched"
+                        f" rows exceeds the {f['limit']}-row limit."
+                    ),
+                })
+                continue
             f['severity'] = rate_severity('fuzzy_duplicate', f)
             f['why'] = WHY_IT_MATTERS['fuzzy_duplicate']
             fix = generate_dup_fix('fuzzy_duplicate', f, sheet_name)
             if fix:
                 f['fix'] = fix
+            fuzzy.append(f)
         sheet_results['fuzzy_duplicates'] = fuzzy
 
         if schema:

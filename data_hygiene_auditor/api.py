@@ -141,6 +141,7 @@ class AuditResult:
     overall_score: int
     sheets: List[SheetResult] = field(default_factory=list)
     trend: Optional[TrendData] = None
+    _raw: Dict[str, Any] = field(default_factory=dict, repr=False)
 
     @property
     def total_issues(self) -> int:
@@ -401,12 +402,11 @@ def audit_file(
             sheets=raw_trend.get('sheets', {}),
         )
 
-    result = AuditResult(
+    return AuditResult(
         input_file=raw['input_file'],
         audit_timestamp=raw['audit_timestamp'],
         overall_score=raw['overall_score'],
         sheets=sheets,
         trend=trend_obj,
+        _raw=raw,
     )
-    result._raw = raw
-    return result

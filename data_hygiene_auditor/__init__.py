@@ -12,7 +12,7 @@ from .api import (
     TrendData,
     audit_file,
 )
-from .core import SUPPORTED_EXTENSIONS, WHY_IT_MATTERS, _load_sheets, run_audit
+from .core import SUPPORTED_EXTENSIONS, WHY_IT_MATTERS, _load_sheets, count_issues, run_audit  # noqa: F401
 from .detection import (
     analyze_fuzzy_duplicates,
     analyze_mixed_formats,
@@ -39,7 +39,7 @@ __all__ = [
     'SheetResult',
     'TrendData',
     'run_audit',
-    '_load_sheets',
+    'count_issues',
     'SUPPORTED_EXTENSIONS',
     'WHY_IT_MATTERS',
     'infer_field_type',

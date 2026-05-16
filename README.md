@@ -103,7 +103,13 @@ Supports `.xlsx`, `.xls`, `.csv`, and `.tsv` files.
 | `--input`, `-i` | Path to the file to audit — `.xlsx`, `.csv`, or `.tsv` (required) |
 | `--output`, `-o` | Directory for generated reports (required) |
 | `--json` | Also output the raw findings as structured JSON |
-| `--threshold`, `-t` | Fuzzy duplicate similarity threshold, 0.0-1.0 (default: 0.85) |
+| `--threshold`, `-t` | Fuzzy duplicate similarity threshold, 0.0–1.0 (default: 0.85) |
+| `--schema`, `-s` | Path to a schema JSON for type/completeness validation |
+| `--generate-schema` | Infer types from the data and save a schema JSON to the given path |
+| `--baseline`, `-b` | Path to a previous audit JSON for trend comparison (shows deltas) |
+| `--quiet`, `-q` | Suppress all terminal output (just write report files) |
+| `--force` | Process files exceeding the 2M row safety limit |
+| `--version`, `-V` | Print version and exit |
 
 ### Example
 
@@ -115,16 +121,16 @@ python audit.py --input samples/input/sample_messy_data.xlsx --output ./reports
   Data Hygiene Auditor
   Auditing: samples/input/sample_messy_data.xlsx
 
-  [1/2] Analyzed sheet: Customers
-  [2/2] Analyzed sheet: Orders
+  [1/2] Analyzed sheet: Customers  (score: 42)
+  [2/2] Analyzed sheet: Orders  (score: 68)
 
   Generating reports...
     HTML  -> ./reports/sample_messy_data_audit_report.html
     Excel -> ./reports/sample_messy_data_audit_findings.xlsx
     PDF   -> ./reports/sample_messy_data_audit_report.pdf
 
-  Audit complete: 59 issues found
-    High: 23 | Medium: 20 | Low: 16
+  Health Score: 55/100
+  59 issues found  —  High: 23 | Medium: 20 | Low: 16
 ```
 
 ## Use as a Library
@@ -179,7 +185,7 @@ python generate_sample.py
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.9+
 - pandas
 - openpyxl
 - reportlab

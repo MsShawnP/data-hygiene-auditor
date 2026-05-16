@@ -1,8 +1,9 @@
 """HTML report generator."""
 
 import json
-from collections import Counter
 from html import escape as _html_escape
+
+from ..core import count_issues
 
 
 def _h(val):
@@ -30,22 +31,9 @@ def _render_fix(fix):
 
 def generate_html(results, output_path):
     """Generate a client-readable HTML report."""
-    total_issues = 0
-    severity_totals = Counter()
-    for sheet in results['sheets'].values():
-        for field in sheet['fields'].values():
-            for issue in field['issues']:
-                total_issues += 1
-                severity_totals[issue['severity']] += 1
-        for d in sheet['phantom_duplicates']:
-            total_issues += 1
-            severity_totals[d['severity']] += 1
-        for f in sheet.get('fuzzy_duplicates', []):
-            total_issues += 1
-            severity_totals[f['severity']] += 1
-        for sv in sheet.get('schema_violations', []):
-            total_issues += 1
-            severity_totals[sv['severity']] += 1
+    counts = count_issues(results)
+    total_issues = counts.get('total', 0)
+    severity_totals = counts
 
     parts = []
     parts.append(f"""<!DOCTYPE html>
