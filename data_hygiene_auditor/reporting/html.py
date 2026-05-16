@@ -525,6 +525,24 @@ color:#fff">{ss}/100</span></h2>
     <div class="null-bar"><div class="null-bar-fill"
         style="width:{min(null['missing_pct'], 100)}%;background:{null_color};"></div></div>
 """)
+            profile = field_data.get('profile', {})
+            if profile:
+                stats_parts = [
+                    f"{profile['cardinality']} distinct",
+                    f"{profile['uniqueness_pct']}% unique",
+                    f"avg len {profile['avg_length']}",
+                ]
+                if 'min_value' in profile:
+                    stats_parts.append(
+                        f"range {profile['min_value']}"
+                        f"–{profile['max_value']}"
+                    )
+                parts.append(
+                    '<div style="font-size:0.8rem;color:var(--text-muted);'
+                    'margin:0.2rem 0 0.4rem 0;">'
+                    f'{" &nbsp;|&nbsp; ".join(stats_parts)}</div>'
+                )
+
             for issue in issues:
                 sev = issue['severity']
                 itype = issue['type']

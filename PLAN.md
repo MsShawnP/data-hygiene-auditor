@@ -498,9 +498,99 @@ Goal: Let users define detection rules in JSON that run alongside built-in check
 
 ### Sprint 6 complete when:
 
+- [x] All sub-tasks checked off
+- [x] `pytest` passes with new rule engine tests
+- [x] `ruff check .` passes
+- [x] Sample rules file works: `data-hygiene-audit --input samples/input/sample_messy_data.xlsx --output ./reports --rules samples/rules_example.json`
+- [x] Custom rule findings appear in HTML, Excel, and PDF reports
+- [x] Invalid rules file produces clear error message
+
+---
+
+## Sprint 7: Profiling, Multi-file, and CI Integration
+
+**Source:** Audit Round 2 — ranked #2, #3, #4 next moves
+**Priority:** Next
+**Estimated effort:** 2–3 days
+
+Three independent tracks that can be done in any order.
+
+### Decomposition: Sprint 7
+
+---
+
+#### Track A: Column-level profiling
+
+Goal: Add statistical profiling (cardinality, uniqueness, min/max/mean) to audit results and reports.
+
+- [ ] A1: Compute column statistics in core audit
+    - Depends on: none
+    - Done when: `sheet_results['fields'][col]` gains a `'profile'` dict with keys: `cardinality` (distinct count), `uniqueness_pct`, `min_length`, `max_length`, `avg_length`; for numeric columns also: `min_value`, `max_value`, `mean_value`, `median_value`; unit tests verify stats on known data
+
+- [ ] A2: Render profile stats in HTML report
+    - Depends on: A1
+    - Done when: each field section in HTML shows a compact stats row (e.g. "123 distinct | 82% unique | avg length 14"); numeric fields show min/max/mean; visually compact, doesn't overwhelm the issue findings
+
+- [ ] A3: Include profile stats in Excel and PDF reports
+    - Depends on: A1
+    - Done when: Excel findings sheet has profile columns (cardinality, uniqueness); PDF shows stats per field; JSON output includes profile data
+
+- [ ] A4: Expose profiling in typed API
+    - Depends on: A1
+    - Done when: `FieldResult` dataclass gains a `profile: ColumnProfile` field; `ColumnProfile` dataclass has all stat fields; accessible via `result.sheets[0].fields[0].profile.cardinality`
+
+---
+
+#### Track B: Multi-file / directory mode
+
+Goal: Accept a directory path or glob and produce a combined report across all matched files.
+
+- [ ] B1: Add directory/glob input resolution
+    - Depends on: none
+    - Done when: `--input ./data/` scans for supported files recursively; `--input "data/*.csv"` expands globs; error if no files found; file list printed before audit starts
+
+- [ ] B2: Run audit across multiple files and merge results
+    - Depends on: B1
+    - Done when: `run_audit()` accepts a list of paths (or new `run_multi_audit()`); results dict gains a `'files'` key mapping filename to per-file results; `overall_score` is the weighted average across all files
+
+- [ ] B3: Multi-file reporting
+    - Depends on: B2
+    - Done when: HTML report has a file-level summary table (filename, row count, health score, issue count) with links to per-file detail sections; Excel has one sheet per file; PDF has file-level table of contents
+
+- [ ] B4: Add `--recursive` flag and document
+    - Depends on: B3
+    - Done when: `--recursive` / `-R` controls directory traversal depth (default: recursive); README documents multi-file usage with examples; CHANGELOG updated
+
+---
+
+#### Track C: CI / pipeline integration
+
+Goal: Provide a GitHub Action and exit codes so audits can gate CI pipelines.
+
+- [ ] C1: Add structured exit codes
+    - Depends on: none
+    - Done when: CLI exits 0 if score >= threshold, exits 1 if score < threshold; new `--fail-under` flag sets the threshold (default: 0, never fails); `--fail-under 70` exits 1 if health score < 70; unit test verifies exit codes
+
+- [ ] C2: Create GitHub Action definition
+    - Depends on: C1
+    - Done when: `.github/actions/audit/action.yml` defines a composite action with inputs (file, rules, fail-under, threshold); uses `pip install .` + runs the CLI; outputs health score and issue count as step outputs; README documents usage in a workflow
+
+- [ ] C3: Add SARIF output for GitHub Code Scanning
+    - Depends on: C1
+    - Done when: `--sarif` flag outputs findings in SARIF format compatible with `github/codeql-action/upload-sarif`; findings appear as code scanning alerts tied to the input file; test validates SARIF schema compliance
+
+- [ ] C4: Document CI usage in README
+    - Depends on: C2, C3
+    - Done when: README has "CI / Pipeline Integration" section with GitHub Actions example workflow YAML showing: audit on push, fail-under threshold, SARIF upload; CHANGELOG updated
+
+---
+
+### Sprint 7 complete when:
+
 - [ ] All sub-tasks checked off
-- [ ] `pytest` passes with new rule engine tests
+- [ ] `pytest` passes with new profiling and multi-file tests
 - [ ] `ruff check .` passes
-- [ ] Sample rules file works: `data-hygiene-audit --input samples/input/sample_messy_data.xlsx --output ./reports --rules samples/rules_example.json`
-- [ ] Custom rule findings appear in HTML, Excel, and PDF reports
-- [ ] Invalid rules file produces clear error message
+- [ ] `data-hygiene-audit --input samples/input/ --output ./reports` audits all files in directory
+- [ ] HTML report shows column stats (cardinality, uniqueness)
+- [ ] `--fail-under 70` exits non-zero on low-scoring data
+- [ ] GitHub Action YAML is valid and documented

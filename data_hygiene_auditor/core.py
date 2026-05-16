@@ -233,6 +233,7 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
                     if finding:
                         field_findings['issues'].append(finding)
 
+            field_findings['profile'] = _compute_profile(df[col], field_type)
             sheet_results['fields'][col] = field_findings
 
         field_types = {
@@ -317,6 +318,45 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
     return results
 
 
+def run_multi_audit(input_paths, fuzzy_threshold=0.85, schema_path=None, rules_path=None):
+    """Run audits across multiple files. Returns a combined results dict.
+
+    The returned dict has:
+    - 'files': mapping of filename -> per-file audit results
+    - 'overall_score': weighted average by row count
+    - 'total_files': number of files audited
+    - 'total_rows': sum of rows across all files
+    """
+    file_results = {}
+    for path in input_paths:
+        results = run_audit(
+            path,
+            fuzzy_threshold=fuzzy_threshold,
+            schema_path=schema_path,
+            rules_path=rules_path,
+        )
+        file_results[os.path.basename(path)] = results
+
+    total_rows = sum(
+        sum(s['row_count'] for s in r['sheets'].values())
+        for r in file_results.values()
+    )
+    if total_rows > 0:
+        weighted_score = sum(
+            r['overall_score'] * sum(s['row_count'] for s in r['sheets'].values())
+            for r in file_results.values()
+        ) / total_rows
+    else:
+        weighted_score = 100
+
+    return {
+        'files': file_results,
+        'overall_score': round(weighted_score),
+        'total_files': len(file_results),
+        'total_rows': total_rows,
+    }
+
+
 def _compute_health_score(sheet_data):
     """Compute a 0-100 health score for a sheet.
 
@@ -353,3 +393,46 @@ def _compute_health_score(sheet_data):
         score -= severity_penalty.get(sv['severity'], 1.0)
 
     return max(0, round(score))
+
+
+def _compute_profile(series, field_type):
+    """Compute column-level statistics for profiling."""
+    total = len(series)
+    non_null = series.dropna()
+    non_null_str = non_null.astype(str).str.strip()
+    non_empty = non_null_str[non_null_str != '']
+
+    cardinality = int(non_empty.nunique()) if len(non_empty) > 0 else 0
+    uniqueness_pct = round(cardinality / len(non_empty) * 100, 1) if len(non_empty) > 0 else 0.0
+
+    lengths = non_empty.str.len()
+    profile = {
+        'cardinality': cardinality,
+        'uniqueness_pct': uniqueness_pct,
+        'total_values': total,
+        'non_empty_values': int(len(non_empty)),
+        'min_length': int(lengths.min()) if len(lengths) > 0 else 0,
+        'max_length': int(lengths.max()) if len(lengths) > 0 else 0,
+        'avg_length': round(float(lengths.mean()), 1) if len(lengths) > 0 else 0.0,
+    }
+
+    if field_type == 'currency':
+        numeric = pd.to_numeric(
+            non_empty.str.replace(r'[$,£€]', '', regex=True),
+            errors='coerce',
+        ).dropna()
+        if len(numeric) > 0:
+            profile['min_value'] = round(float(numeric.min()), 2)
+            profile['max_value'] = round(float(numeric.max()), 2)
+            profile['mean_value'] = round(float(numeric.mean()), 2)
+            profile['median_value'] = round(float(numeric.median()), 2)
+
+    elif field_type == 'id':
+        numeric = pd.to_numeric(non_empty, errors='coerce').dropna()
+        if len(numeric) > 0:
+            profile['min_value'] = round(float(numeric.min()), 2)
+            profile['max_value'] = round(float(numeric.max()), 2)
+            profile['mean_value'] = round(float(numeric.mean()), 2)
+            profile['median_value'] = round(float(numeric.median()), 2)
+
+    return profile

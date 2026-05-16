@@ -297,3 +297,77 @@ class TestCustomRulesIntegration:
         results_without = run_audit(str(SAMPLE_PATH))
         results_with = run_audit(str(SAMPLE_PATH), rules_path=str(rules_file))
         assert results_with['overall_score'] < results_without['overall_score']
+
+
+class TestColumnProfiling:
+
+    def test_profile_exists_for_all_fields(self):
+        results = run_audit(str(SAMPLE_PATH))
+        for sheet in results['sheets'].values():
+            for col, field_data in sheet['fields'].items():
+                assert 'profile' in field_data, f"Missing profile for {col}"
+                profile = field_data['profile']
+                assert 'cardinality' in profile
+                assert 'uniqueness_pct' in profile
+                assert 'min_length' in profile
+                assert 'max_length' in profile
+                assert 'avg_length' in profile
+
+    def test_profile_cardinality(self):
+        import pandas as pd
+
+        from data_hygiene_auditor.core import _compute_profile
+        series = pd.Series(["apple", "banana", "apple", "cherry", None])
+        profile = _compute_profile(series, "freetext")
+        assert profile['cardinality'] == 3
+        assert profile['non_empty_values'] == 4
+        assert profile['total_values'] == 5
+
+    def test_profile_uniqueness(self):
+        import pandas as pd
+
+        from data_hygiene_auditor.core import _compute_profile
+        series = pd.Series(["a", "b", "c", "d"])
+        profile = _compute_profile(series, "freetext")
+        assert profile['uniqueness_pct'] == 100.0
+
+    def test_profile_lengths(self):
+        import pandas as pd
+
+        from data_hygiene_auditor.core import _compute_profile
+        series = pd.Series(["hi", "hello", "hey"])
+        profile = _compute_profile(series, "freetext")
+        assert profile['min_length'] == 2
+        assert profile['max_length'] == 5
+        assert profile['avg_length'] == round((2 + 5 + 3) / 3, 1)
+
+    def test_profile_numeric_stats_currency(self):
+        import pandas as pd
+
+        from data_hygiene_auditor.core import _compute_profile
+        series = pd.Series(["$100.00", "$200.00", "$300.00", "$400.00"])
+        profile = _compute_profile(series, "currency")
+        assert profile['min_value'] == 100.0
+        assert profile['max_value'] == 400.0
+        assert profile['mean_value'] == 250.0
+        assert profile['median_value'] == 250.0
+
+    def test_profile_numeric_stats_id(self):
+        import pandas as pd
+
+        from data_hygiene_auditor.core import _compute_profile
+        series = pd.Series(["1", "2", "3", "4", "5"])
+        profile = _compute_profile(series, "id")
+        assert profile['min_value'] == 1.0
+        assert profile['max_value'] == 5.0
+        assert profile['mean_value'] == 3.0
+
+    def test_profile_empty_series(self):
+        import pandas as pd
+
+        from data_hygiene_auditor.core import _compute_profile
+        series = pd.Series([None, None, ""])
+        profile = _compute_profile(series, "freetext")
+        assert profile['cardinality'] == 0
+        assert profile['uniqueness_pct'] == 0.0
+        assert profile['min_length'] == 0

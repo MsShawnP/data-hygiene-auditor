@@ -15,6 +15,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Conditions: `regex_match`, `not_regex_match`, `min_length`, `max_length`, `allowed_values`, `disallowed_values`, `max_missing_pct`
   - Target columns by regex pattern or explicit list
   - Findings integrated into all 3 report formats
+- Column-level profiling: cardinality, uniqueness %, avg length, numeric range
+  - Stats shown in HTML, Excel, PDF, and JSON output
+  - `ColumnProfile` dataclass in typed API
+- Multi-file / directory mode: `--input ./data/` audits all supported files
+  - `run_multi_audit()` API for programmatic multi-file audits
+- CI / pipeline integration
+  - `--fail-under` flag: exit code 1 if score < threshold
+  - `--sarif` flag: SARIF 2.1.0 output for GitHub Code Scanning
+  - GitHub Action (`.github/actions/audit/action.yml`)
 - `--version` / `-V` flag
 - `--quiet` / `-q` flag to suppress terminal output
 - `--force` flag to override the 2M row safety limit

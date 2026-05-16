@@ -178,6 +178,20 @@ def generate_pdf(results, output_path):
                 styles['FieldHead'],
             ))
 
+            profile = field_data.get('profile', {})
+            if profile:
+                stats = (
+                    f"{profile['cardinality']} distinct"
+                    f" | {profile['uniqueness_pct']}% unique"
+                    f" | avg len {profile['avg_length']}"
+                )
+                if 'min_value' in profile:
+                    stats += (
+                        f" | range {profile['min_value']}"
+                        f"–{profile['max_value']}"
+                    )
+                story.append(Paragraph(stats, styles['SmallBody']))
+
             for issue in issues:
                 sev = issue['severity']
                 detail = issue['detail']

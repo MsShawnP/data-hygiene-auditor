@@ -100,7 +100,7 @@ Supports `.xlsx`, `.xls`, `.csv`, and `.tsv` files.
 
 | Flag | Description |
 |------|-------------|
-| `--input`, `-i` | Path to the file to audit — `.xlsx`, `.csv`, or `.tsv` (required) |
+| `--input`, `-i` | Path to file, directory, or glob pattern (required) |
 | `--output`, `-o` | Directory for generated reports (required) |
 | `--json` | Also output the raw findings as structured JSON |
 | `--threshold`, `-t` | Fuzzy duplicate similarity threshold, 0.0–1.0 (default: 0.85) |
@@ -108,6 +108,8 @@ Supports `.xlsx`, `.xls`, `.csv`, and `.tsv` files.
 | `--generate-schema` | Infer types from the data and save a schema JSON to the given path |
 | `--baseline`, `-b` | Path to a previous audit JSON for trend comparison (shows deltas) |
 | `--rules`, `-r` | Path to custom rules JSON for additional checks |
+| `--sarif` | Output findings in SARIF format (for GitHub Code Scanning) |
+| `--fail-under` | Exit with code 1 if health score is below this threshold (0-100) |
 | `--quiet`, `-q` | Suppress all terminal output (just write report files) |
 | `--force` | Process files exceeding the 2M row safety limit |
 | `--version`, `-V` | Print version and exit |
@@ -222,6 +224,56 @@ Each rule requires: `name`, `description`, `severity` (High/Medium/Low), `condit
 | `max_missing_pct` | Number (0-100) | Missing percentage exceeds threshold |
 
 See [`samples/rules_example.json`](samples/rules_example.json) for a working example with 4 rules.
+
+## Multi-file Mode
+
+Pass a directory or glob pattern to audit multiple files at once:
+
+```
+data-hygiene-audit --input ./data/ --output ./reports
+data-hygiene-audit --input "exports/*.csv" --output ./reports
+```
+
+Each file gets its own set of reports. The CLI shows a combined health score across all files.
+
+## CI / Pipeline Integration
+
+Use `--fail-under` to gate CI pipelines on data quality:
+
+```
+data-hygiene-audit --input data.xlsx --output ./reports --fail-under 70
+```
+
+Exits with code 1 if the health score drops below the threshold.
+
+### GitHub Actions
+
+```yaml
+- uses: actions/checkout@v4
+- uses: actions/setup-python@v5
+  with:
+    python-version: '3.12'
+- uses: ./.github/actions/audit
+  with:
+    file: data/customers.xlsx
+    fail-under: '70'
+    rules: rules.json
+```
+
+### SARIF for Code Scanning
+
+```yaml
+- name: Run audit with SARIF
+  run: |
+    pip install .
+    data-hygiene-audit --input data/ --output ./reports --sarif audit.sarif
+
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: audit.sarif
+```
+
+Findings appear as code scanning alerts in the GitHub Security tab.
 
 ## Regenerating the Sample Data
 

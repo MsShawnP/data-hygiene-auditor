@@ -15,7 +15,7 @@ def generate_excel(results, output_path):
     headers = [
         "Sheet", "Field", "Inferred Type", "Issue Type", "Severity",
         "Description", "Example / Detail", "Why It Matters",
-        "Suggested Fix",
+        "Suggested Fix", "Cardinality", "Uniqueness %",
     ]
     header_font = Font(bold=True, color="FFFFFF", size=11, name="Arial")
     header_fill = PatternFill("solid", fgColor="0f3460")
@@ -98,12 +98,15 @@ def generate_excel(results, output_path):
 
                 fix = issue.get('fix', {})
                 fix_text = fix.get('code', '') if fix else ''
+                profile = field_data.get('profile', {})
                 values = [
                     sheet_name, col_name,
                     field_data['inferred_type'],
                     itype, issue['severity'],
                     desc, example, issue.get('why', ''),
                     fix_text,
+                    profile.get('cardinality', ''),
+                    profile.get('uniqueness_pct', ''),
                 ]
                 for col_idx, val in enumerate(values, 1):
                     cell = ws.cell(

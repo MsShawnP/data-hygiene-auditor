@@ -87,6 +87,23 @@ class FuzzyDuplicate:
 
 
 @dataclass
+class ColumnProfile:
+    """Statistical profile for a column."""
+
+    cardinality: int
+    uniqueness_pct: float
+    total_values: int
+    non_empty_values: int
+    min_length: int
+    max_length: int
+    avg_length: float
+    min_value: Optional[float] = None
+    max_value: Optional[float] = None
+    mean_value: Optional[float] = None
+    median_value: Optional[float] = None
+
+
+@dataclass
 class FieldResult:
     """Audit results for a single field/column."""
 
@@ -99,6 +116,7 @@ class FieldResult:
     missing_pct: float
     total_rows: int
     findings: List[Finding] = field(default_factory=list)
+    profile: Optional[ColumnProfile] = None
 
 
 @dataclass
@@ -313,6 +331,21 @@ def audit_file(
                     detail=issue['detail'],
                     fix=fix_obj,
                 ))
+            profile_raw = field_data.get('profile', {})
+            profile_obj = ColumnProfile(
+                cardinality=profile_raw.get('cardinality', 0),
+                uniqueness_pct=profile_raw.get('uniqueness_pct', 0.0),
+                total_values=profile_raw.get('total_values', 0),
+                non_empty_values=profile_raw.get('non_empty_values', 0),
+                min_length=profile_raw.get('min_length', 0),
+                max_length=profile_raw.get('max_length', 0),
+                avg_length=profile_raw.get('avg_length', 0.0),
+                min_value=profile_raw.get('min_value'),
+                max_value=profile_raw.get('max_value'),
+                mean_value=profile_raw.get('mean_value'),
+                median_value=profile_raw.get('median_value'),
+            ) if profile_raw else None
+
             fields.append(FieldResult(
                 name=col_name,
                 inferred_type=field_data['inferred_type'],
@@ -323,6 +356,7 @@ def audit_file(
                 missing_pct=null['missing_pct'],
                 total_rows=null['total_rows'],
                 findings=findings,
+                profile=profile_obj,
             ))
 
         duplicates = []
