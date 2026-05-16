@@ -1,8 +1,9 @@
 # Data Hygiene Auditor — Improvement Plan
 
-**Source:** Full project audit (2025-05-15)
+**Source:** Full project audit (2025-05-15), re-audited 2026-05-16
 **Tier:** Medium
-**Status:** Complete — all sprints + stretch goal shipped (PRs #1-#6, 2025-05-15)
+**Status:** Sprints 1-4 + stretch complete. Sprint 5 (polish) in progress.
+**Current focus:** Sprint 5 — Bug fixes, polish, and DevEx improvements
 
 ---
 
@@ -362,3 +363,234 @@ Generate actionable fix scripts or transformation suggestions for each finding.
 
 #### Context
 Phase 3 Category Trends: AI-powered fix suggestions are emerging but nobody does them well. This is the leapfrog opportunity — but only after foundation and presentation are solid.
+
+---
+
+## Sprint 5: Polish & DevEx
+
+**Source:** Audit Round 2 (2026-05-16)
+**Priority:** Next
+**Estimated effort:** Half day
+
+### Decomposition: Sprint 5
+
+Goal: Fix remaining rough edges so the project has zero known bugs and professional-grade CLI/packaging.
+
+All items are independent unless noted — can be done in any order.
+
+---
+
+#### A: Fix issue-counting (bug + dedup)
+
+- [ ] A1: Extract shared issue-counting helper into `core.py`
+    - Depends on: none
+    - Done when: a function `count_issues(results) -> dict` exists in `core.py` that returns `{'total': N, 'High': N, 'Medium': N, 'Low': N}` counting all issue sources (field issues, phantom dupes, fuzzy dupes, schema violations); unit test passes
+- [ ] A2: Fix CLI counting bug — add fuzzy duplicates to total
+    - Depends on: A1
+    - Done when: `cli.py` uses the shared helper; running `data-hygiene-audit` on the sample file reports the same total as the HTML report
+- [ ] A3: Migrate html.py and excel.py to use the shared helper
+    - Depends on: A1
+    - Done when: `html.py` and `excel.py` import and use `count_issues()`; all tests pass; HTML report totals unchanged
+
+#### B: Fix `_raw` type safety
+
+- [ ] B1: Make `_raw` a proper field on `AuditResult`
+    - Depends on: none
+    - Done when: `AuditResult` has `_raw: Dict[str, Any] = field(repr=False, default_factory=dict)` (or `init=False`); `audit_file()` sets it normally; `mypy --strict data_hygiene_auditor/api.py` produces no `_raw` errors; all tests pass
+
+#### C: Public API cleanup
+
+- [ ] C1: Remove `_load_sheets` from `__all__` in `__init__.py`
+    - Depends on: none
+    - Done when: `_load_sheets` is not in `__all__`; `from data_hygiene_auditor import _load_sheets` still works (it's not deleted, just not advertised); tests pass
+
+#### D: CLI improvements
+
+- [ ] D1: Add `--version` flag
+    - Depends on: none
+    - Done when: `data-hygiene-audit --version` prints `data-hygiene-auditor 1.0.0`; test or manual verification passes
+- [ ] D2: Add `--quiet` flag
+    - Depends on: none
+    - Done when: `data-hygiene-audit --input ... --output ... --quiet` produces no stdout (only writes files); exit code 0 on success; test confirms no output
+
+#### E: Detection warnings and guards
+
+- [ ] E1: Warn when fuzzy matching is skipped (>500 rows)
+    - Depends on: none
+    - Done when: running on a file with >500 rows prints a warning like "Note: Fuzzy matching skipped for sheet X (501 rows > 500 limit)"; warning included in JSON output as metadata; test confirms warning appears
+- [ ] E2: Add file size / row count guard
+    - Depends on: none
+    - Done when: files >500K rows print a warning "Large file: N rows. Processing may be slow."; files >2M rows exit with error unless `--force` is passed; test confirms both behaviors
+
+#### F: DevEx alignment
+
+- [ ] F1: Align Python version requirement
+    - Depends on: none
+    - Done when: `requires-python` in pyproject.toml set to `>=3.9`; CI matrix remains 3.9/3.12/3.13; README updated if it mentions 3.8
+- [ ] F2: Add CHANGELOG.md
+    - Depends on: none
+    - Done when: `CHANGELOG.md` exists with entries for v1.0.0 (initial feature set) and unreleased section for current work; follows Keep a Changelog format
+
+#### G: Documentation
+
+- [ ] G1: Document `--schema`, `--baseline`, `--generate-schema` in README options table
+    - Depends on: none
+    - Done when: README options table includes all 7 flags (--input, --output, --json, --threshold, --schema, --baseline, --generate-schema) with descriptions
+
+---
+
+### Sprint 5 complete when:
+
+- [x] All sub-tasks checked off
+- [x] `pytest` passes (171 tests)
+- [x] `ruff check .` passes
+- [x] `data-hygiene-audit --version` works
+- [x] `data-hygiene-audit --input samples/input/sample_messy_data.xlsx --output samples/output/ --quiet` produces files with no stdout
+- [x] CLI issue count matches HTML report issue count on sample data
+
+---
+
+## Sprint 6: Custom Rule Engine
+
+**Source:** Audit Round 2 — ranked #1 next move
+**Priority:** Next
+**Estimated effort:** 1–2 days
+
+### Decomposition: Sprint 6
+
+Goal: Let users define detection rules in JSON that run alongside built-in checks, with findings integrated into all report outputs.
+
+---
+
+#### A: Rule file format and loader
+
+- [ ] A1: Define rule JSON schema and implement loader
+    - Depends on: none
+    - Done when: `data_hygiene_auditor/rules.py` exists with `load_rules(path) -> list[Rule]` that parses a JSON file into typed Rule objects (dataclass with fields: name, description, severity, column_pattern, condition, threshold); loader rejects invalid rules with clear error messages; unit tests for valid/invalid inputs pass
+
+- [ ] A2: Implement rule condition evaluator
+    - Depends on: A1
+    - Done when: a function `evaluate_rule(rule, series) -> list[dict]` applies a single rule to a pandas Series and returns findings; supports conditions: `regex_match`, `not_regex_match`, `min_length`, `max_length`, `allowed_values`, `disallowed_values`, `max_missing_pct`; unit tests cover each condition type
+
+#### B: Integration with audit pipeline
+
+- [ ] B1: Wire rules into `run_audit()` and results structure
+    - Depends on: A2
+    - Done when: `run_audit(..., rules_path=...)` loads rules and evaluates them per-column; findings appear in `sheet_results['fields'][col]['issues']` with `type: 'custom_rule'`; `count_issues()` counts them; health score penalizes them; existing tests still pass
+
+- [ ] B2: Add `--rules` CLI flag
+    - Depends on: B1
+    - Done when: `data-hygiene-audit --input data.xlsx --output ./reports --rules rules.json` applies custom rules; findings show in all 3 reports; `--rules` documented in `--help` output
+
+#### C: Reporting integration
+
+- [ ] C1: Display custom rule findings in HTML/Excel/PDF reports
+    - Depends on: B1
+    - Done when: custom rule findings render with rule name as heading, description as "why it matters", and severity badge; visually indistinguishable from built-in findings; verified on sample data with 2+ custom rules
+
+#### D: Documentation and sample
+
+- [ ] D1: Create sample rules file and document in README
+    - Depends on: B2, C1
+    - Done when: `samples/rules_example.json` demonstrates 3–4 rules (regex, allowed values, length, missing pct); README has "Custom Rules" section explaining format, conditions, and usage; CHANGELOG updated
+
+---
+
+### Sprint 6 complete when:
+
+- [x] All sub-tasks checked off
+- [x] `pytest` passes with new rule engine tests
+- [x] `ruff check .` passes
+- [x] Sample rules file works: `data-hygiene-audit --input samples/input/sample_messy_data.xlsx --output ./reports --rules samples/rules_example.json`
+- [x] Custom rule findings appear in HTML, Excel, and PDF reports
+- [x] Invalid rules file produces clear error message
+
+---
+
+## Sprint 7: Profiling, Multi-file, and CI Integration
+
+**Source:** Audit Round 2 — ranked #2, #3, #4 next moves
+**Priority:** Next
+**Estimated effort:** 2–3 days
+
+Three independent tracks that can be done in any order.
+
+### Decomposition: Sprint 7
+
+---
+
+#### Track A: Column-level profiling
+
+Goal: Add statistical profiling (cardinality, uniqueness, min/max/mean) to audit results and reports.
+
+- [ ] A1: Compute column statistics in core audit
+    - Depends on: none
+    - Done when: `sheet_results['fields'][col]` gains a `'profile'` dict with keys: `cardinality` (distinct count), `uniqueness_pct`, `min_length`, `max_length`, `avg_length`; for numeric columns also: `min_value`, `max_value`, `mean_value`, `median_value`; unit tests verify stats on known data
+
+- [ ] A2: Render profile stats in HTML report
+    - Depends on: A1
+    - Done when: each field section in HTML shows a compact stats row (e.g. "123 distinct | 82% unique | avg length 14"); numeric fields show min/max/mean; visually compact, doesn't overwhelm the issue findings
+
+- [ ] A3: Include profile stats in Excel and PDF reports
+    - Depends on: A1
+    - Done when: Excel findings sheet has profile columns (cardinality, uniqueness); PDF shows stats per field; JSON output includes profile data
+
+- [ ] A4: Expose profiling in typed API
+    - Depends on: A1
+    - Done when: `FieldResult` dataclass gains a `profile: ColumnProfile` field; `ColumnProfile` dataclass has all stat fields; accessible via `result.sheets[0].fields[0].profile.cardinality`
+
+---
+
+#### Track B: Multi-file / directory mode
+
+Goal: Accept a directory path or glob and produce a combined report across all matched files.
+
+- [ ] B1: Add directory/glob input resolution
+    - Depends on: none
+    - Done when: `--input ./data/` scans for supported files recursively; `--input "data/*.csv"` expands globs; error if no files found; file list printed before audit starts
+
+- [ ] B2: Run audit across multiple files and merge results
+    - Depends on: B1
+    - Done when: `run_audit()` accepts a list of paths (or new `run_multi_audit()`); results dict gains a `'files'` key mapping filename to per-file results; `overall_score` is the weighted average across all files
+
+- [ ] B3: Multi-file reporting
+    - Depends on: B2
+    - Done when: HTML report has a file-level summary table (filename, row count, health score, issue count) with links to per-file detail sections; Excel has one sheet per file; PDF has file-level table of contents
+
+- [ ] B4: Add `--recursive` flag and document
+    - Depends on: B3
+    - Done when: `--recursive` / `-R` controls directory traversal depth (default: recursive); README documents multi-file usage with examples; CHANGELOG updated
+
+---
+
+#### Track C: CI / pipeline integration
+
+Goal: Provide a GitHub Action and exit codes so audits can gate CI pipelines.
+
+- [ ] C1: Add structured exit codes
+    - Depends on: none
+    - Done when: CLI exits 0 if score >= threshold, exits 1 if score < threshold; new `--fail-under` flag sets the threshold (default: 0, never fails); `--fail-under 70` exits 1 if health score < 70; unit test verifies exit codes
+
+- [ ] C2: Create GitHub Action definition
+    - Depends on: C1
+    - Done when: `.github/actions/audit/action.yml` defines a composite action with inputs (file, rules, fail-under, threshold); uses `pip install .` + runs the CLI; outputs health score and issue count as step outputs; README documents usage in a workflow
+
+- [ ] C3: Add SARIF output for GitHub Code Scanning
+    - Depends on: C1
+    - Done when: `--sarif` flag outputs findings in SARIF format compatible with `github/codeql-action/upload-sarif`; findings appear as code scanning alerts tied to the input file; test validates SARIF schema compliance
+
+- [ ] C4: Document CI usage in README
+    - Depends on: C2, C3
+    - Done when: README has "CI / Pipeline Integration" section with GitHub Actions example workflow YAML showing: audit on push, fail-under threshold, SARIF upload; CHANGELOG updated
+
+---
+
+### Sprint 7 complete when:
+
+- [ ] All sub-tasks checked off
+- [ ] `pytest` passes with new profiling and multi-file tests
+- [ ] `ruff check .` passes
+- [ ] `data-hygiene-audit --input samples/input/ --output ./reports` audits all files in directory
+- [ ] HTML report shows column stats (cardinality, uniqueness)
+- [ ] `--fail-under 70` exits non-zero on low-scoring data
+- [ ] GitHub Action YAML is valid and documented

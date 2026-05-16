@@ -1,8 +1,9 @@
 """HTML report generator."""
 
 import json
-from collections import Counter
 from html import escape as _html_escape
+
+from ..core import count_issues
 
 
 def _h(val):
@@ -30,22 +31,9 @@ def _render_fix(fix):
 
 def generate_html(results, output_path):
     """Generate a client-readable HTML report."""
-    total_issues = 0
-    severity_totals = Counter()
-    for sheet in results['sheets'].values():
-        for field in sheet['fields'].values():
-            for issue in field['issues']:
-                total_issues += 1
-                severity_totals[issue['severity']] += 1
-        for d in sheet['phantom_duplicates']:
-            total_issues += 1
-            severity_totals[d['severity']] += 1
-        for f in sheet.get('fuzzy_duplicates', []):
-            total_issues += 1
-            severity_totals[f['severity']] += 1
-        for sv in sheet.get('schema_violations', []):
-            total_issues += 1
-            severity_totals[sv['severity']] += 1
+    counts = count_issues(results)
+    total_issues = counts.get('total', 0)
+    severity_totals = counts
 
     parts = []
     parts.append(f"""<!DOCTYPE html>
@@ -537,6 +525,24 @@ color:#fff">{ss}/100</span></h2>
     <div class="null-bar"><div class="null-bar-fill"
         style="width:{min(null['missing_pct'], 100)}%;background:{null_color};"></div></div>
 """)
+            profile = field_data.get('profile', {})
+            if profile:
+                stats_parts = [
+                    f"{profile['cardinality']} distinct",
+                    f"{profile['uniqueness_pct']}% unique",
+                    f"avg len {profile['avg_length']}",
+                ]
+                if 'min_value' in profile:
+                    stats_parts.append(
+                        f"range {profile['min_value']}"
+                        f"–{profile['max_value']}"
+                    )
+                parts.append(
+                    '<div style="font-size:0.8rem;color:var(--text-muted);'
+                    'margin:0.2rem 0 0.4rem 0;">'
+                    f'{" &nbsp;|&nbsp; ".join(stats_parts)}</div>'
+                )
+
             for issue in issues:
                 sev = issue['severity']
                 itype = issue['type']
@@ -614,6 +620,24 @@ color:#fff">{ss}/100</span></h2>
                         f' {detail["total_rows"]} values missing'
                         f' ({detail["missing_pct"]}%)'
                     )
+
+                elif itype == 'custom_rule':
+                    rule_name = _h(issue.get('rule_name', 'Custom Rule'))
+                    msg = _h(detail.get('message', ''))
+                    parts.append(
+                        f'<strong>{rule_name}</strong>'
+                        f' &mdash; {msg}'
+                    )
+                    examples = detail.get('examples', [])
+                    if examples:
+                        sample_str = ', '.join(
+                            f'"{_h(str(e))}"' for e in examples[:3]
+                        )
+                        parts.append(
+                            '<div style="font-size:0.85rem;'
+                            'color:var(--text-muted);">'
+                            f'Examples: {sample_str}</div>'
+                        )
 
                 else:
                     parts.append(

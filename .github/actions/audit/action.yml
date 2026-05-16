@@ -1,0 +1,81 @@
+name: 'Data Hygiene Audit'
+description: 'Run data quality checks on Excel/CSV files and fail if score is too low'
+inputs:
+  file:
+    description: 'Path to input file or directory'
+    required: true
+  output:
+    description: 'Output directory for reports'
+    required: false
+    default: './audit-reports'
+  fail-under:
+    description: 'Minimum health score (0-100). Fails if score is below this.'
+    required: false
+    default: '0'
+  threshold:
+    description: 'Fuzzy duplicate similarity threshold (0.0-1.0)'
+    required: false
+    default: '0.85'
+  rules:
+    description: 'Path to custom rules JSON file'
+    required: false
+    default: ''
+  schema:
+    description: 'Path to schema JSON file'
+    required: false
+    default: ''
+outputs:
+  score:
+    description: 'Overall health score (0-100)'
+    value: ${{ steps.audit.outputs.score }}
+  issues:
+    description: 'Total number of issues found'
+    value: ${{ steps.audit.outputs.issues }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Data Hygiene Auditor
+      shell: bash
+      run: pip install .
+
+    - name: Run audit
+      id: audit
+      shell: bash
+      run: |
+        ARGS="--input ${{ inputs.file }} --output ${{ inputs.output }} --json"
+        ARGS="$ARGS --threshold ${{ inputs.threshold }}"
+        if [ -n "${{ inputs.rules }}" ]; then
+          ARGS="$ARGS --rules ${{ inputs.rules }}"
+        fi
+        if [ -n "${{ inputs.schema }}" ]; then
+          ARGS="$ARGS --schema ${{ inputs.schema }}"
+        fi
+        if [ "${{ inputs.fail-under }}" != "0" ]; then
+          ARGS="$ARGS --fail-under ${{ inputs.fail-under }}"
+        fi
+        data-hygiene-audit $ARGS
+        # Extract score from JSON output
+        SCORE=$(python -c "
+        import json, glob
+        files = glob.glob('${{ inputs.output }}/*_audit_results.json')
+        if files:
+            with open(files[0]) as f:
+                data = json.load(f)
+            print(data['overall_score'])
+        else:
+            print('0')
+        ")
+        echo "score=$SCORE" >> $GITHUB_OUTPUT
+        # Count issues
+        ISSUES=$(python -c "
+        import json, glob
+        from data_hygiene_auditor.core import count_issues
+        files = glob.glob('${{ inputs.output }}/*_audit_results.json')
+        total = 0
+        for f in files:
+            with open(f) as fh:
+                data = json.load(fh)
+            total += count_issues(data).get('total', 0)
+        print(total)
+        ")
+        echo "issues=$ISSUES" >> $GITHUB_OUTPUT

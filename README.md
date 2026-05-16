@@ -100,10 +100,19 @@ Supports `.xlsx`, `.xls`, `.csv`, and `.tsv` files.
 
 | Flag | Description |
 |------|-------------|
-| `--input`, `-i` | Path to the file to audit — `.xlsx`, `.csv`, or `.tsv` (required) |
+| `--input`, `-i` | Path to file, directory, or glob pattern (required) |
 | `--output`, `-o` | Directory for generated reports (required) |
 | `--json` | Also output the raw findings as structured JSON |
-| `--threshold`, `-t` | Fuzzy duplicate similarity threshold, 0.0-1.0 (default: 0.85) |
+| `--threshold`, `-t` | Fuzzy duplicate similarity threshold, 0.0–1.0 (default: 0.85) |
+| `--schema`, `-s` | Path to a schema JSON for type/completeness validation |
+| `--generate-schema` | Infer types from the data and save a schema JSON to the given path |
+| `--baseline`, `-b` | Path to a previous audit JSON for trend comparison (shows deltas) |
+| `--rules`, `-r` | Path to custom rules JSON for additional checks |
+| `--sarif` | Output findings in SARIF format (for GitHub Code Scanning) |
+| `--fail-under` | Exit with code 1 if health score is below this threshold (0-100) |
+| `--quiet`, `-q` | Suppress all terminal output (just write report files) |
+| `--force` | Process files exceeding the 2M row safety limit |
+| `--version`, `-V` | Print version and exit |
 
 ### Example
 
@@ -115,16 +124,16 @@ python audit.py --input samples/input/sample_messy_data.xlsx --output ./reports
   Data Hygiene Auditor
   Auditing: samples/input/sample_messy_data.xlsx
 
-  [1/2] Analyzed sheet: Customers
-  [2/2] Analyzed sheet: Orders
+  [1/2] Analyzed sheet: Customers  (score: 42)
+  [2/2] Analyzed sheet: Orders  (score: 68)
 
   Generating reports...
     HTML  -> ./reports/sample_messy_data_audit_report.html
     Excel -> ./reports/sample_messy_data_audit_findings.xlsx
     PDF   -> ./reports/sample_messy_data_audit_report.pdf
 
-  Audit complete: 59 issues found
-    High: 23 | Medium: 20 | Low: 16
+  Health Score: 55/100
+  59 issues found  —  High: 23 | Medium: 20 | Low: 16
 ```
 
 ## Use as a Library
@@ -169,6 +178,103 @@ loose = audit_file("data.xlsx", fuzzy_threshold=0.70)
 
 Works in Jupyter notebooks — call `audit_file()` in a cell and explore the typed results interactively.
 
+## Custom Rules
+
+Define your own detection rules in a JSON file to enforce project-specific data standards alongside the built-in checks.
+
+```
+data-hygiene-audit --input data.xlsx --output ./reports --rules my_rules.json
+```
+
+### Rule file format
+
+```json
+{
+  "rules": [
+    {
+      "name": "Phone format (US)",
+      "description": "Phone numbers should match (XXX) XXX-XXXX format",
+      "severity": "High",
+      "condition": "regex_match",
+      "threshold": "^\\(\\d{3}\\) \\d{3}-\\d{4}$",
+      "column_pattern": "phone|tel"
+    }
+  ]
+}
+```
+
+Each rule requires: `name`, `description`, `severity` (High/Medium/Low), `condition`, and `threshold`.
+
+### Targeting columns
+
+- `"column_pattern": "phone|tel"` — regex matched against column names (case-insensitive)
+- `"columns": ["Status", "Type"]` — explicit list of column names
+- Omit both to apply the rule to all columns
+
+### Available conditions
+
+| Condition | Threshold | Fires when |
+|-----------|-----------|------------|
+| `regex_match` | Regex string | Values don't match the pattern |
+| `not_regex_match` | Regex string | Values match the disallowed pattern |
+| `min_length` | Number | Values are shorter than threshold |
+| `max_length` | Number | Values are longer than threshold |
+| `allowed_values` | Array of strings | Values not in the allowed set (case-insensitive) |
+| `disallowed_values` | Array of strings | Values found in the disallowed set (case-insensitive) |
+| `max_missing_pct` | Number (0-100) | Missing percentage exceeds threshold |
+
+See [`samples/rules_example.json`](samples/rules_example.json) for a working example with 4 rules.
+
+## Multi-file Mode
+
+Pass a directory or glob pattern to audit multiple files at once:
+
+```
+data-hygiene-audit --input ./data/ --output ./reports
+data-hygiene-audit --input "exports/*.csv" --output ./reports
+```
+
+Each file gets its own set of reports. The CLI shows a combined health score across all files.
+
+## CI / Pipeline Integration
+
+Use `--fail-under` to gate CI pipelines on data quality:
+
+```
+data-hygiene-audit --input data.xlsx --output ./reports --fail-under 70
+```
+
+Exits with code 1 if the health score drops below the threshold.
+
+### GitHub Actions
+
+```yaml
+- uses: actions/checkout@v4
+- uses: actions/setup-python@v5
+  with:
+    python-version: '3.12'
+- uses: ./.github/actions/audit
+  with:
+    file: data/customers.xlsx
+    fail-under: '70'
+    rules: rules.json
+```
+
+### SARIF for Code Scanning
+
+```yaml
+- name: Run audit with SARIF
+  run: |
+    pip install .
+    data-hygiene-audit --input data/ --output ./reports --sarif audit.sarif
+
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: audit.sarif
+```
+
+Findings appear as code scanning alerts in the GitHub Security tab.
+
 ## Regenerating the Sample Data
 
 `generate_sample.py` recreates the deliberately-messy demo workbook at `samples/input/sample_messy_data.xlsx`. Run it if you want to modify the demo data or verify that generation is reproducible. The committed outputs in [samples/output/](samples/output/) can then be regenerated with the command shown in [See It In Action](#see-it-in-action).
@@ -179,7 +285,7 @@ python generate_sample.py
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.9+
 - pandas
 - openpyxl
 - reportlab

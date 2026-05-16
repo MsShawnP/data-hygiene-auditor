@@ -2,6 +2,7 @@
 
 from .api import (
     AuditResult,
+    ColumnProfile,
     Duplicate,
     FieldResult,
     Finding,
@@ -12,7 +13,14 @@ from .api import (
     TrendData,
     audit_file,
 )
-from .core import SUPPORTED_EXTENSIONS, WHY_IT_MATTERS, _load_sheets, run_audit
+from .core import (  # noqa: F401
+    SUPPORTED_EXTENSIONS,
+    WHY_IT_MATTERS,
+    _load_sheets,
+    count_issues,
+    run_audit,
+    run_multi_audit,
+)
 from .detection import (
     analyze_fuzzy_duplicates,
     analyze_mixed_formats,
@@ -24,6 +32,7 @@ from .detection import (
     rate_severity,
 )
 from .reporting import generate_excel, generate_html, generate_pdf
+from .rules import Rule, evaluate_rule, load_rules
 from .schema import generate_schema, load_schema, validate_schema
 from .trend import compute_trend, load_baseline
 
@@ -34,12 +43,14 @@ __all__ = [
     'FixSuggestion',
     'Duplicate',
     'FuzzyDuplicate',
+    'ColumnProfile',
     'FieldResult',
     'SchemaViolation',
     'SheetResult',
     'TrendData',
     'run_audit',
-    '_load_sheets',
+    'run_multi_audit',
+    'count_issues',
     'SUPPORTED_EXTENSIONS',
     'WHY_IT_MATTERS',
     'infer_field_type',
@@ -58,4 +69,7 @@ __all__ = [
     'validate_schema',
     'load_baseline',
     'compute_trend',
+    'load_rules',
+    'evaluate_rule',
+    'Rule',
 ]

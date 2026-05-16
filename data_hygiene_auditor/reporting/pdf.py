@@ -178,6 +178,20 @@ def generate_pdf(results, output_path):
                 styles['FieldHead'],
             ))
 
+            profile = field_data.get('profile', {})
+            if profile:
+                stats = (
+                    f"{profile['cardinality']} distinct"
+                    f" | {profile['uniqueness_pct']}% unique"
+                    f" | avg len {profile['avg_length']}"
+                )
+                if 'min_value' in profile:
+                    stats += (
+                        f" | range {profile['min_value']}"
+                        f"–{profile['max_value']}"
+                    )
+                story.append(Paragraph(stats, styles['SmallBody']))
+
             for issue in issues:
                 sev = issue['severity']
                 detail = issue['detail']
@@ -257,6 +271,24 @@ def generate_pdf(results, output_path):
                         text,
                         styles.get(sev_style, styles['SmallBody']),
                     ))
+
+                elif itype == 'custom_rule':
+                    rule_name = _p(issue.get('rule_name', 'Custom Rule'))
+                    msg = _p(detail.get('message', ''))
+                    text = f"[{sev}] {rule_name} — {msg}"
+                    story.append(Paragraph(
+                        text,
+                        styles.get(sev_style, styles['SmallBody']),
+                    ))
+                    examples = detail.get('examples', [])
+                    if examples:
+                        sample_str = ', '.join(
+                            f'"{_p(str(e))}"' for e in examples[:3]
+                        )
+                        story.append(Paragraph(
+                            f"Examples: {sample_str}",
+                            styles['SmallBody'],
+                        ))
 
                 why = issue.get('why', '')
                 if why:

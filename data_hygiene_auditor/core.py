@@ -77,6 +77,36 @@ WHY_IT_MATTERS = {
 SUPPORTED_EXTENSIONS = {'.xlsx', '.xls', '.csv', '.tsv'}
 
 
+def count_issues(results):
+    """Count total and per-severity issues across all sheets.
+
+    Counts all issue sources: field issues, phantom duplicates,
+    fuzzy duplicates, and schema violations.
+
+    Returns dict with keys: 'total', 'High', 'Medium', 'Low', 'schema'.
+    """
+    from collections import Counter
+    totals = Counter()
+    schema_count = 0
+    for sheet in results['sheets'].values():
+        for field_data in sheet['fields'].values():
+            for issue in field_data['issues']:
+                totals['total'] += 1
+                totals[issue['severity']] += 1
+        for d in sheet['phantom_duplicates']:
+            totals['total'] += 1
+            totals[d['severity']] += 1
+        for f in sheet.get('fuzzy_duplicates', []):
+            totals['total'] += 1
+            totals[f['severity']] += 1
+        for sv in sheet.get('schema_violations', []):
+            totals['total'] += 1
+            totals[sv['severity']] += 1
+            schema_count += 1
+    totals['schema'] = schema_count
+    return dict(totals)
+
+
 def _load_sheets(input_path):
     """Load tabular data as a dict of {sheet_name: DataFrame}."""
     ext = Path(input_path).suffix.lower()
@@ -92,12 +122,17 @@ def _load_sheets(input_path):
         }
 
 
-def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=None):
+def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=None, rules_path=None):
     """Run all checks against an Excel or CSV file. Returns structured audit results."""
     schema = None
     if schema_path:
         from .schema import load_schema
         schema = load_schema(schema_path)
+
+    rules = None
+    if rules_path:
+        from .rules import evaluate_rule, load_rules
+        rules = load_rules(rules_path)
 
     sheets = _load_sheets(input_path)
     results = {
@@ -192,6 +227,13 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
                     issue['fix'] = fix
                 field_findings['issues'].append(issue)
 
+            if rules:
+                for rule in rules:
+                    finding = evaluate_rule(rule, df[col], col)
+                    if finding:
+                        field_findings['issues'].append(finding)
+
+            field_findings['profile'] = _compute_profile(df[col], field_type)
             sheet_results['fields'][col] = field_findings
 
         field_types = {
@@ -213,17 +255,32 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
             frozenset(i - 2 for i in d['rows'])
             for d in dupes
         ]
-        fuzzy = analyze_fuzzy_duplicates(
+        fuzzy_raw = analyze_fuzzy_duplicates(
             df, sheet_name, field_types,
             threshold=fuzzy_threshold,
             phantom_row_sets=phantom_row_sets,
         )
-        for f in fuzzy:
+        fuzzy = []
+        for f in fuzzy_raw:
+            if f.get('type') == '_levenshtein_skipped':
+                results.setdefault('warnings', []).append({
+                    'type': 'levenshtein_skipped',
+                    'sheet': sheet_name,
+                    'unmatched_rows': f['unmatched_count'],
+                    'limit': f['limit'],
+                    'message': (
+                        f"Fuzzy (Levenshtein) matching skipped for sheet"
+                        f" '{sheet_name}': {f['unmatched_count']} unmatched"
+                        f" rows exceeds the {f['limit']}-row limit."
+                    ),
+                })
+                continue
             f['severity'] = rate_severity('fuzzy_duplicate', f)
             f['why'] = WHY_IT_MATTERS['fuzzy_duplicate']
             fix = generate_dup_fix('fuzzy_duplicate', f, sheet_name)
             if fix:
                 f['fix'] = fix
+            fuzzy.append(f)
         sheet_results['fuzzy_duplicates'] = fuzzy
 
         if schema:
@@ -247,11 +304,57 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
     if schema:
         results['schema'] = {'source': schema_path, 'validated': True}
 
+    if rules:
+        results['rules'] = {
+            'source': rules_path,
+            'count': len(rules),
+            'names': [r.name for r in rules],
+        }
+
     if baseline_path:
         baseline = load_baseline(baseline_path)
         results['trend'] = compute_trend(results, baseline)
 
     return results
+
+
+def run_multi_audit(input_paths, fuzzy_threshold=0.85, schema_path=None, rules_path=None):
+    """Run audits across multiple files. Returns a combined results dict.
+
+    The returned dict has:
+    - 'files': mapping of filename -> per-file audit results
+    - 'overall_score': weighted average by row count
+    - 'total_files': number of files audited
+    - 'total_rows': sum of rows across all files
+    """
+    file_results = {}
+    for path in input_paths:
+        results = run_audit(
+            path,
+            fuzzy_threshold=fuzzy_threshold,
+            schema_path=schema_path,
+            rules_path=rules_path,
+        )
+        file_results[os.path.basename(path)] = results
+
+    total_rows = sum(
+        sum(s['row_count'] for s in r['sheets'].values())
+        for r in file_results.values()
+    )
+    if total_rows > 0:
+        weighted_score = sum(
+            r['overall_score'] * sum(s['row_count'] for s in r['sheets'].values())
+            for r in file_results.values()
+        ) / total_rows
+    else:
+        weighted_score = 100
+
+    return {
+        'files': file_results,
+        'overall_score': round(weighted_score),
+        'total_files': len(file_results),
+        'total_rows': total_rows,
+    }
 
 
 def _compute_health_score(sheet_data):
@@ -290,3 +393,46 @@ def _compute_health_score(sheet_data):
         score -= severity_penalty.get(sv['severity'], 1.0)
 
     return max(0, round(score))
+
+
+def _compute_profile(series, field_type):
+    """Compute column-level statistics for profiling."""
+    total = len(series)
+    non_null = series.dropna()
+    non_null_str = non_null.astype(str).str.strip()
+    non_empty = non_null_str[non_null_str != '']
+
+    cardinality = int(non_empty.nunique()) if len(non_empty) > 0 else 0
+    uniqueness_pct = round(cardinality / len(non_empty) * 100, 1) if len(non_empty) > 0 else 0.0
+
+    lengths = non_empty.str.len()
+    profile = {
+        'cardinality': cardinality,
+        'uniqueness_pct': uniqueness_pct,
+        'total_values': total,
+        'non_empty_values': int(len(non_empty)),
+        'min_length': int(lengths.min()) if len(lengths) > 0 else 0,
+        'max_length': int(lengths.max()) if len(lengths) > 0 else 0,
+        'avg_length': round(float(lengths.mean()), 1) if len(lengths) > 0 else 0.0,
+    }
+
+    if field_type == 'currency':
+        numeric = pd.to_numeric(
+            non_empty.str.replace(r'[$,£€]', '', regex=True),
+            errors='coerce',
+        ).dropna()
+        if len(numeric) > 0:
+            profile['min_value'] = round(float(numeric.min()), 2)
+            profile['max_value'] = round(float(numeric.max()), 2)
+            profile['mean_value'] = round(float(numeric.mean()), 2)
+            profile['median_value'] = round(float(numeric.median()), 2)
+
+    elif field_type == 'id':
+        numeric = pd.to_numeric(non_empty, errors='coerce').dropna()
+        if len(numeric) > 0:
+            profile['min_value'] = round(float(numeric.min()), 2)
+            profile['max_value'] = round(float(numeric.max()), 2)
+            profile['mean_value'] = round(float(numeric.mean()), 2)
+            profile['median_value'] = round(float(numeric.median()), 2)
+
+    return profile
