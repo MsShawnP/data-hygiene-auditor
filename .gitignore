@@ -4,4 +4,6 @@ __pycache__/
 .DS_Store
 .venv/
 build/
+dist/
 *.egg-info/
+samples/output/benchmark_*
