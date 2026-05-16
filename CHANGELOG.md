@@ -26,6 +26,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - GitHub Action (`.github/actions/audit/action.yml`)
 - `--version` / `-V` flag
 - `--quiet` / `-q` flag to suppress terminal output
+- `--export-fixes` flag: export remediation plan as CSV (sorted by severity, with fix code and assignee columns)
 - `--force` flag to override the 2M row safety limit
 - `count_issues()` shared helper for consistent issue counting
 - Warning when fuzzy (Levenshtein) matching is skipped due to row count
