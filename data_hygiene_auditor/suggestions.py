@@ -12,7 +12,8 @@ def generate_fix(issue_type: str, detail: dict, col_name: str = '',
     """
     handler = _HANDLERS.get(issue_type)
     if handler:
-        return handler(detail, col_name, field_type)
+        result: dict | None = handler(detail, col_name, field_type)
+        return result
     return None
 
 

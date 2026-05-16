@@ -139,6 +139,79 @@ def _generate_sarif(all_results, input_files):
     }
 
 
+def _export_remediation_csv(all_results, output_path):
+    """Export a CSV remediation plan with one row per fixable issue."""
+    import csv
+
+    rows = []
+    for results in all_results:
+        source_file = results.get('input_file', '')
+        for sheet_name, sheet_data in results['sheets'].items():
+            for col_name, field_data in sheet_data['fields'].items():
+                for issue in field_data['issues']:
+                    fix = issue.get('fix', {})
+                    detail = issue.get('detail', {})
+                    msg = ''
+                    if isinstance(detail, dict):
+                        msg = detail.get('message', '')
+                        if not msg and 'issue' in detail:
+                            msg = detail['issue']
+                    rows.append({
+                        'File': source_file,
+                        'Sheet': sheet_name,
+                        'Field': col_name,
+                        'Issue Type': issue.get('rule_name', issue['type']),
+                        'Severity': issue['severity'],
+                        'Description': msg,
+                        'Fix Strategy': fix.get('strategy', '') if fix else '',
+                        'Fix Code': fix.get('code', '') if fix else '',
+                        'Assigned To': '',
+                        'Status': 'Open',
+                    })
+
+            for dup in sheet_data['phantom_duplicates']:
+                fix = dup.get('fix', {})
+                rows.append({
+                    'File': source_file,
+                    'Sheet': sheet_name,
+                    'Field': '(row-level)',
+                    'Issue Type': dup['type'],
+                    'Severity': dup['severity'],
+                    'Description': f"{dup['group_size']} rows: {', '.join(str(r) for r in dup['rows'][:5])}",
+                    'Fix Strategy': fix.get('strategy', '') if fix else '',
+                    'Fix Code': fix.get('code', '') if fix else '',
+                    'Assigned To': '',
+                    'Status': 'Open',
+                })
+
+            for fuzz in sheet_data.get('fuzzy_duplicates', []):
+                fix = fuzz.get('fix', {})
+                rows.append({
+                    'File': source_file,
+                    'Sheet': sheet_name,
+                    'Field': '(row-level)',
+                    'Issue Type': 'fuzzy_duplicate',
+                    'Severity': fuzz['severity'],
+                    'Description': f"{fuzz['group_size']} rows: {', '.join(str(r) for r in fuzz['rows'][:5])}",
+                    'Fix Strategy': fix.get('strategy', '') if fix else '',
+                    'Fix Code': fix.get('code', '') if fix else '',
+                    'Assigned To': '',
+                    'Status': 'Open',
+                })
+
+    rows.sort(key=lambda r: {'High': 0, 'Medium': 1, 'Low': 2}.get(r['Severity'], 3))
+
+    fieldnames = [
+        'File', 'Sheet', 'Field', 'Issue Type', 'Severity',
+        'Description', 'Fix Strategy', 'Fix Code',
+        'Assigned To', 'Status',
+    ]
+    with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=(
@@ -197,6 +270,10 @@ Outputs three files:
     parser.add_argument(
         '--sarif',
         help='Output findings in SARIF format to the given path',
+    )
+    parser.add_argument(
+        '--export-fixes',
+        help='Export remediation plan as CSV to the given path',
     )
     parser.add_argument(
         '--quiet', '-q', action='store_true',
@@ -322,6 +399,10 @@ Outputs three files:
         with open(args.sarif, 'w') as f:
             json.dump(sarif_data, f, indent=2)
         _log(f"    {_c('SARIF', '32')}  -> {args.sarif}")
+
+    if args.export_fixes:
+        _export_remediation_csv(all_results, args.export_fixes)
+        _log(f"    {_c('Fixes', '32')} -> {args.export_fixes}")
 
     total_counts = {'total': 0, 'High': 0, 'Medium': 0, 'Low': 0, 'schema': 0}
     scores = []

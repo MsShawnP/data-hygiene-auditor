@@ -109,6 +109,7 @@ Supports `.xlsx`, `.xls`, `.csv`, and `.tsv` files.
 | `--baseline`, `-b` | Path to a previous audit JSON for trend comparison (shows deltas) |
 | `--rules`, `-r` | Path to custom rules JSON for additional checks |
 | `--sarif` | Output findings in SARIF format (for GitHub Code Scanning) |
+| `--export-fixes` | Export remediation plan as CSV (sorted by severity, with fix code) |
 | `--fail-under` | Exit with code 1 if health score is below this threshold (0-100) |
 | `--quiet`, `-q` | Suppress all terminal output (just write report files) |
 | `--force` | Process files exceeding the 2M row safety limit |

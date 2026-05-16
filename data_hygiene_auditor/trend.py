@@ -78,7 +78,7 @@ def compute_trend(current, baseline):
 
 def _count_issues(results):
     """Count total and per-severity issues across all sheets."""
-    counts = Counter()
+    counts: Counter[str] = Counter()
     for sheet_data in results.get('sheets', {}).values():
         counts += _count_sheet_issues(sheet_data)
     return counts
@@ -86,7 +86,7 @@ def _count_issues(results):
 
 def _count_sheet_issues(sheet_data):
     """Count issues in a single sheet."""
-    counts = Counter()
+    counts: Counter[str] = Counter()
     for field_data in sheet_data.get('fields', {}).values():
         for issue in field_data.get('issues', []):
             counts['total'] += 1

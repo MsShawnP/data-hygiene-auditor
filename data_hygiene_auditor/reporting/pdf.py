@@ -23,7 +23,7 @@ def _p(val):
     return _xml_escape(str(val))
 
 
-def generate_pdf(results, output_path):
+def generate_pdf(results: dict, output_path: str) -> str:
     """Generate a clean PDF report matching the HTML content."""
     doc = SimpleDocTemplate(
         output_path, pagesize=letter,
@@ -93,7 +93,7 @@ def generate_pdf(results, output_path):
     story.append(Spacer(1, 8))
 
     total_issues = 0
-    severity_totals = Counter()
+    severity_totals: Counter[str] = Counter()
     for sheet in results['sheets'].values():
         for field in sheet['fields'].values():
             for issue in field['issues']:

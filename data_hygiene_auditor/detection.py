@@ -195,7 +195,7 @@ def analyze_mixed_formats(series, field_type):
 
 def analyze_wrong_purpose(series, col_name, field_type):
     """Detect fields being used for the wrong purpose."""
-    findings = []
+    findings: list[dict] = []
     str_vals = series.dropna().astype(str).str.strip()
     non_null = str_vals[str_vals != '']
     if len(non_null) == 0:
@@ -245,7 +245,7 @@ def analyze_wrong_purpose(series, col_name, field_type):
     if field_type == 'id':
         alpha_mask = non_null.str.match(r'^[A-Za-z]+-\d+$', na=False)
         bare_mask = non_null.str.match(r'^\d+$', na=False)
-        type_counts = Counter()
+        type_counts: Counter[str] = Counter()
         alpha_count = int(alpha_mask.sum())
         bare_count = int(bare_mask.sum())
         other_count = len(non_null) - alpha_count - bare_count
@@ -310,7 +310,7 @@ def analyze_wrong_purpose(series, col_name, field_type):
 
 def analyze_placeholders(series, col_name):
     """Detect suspiciously uniform or placeholder data."""
-    findings = []
+    findings: list[dict] = []
     str_vals = series.dropna().astype(str).str.strip()
     non_null = str_vals[str_vals != '']
     if len(non_null) == 0:
@@ -346,7 +346,7 @@ def analyze_placeholders(series, col_name):
 
 def analyze_phantom_duplicates(df, sheet_name, field_types=None):
     """Detect records that are the same after normalizing whitespace/case/punctuation."""
-    findings = []
+    findings: list[dict] = []
     if df.empty or len(df) < 2:
         return findings
 
@@ -388,9 +388,9 @@ def analyze_phantom_duplicates(df, sheet_name, field_types=None):
     if dup_sigs.empty:
         return findings
 
-    groups = defaultdict(list)
-    for idx, sig in dup_sigs.items():
-        groups[sig].append(idx)
+    groups: dict[str, list[int]] = defaultdict(list)
+    for idx, sig in zip(dup_sigs.index, dup_sigs.values):
+        groups[sig].append(int(idx))
 
     for sig, indices in groups.items():
         if len(indices) < 2:
@@ -470,7 +470,7 @@ def analyze_fuzzy_duplicates(
     Finds matches that normalize-and-hash misses: token reordering,
     abbreviations, and typos.
     """
-    findings = []
+    findings: list[dict] = []
     if df.empty or len(df) < 2:
         return findings
 
@@ -521,14 +521,14 @@ def analyze_fuzzy_duplicates(
             continue
 
         fp_matched.update(indices)
-        row_nums = [i + 2 for i in indices]
+        row_nums = [int(i) + 2 for i in indices]
         sample_rows = []
         for i in indices[:3]:
             sample_rows.append(
                 {col: str(df.iloc[i][col]) for col in df.columns[:6]},
             )
 
-        differences = {}
+        differences: dict = {}
         for col in content_cols:
             vals = [str(df.iloc[i][col]) for i in indices]
             unique_vals = list(dict.fromkeys(vals))
