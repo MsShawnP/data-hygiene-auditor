@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.1.0] - 2026-05-16
 
 ### Fixed
 - CLI issue count now includes fuzzy duplicates and schema violations
 - `AuditResult._raw` is a proper dataclass field (type-checker visible)
+- `dataclasses.field` shadowing bug in `Finding` dataclass (caught by mypy)
 
 ### Added
 - Custom rule engine: define detection rules in JSON (`--rules` flag)
@@ -34,6 +35,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - Minimum Python version raised from 3.8 to 3.9
+- Fuzzy (Levenshtein) matching limit raised from 500 to 50,000 rows via n-gram blocking
 - mypy type checking added to CI (public API and rules module strictly typed)
 - PyPI classifiers expanded (license, Python versions, `Typing :: Typed`)
 - Automated PyPI publish workflow (push `v*` tag → build → test → publish)
@@ -59,5 +61,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Test suite (171 tests) and CI pipeline
 - MIT license
 
-[Unreleased]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/MsShawnP/Data-Hygiene-Auditor/releases/tag/v1.0.0

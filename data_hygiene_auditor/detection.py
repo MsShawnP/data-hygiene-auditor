@@ -461,6 +461,57 @@ def _levenshtein_similarity(s1, s2):
     return 1.0 - _levenshtein_distance(s1, s2) / max_len
 
 
+def _ngram_blocking(norm_strings, ngram_size=3, max_candidates_per_record=50):
+    """Build candidate pairs via n-gram inverted index.
+
+    Instead of comparing every pair (O(n²)), generate character n-grams for
+    each record and only consider pairs that share at least one n-gram.
+    Returns a set of (idx_a, idx_b) tuples with idx_a < idx_b.
+    """
+    inverted: dict[str, list[int]] = defaultdict(list)
+    for idx, text in norm_strings.items():
+        if len(text) < ngram_size:
+            grams = {text} if text else set()
+        else:
+            grams = {text[i:i + ngram_size] for i in range(len(text) - ngram_size + 1)}
+        for gram in grams:
+            inverted[gram].append(idx)
+
+    # Count shared n-grams per pair, cap candidates per record
+    pair_counts: dict[tuple[int, int], int] = Counter()
+    for indices in inverted.values():
+        if len(indices) > 500:
+            # Skip very common n-grams (noise)
+            continue
+        for i, a in enumerate(indices):
+            for b in indices[i + 1:]:
+                pair = (min(a, b), max(a, b))
+                pair_counts[pair] += 1
+
+    # Keep pairs with enough shared n-grams (at least 2, or 1 for short strings)
+    candidates: set[tuple[int, int]] = set()
+    per_record: dict[int, int] = Counter()
+    for pair, count in sorted(pair_counts.items(), key=lambda x: -x[1]):
+        if count < 2:
+            # For very short strings, 1 shared n-gram is ok
+            shorter = min(len(norm_strings[pair[0]]), len(norm_strings[pair[1]]))
+            if shorter >= ngram_size * 3 or count < 1:
+                continue
+        a, b = pair
+        if per_record[a] >= max_candidates_per_record:
+            continue
+        if per_record[b] >= max_candidates_per_record:
+            continue
+        candidates.add(pair)
+        per_record[a] += 1
+        per_record[b] += 1
+
+    return candidates
+
+
+_LEVENSHTEIN_LIMIT = 50_000
+
+
 def analyze_fuzzy_duplicates(
     df, sheet_name, field_types=None, threshold=0.85,
     phantom_row_sets=None,
@@ -549,14 +600,14 @@ def analyze_fuzzy_duplicates(
     skip = already_matched | fp_matched
     unmatched = [i for i in range(len(df)) if i not in skip]
 
-    if len(unmatched) > 500:
+    if len(unmatched) > _LEVENSHTEIN_LIMIT:
         findings.append({
             'type': '_levenshtein_skipped',
             'unmatched_count': len(unmatched),
-            'limit': 500,
+            'limit': _LEVENSHTEIN_LIMIT,
         })
 
-    if len(unmatched) >= 2 and len(unmatched) <= 500:
+    if len(unmatched) >= 2 and len(unmatched) <= _LEVENSHTEIN_LIMIT:
         norm_strings = {}
         for idx in unmatched:
             parts = [
@@ -564,13 +615,28 @@ def analyze_fuzzy_duplicates(
             ]
             norm_strings[idx] = '||'.join(parts)
 
+        # Use n-gram blocking for large sets, brute force for small ones
+        if len(unmatched) <= 500:
+            # Small set: brute-force pairwise (fast enough)
+            candidate_pairs = {
+                (min(a, b), max(a, b))
+                for i, a in enumerate(unmatched)
+                for b in unmatched[i + 1:]
+            }
+        else:
+            # Large set: n-gram blocking to avoid O(n²)
+            candidate_pairs = _ngram_blocking(norm_strings)
+
         used = set()
-        for pos, idx_a in enumerate(unmatched):
+        for idx_a in unmatched:
             if idx_a in used:
                 continue
             group = [idx_a]
-            for idx_b in unmatched[pos + 1:]:
-                if idx_b in used:
+            for idx_b in unmatched:
+                if idx_b <= idx_a or idx_b in used:
+                    continue
+                pair = (min(idx_a, idx_b), max(idx_a, idx_b))
+                if pair not in candidate_pairs:
                     continue
                 sim = _levenshtein_similarity(
                     norm_strings[idx_a], norm_strings[idx_b],

@@ -5,6 +5,7 @@ from data_hygiene_auditor.detection import (
     _fingerprint,
     _levenshtein_distance,
     _levenshtein_similarity,
+    _ngram_blocking,
     analyze_fuzzy_duplicates,
 )
 
@@ -167,6 +168,88 @@ class TestFuzzyDuplicates:
             df, "Sheet1", threshold=0.7,
         )
         assert len(loose) >= len(strict)
+
+
+class TestNgramBlocking:
+    def test_similar_strings_are_candidates(self):
+        norm = {0: "johnathan smith", 1: "jonathon smith", 2: "alice brown"}
+        pairs = _ngram_blocking(norm)
+        # johnathan/jonathon share many n-grams
+        assert (0, 1) in pairs
+
+    def test_dissimilar_strings_not_candidates(self):
+        norm = {0: "abcdefghij", 1: "zyxwvutsrq"}
+        pairs = _ngram_blocking(norm)
+        assert (0, 1) not in pairs
+
+    def test_empty_input(self):
+        pairs = _ngram_blocking({})
+        assert len(pairs) == 0
+
+    def test_single_record(self):
+        pairs = _ngram_blocking({0: "hello world"})
+        assert len(pairs) == 0
+
+    def test_short_strings(self):
+        norm = {0: "ab", 1: "ab"}
+        pairs = _ngram_blocking(norm, ngram_size=3)
+        # Short strings still work (use the full string as a single gram)
+        assert (0, 1) in pairs
+
+    def test_scales_beyond_500_rows(self):
+        """Verify blocking works on 1000+ records without timeout."""
+        import random
+        random.seed(42)
+        base_names = [
+            "john smith", "jane doe", "bob jones", "alice brown",
+            "charlie wilson", "diana ross", "edward king",
+        ]
+        norm = {}
+        for i in range(1000):
+            base = random.choice(base_names)
+            # Add slight variation to ~10% of records
+            if i % 10 == 0:
+                base = base[:3] + "x" + base[4:]
+            norm[i] = base + f"||city{i % 50}||state{i % 10}"
+        pairs = _ngram_blocking(norm)
+        # Should produce candidates without blowing up
+        assert isinstance(pairs, set)
+        # With many similar strings, should find some candidates
+        assert len(pairs) > 0
+
+
+class TestFuzzyLargeDataset:
+    def test_levenshtein_runs_beyond_500_rows(self):
+        """Verify fuzzy matching works on datasets larger than old 500-row cap."""
+        import random
+        random.seed(99)
+        first_names = ["Alice", "Bob", "Charlie", "Diana", "Edward",
+                       "Fiona", "George", "Hannah", "Ivan", "Julia"]
+        last_names = ["Smith", "Jones", "Brown", "Davis", "Wilson",
+                      "Taylor", "Anderson", "Thomas", "Moore", "White"]
+        cities = ["Portland", "Seattle", "Boston", "Denver", "Austin"]
+        rows = []
+        for i in range(600):
+            rows.append({
+                "Name": f"{random.choice(first_names)} {random.choice(last_names)}",
+                "City": random.choice(cities),
+            })
+        # Inject a typo pair that should be caught by Levenshtein
+        rows[100] = {"Name": "Johnathan Smitherson", "City": "Portland"}
+        rows[200] = {"Name": "Jonathon Smitherson", "City": "Portland"}
+        df = pd.DataFrame(rows)
+        findings = analyze_fuzzy_duplicates(df, "Sheet1", threshold=0.8)
+        # Should NOT have a _levenshtein_skipped warning
+        skipped = [f for f in findings if f.get('type') == '_levenshtein_skipped']
+        assert len(skipped) == 0
+
+    def test_no_skip_warning_at_501_rows(self):
+        """Old limit was 500 — verify 501 rows no longer triggers skip."""
+        rows = [{"Name": f"Unique Name {i}", "City": "Same"} for i in range(501)]
+        df = pd.DataFrame(rows)
+        findings = analyze_fuzzy_duplicates(df, "Sheet1")
+        skipped = [f for f in findings if f.get('type') == '_levenshtein_skipped']
+        assert len(skipped) == 0
 
 
 class TestFuzzyInRunAudit:

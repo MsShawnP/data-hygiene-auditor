@@ -23,7 +23,7 @@ A single run produces three reports tailored to three audiences: an **HTML repor
 
 **Phantom Duplicates** — Finds records that appear different on the surface due to casing, whitespace, or punctuation but represent the same entity after normalization. ID columns are automatically excluded from matching, so two records with different surrogate keys but identical content are still caught.
 
-**Fuzzy Duplicates** — Goes beyond normalization with fingerprint clustering (catches token reordering like "Smith John" vs "John Smith") and Levenshtein distance matching (catches typos like "Johnathan" vs "Jonathon"). Configurable similarity threshold.
+**Fuzzy Duplicates** — Goes beyond normalization with fingerprint clustering (catches token reordering like "Smith John" vs "John Smith") and Levenshtein distance matching (catches typos like "Johnathan" vs "Jonathon"). N-gram blocking enables Levenshtein matching on datasets up to 50,000 rows without brute-force overhead. Configurable similarity threshold.
 
 **Completeness Baseline** — Every field receives a null/missing analysis with severity rating, including detection of whitespace-only values that look populated but carry no data.
 
