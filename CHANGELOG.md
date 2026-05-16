@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `AuditResult._raw` is a proper dataclass field (type-checker visible)
 
 ### Added
+- Custom rule engine: define detection rules in JSON (`--rules` flag)
+  - Conditions: `regex_match`, `not_regex_match`, `min_length`, `max_length`, `allowed_values`, `disallowed_values`, `max_missing_pct`
+  - Target columns by regex pattern or explicit list
+  - Findings integrated into all 3 report formats
 - `--version` / `-V` flag
 - `--quiet` / `-q` flag to suppress terminal output
 - `--force` flag to override the 2M row safety limit

@@ -258,6 +258,24 @@ def generate_pdf(results, output_path):
                         styles.get(sev_style, styles['SmallBody']),
                     ))
 
+                elif itype == 'custom_rule':
+                    rule_name = _p(issue.get('rule_name', 'Custom Rule'))
+                    msg = _p(detail.get('message', ''))
+                    text = f"[{sev}] {rule_name} — {msg}"
+                    story.append(Paragraph(
+                        text,
+                        styles.get(sev_style, styles['SmallBody']),
+                    ))
+                    examples = detail.get('examples', [])
+                    if examples:
+                        sample_str = ', '.join(
+                            f'"{_p(str(e))}"' for e in examples[:3]
+                        )
+                        story.append(Paragraph(
+                            f"Examples: {sample_str}",
+                            styles['SmallBody'],
+                        ))
+
                 why = issue.get('why', '')
                 if why:
                     story.append(Paragraph(

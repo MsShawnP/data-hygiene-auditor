@@ -90,6 +90,10 @@ Outputs three files:
         help='Path to previous audit JSON for trend comparison',
     )
     parser.add_argument(
+        '--rules', '-r',
+        help='Path to custom rules JSON for additional checks',
+    )
+    parser.add_argument(
         '--quiet', '-q', action='store_true',
         help='Suppress all terminal output (just write report files)',
     )
@@ -149,6 +153,7 @@ Outputs three files:
         fuzzy_threshold=args.threshold,
         schema_path=args.schema,
         baseline_path=args.baseline,
+        rules_path=args.rules,
     )
     sheet_count = len(results['sheets'])
     for i, (name, sdata) in enumerate(results['sheets'].items(), 1):

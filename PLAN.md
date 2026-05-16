@@ -441,9 +441,66 @@ All items are independent unless noted — can be done in any order.
 
 ### Sprint 5 complete when:
 
+- [x] All sub-tasks checked off
+- [x] `pytest` passes (171 tests)
+- [x] `ruff check .` passes
+- [x] `data-hygiene-audit --version` works
+- [x] `data-hygiene-audit --input samples/input/sample_messy_data.xlsx --output samples/output/ --quiet` produces files with no stdout
+- [x] CLI issue count matches HTML report issue count on sample data
+
+---
+
+## Sprint 6: Custom Rule Engine
+
+**Source:** Audit Round 2 — ranked #1 next move
+**Priority:** Next
+**Estimated effort:** 1–2 days
+
+### Decomposition: Sprint 6
+
+Goal: Let users define detection rules in JSON that run alongside built-in checks, with findings integrated into all report outputs.
+
+---
+
+#### A: Rule file format and loader
+
+- [ ] A1: Define rule JSON schema and implement loader
+    - Depends on: none
+    - Done when: `data_hygiene_auditor/rules.py` exists with `load_rules(path) -> list[Rule]` that parses a JSON file into typed Rule objects (dataclass with fields: name, description, severity, column_pattern, condition, threshold); loader rejects invalid rules with clear error messages; unit tests for valid/invalid inputs pass
+
+- [ ] A2: Implement rule condition evaluator
+    - Depends on: A1
+    - Done when: a function `evaluate_rule(rule, series) -> list[dict]` applies a single rule to a pandas Series and returns findings; supports conditions: `regex_match`, `not_regex_match`, `min_length`, `max_length`, `allowed_values`, `disallowed_values`, `max_missing_pct`; unit tests cover each condition type
+
+#### B: Integration with audit pipeline
+
+- [ ] B1: Wire rules into `run_audit()` and results structure
+    - Depends on: A2
+    - Done when: `run_audit(..., rules_path=...)` loads rules and evaluates them per-column; findings appear in `sheet_results['fields'][col]['issues']` with `type: 'custom_rule'`; `count_issues()` counts them; health score penalizes them; existing tests still pass
+
+- [ ] B2: Add `--rules` CLI flag
+    - Depends on: B1
+    - Done when: `data-hygiene-audit --input data.xlsx --output ./reports --rules rules.json` applies custom rules; findings show in all 3 reports; `--rules` documented in `--help` output
+
+#### C: Reporting integration
+
+- [ ] C1: Display custom rule findings in HTML/Excel/PDF reports
+    - Depends on: B1
+    - Done when: custom rule findings render with rule name as heading, description as "why it matters", and severity badge; visually indistinguishable from built-in findings; verified on sample data with 2+ custom rules
+
+#### D: Documentation and sample
+
+- [ ] D1: Create sample rules file and document in README
+    - Depends on: B2, C1
+    - Done when: `samples/rules_example.json` demonstrates 3–4 rules (regex, allowed values, length, missing pct); README has "Custom Rules" section explaining format, conditions, and usage; CHANGELOG updated
+
+---
+
+### Sprint 6 complete when:
+
 - [ ] All sub-tasks checked off
-- [ ] `pytest` passes (167+ tests)
+- [ ] `pytest` passes with new rule engine tests
 - [ ] `ruff check .` passes
-- [ ] `data-hygiene-audit --version` works
-- [ ] `data-hygiene-audit --input samples/input/sample_messy_data.xlsx --output samples/output/ --quiet` produces files with no stdout
-- [ ] CLI issue count matches HTML report issue count on sample data
+- [ ] Sample rules file works: `data-hygiene-audit --input samples/input/sample_messy_data.xlsx --output ./reports --rules samples/rules_example.json`
+- [ ] Custom rule findings appear in HTML, Excel, and PDF reports
+- [ ] Invalid rules file produces clear error message

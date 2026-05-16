@@ -122,12 +122,17 @@ def _load_sheets(input_path):
         }
 
 
-def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=None):
+def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=None, rules_path=None):
     """Run all checks against an Excel or CSV file. Returns structured audit results."""
     schema = None
     if schema_path:
         from .schema import load_schema
         schema = load_schema(schema_path)
+
+    rules = None
+    if rules_path:
+        from .rules import evaluate_rule, load_rules
+        rules = load_rules(rules_path)
 
     sheets = _load_sheets(input_path)
     results = {
@@ -222,6 +227,12 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
                     issue['fix'] = fix
                 field_findings['issues'].append(issue)
 
+            if rules:
+                for rule in rules:
+                    finding = evaluate_rule(rule, df[col], col)
+                    if finding:
+                        field_findings['issues'].append(finding)
+
             sheet_results['fields'][col] = field_findings
 
         field_types = {
@@ -291,6 +302,13 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
 
     if schema:
         results['schema'] = {'source': schema_path, 'validated': True}
+
+    if rules:
+        results['rules'] = {
+            'source': rules_path,
+            'count': len(rules),
+            'names': [r.name for r in rules],
+        }
 
     if baseline_path:
         baseline = load_baseline(baseline_path)

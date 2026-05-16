@@ -24,6 +24,7 @@ from .detection import (
     rate_severity,
 )
 from .reporting import generate_excel, generate_html, generate_pdf
+from .rules import Rule, evaluate_rule, load_rules
 from .schema import generate_schema, load_schema, validate_schema
 from .trend import compute_trend, load_baseline
 
@@ -58,4 +59,7 @@ __all__ = [
     'validate_schema',
     'load_baseline',
     'compute_trend',
+    'load_rules',
+    'evaluate_rule',
+    'Rule',
 ]

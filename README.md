@@ -107,6 +107,7 @@ Supports `.xlsx`, `.xls`, `.csv`, and `.tsv` files.
 | `--schema`, `-s` | Path to a schema JSON for type/completeness validation |
 | `--generate-schema` | Infer types from the data and save a schema JSON to the given path |
 | `--baseline`, `-b` | Path to a previous audit JSON for trend comparison (shows deltas) |
+| `--rules`, `-r` | Path to custom rules JSON for additional checks |
 | `--quiet`, `-q` | Suppress all terminal output (just write report files) |
 | `--force` | Process files exceeding the 2M row safety limit |
 | `--version`, `-V` | Print version and exit |
@@ -174,6 +175,53 @@ loose = audit_file("data.xlsx", fuzzy_threshold=0.70)
 ```
 
 Works in Jupyter notebooks — call `audit_file()` in a cell and explore the typed results interactively.
+
+## Custom Rules
+
+Define your own detection rules in a JSON file to enforce project-specific data standards alongside the built-in checks.
+
+```
+data-hygiene-audit --input data.xlsx --output ./reports --rules my_rules.json
+```
+
+### Rule file format
+
+```json
+{
+  "rules": [
+    {
+      "name": "Phone format (US)",
+      "description": "Phone numbers should match (XXX) XXX-XXXX format",
+      "severity": "High",
+      "condition": "regex_match",
+      "threshold": "^\\(\\d{3}\\) \\d{3}-\\d{4}$",
+      "column_pattern": "phone|tel"
+    }
+  ]
+}
+```
+
+Each rule requires: `name`, `description`, `severity` (High/Medium/Low), `condition`, and `threshold`.
+
+### Targeting columns
+
+- `"column_pattern": "phone|tel"` — regex matched against column names (case-insensitive)
+- `"columns": ["Status", "Type"]` — explicit list of column names
+- Omit both to apply the rule to all columns
+
+### Available conditions
+
+| Condition | Threshold | Fires when |
+|-----------|-----------|------------|
+| `regex_match` | Regex string | Values don't match the pattern |
+| `not_regex_match` | Regex string | Values match the disallowed pattern |
+| `min_length` | Number | Values are shorter than threshold |
+| `max_length` | Number | Values are longer than threshold |
+| `allowed_values` | Array of strings | Values not in the allowed set (case-insensitive) |
+| `disallowed_values` | Array of strings | Values found in the disallowed set (case-insensitive) |
+| `max_missing_pct` | Number (0-100) | Missing percentage exceeds threshold |
+
+See [`samples/rules_example.json`](samples/rules_example.json) for a working example with 4 rules.
 
 ## Regenerating the Sample Data
 

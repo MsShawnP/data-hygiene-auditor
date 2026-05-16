@@ -603,6 +603,24 @@ color:#fff">{ss}/100</span></h2>
                         f' ({detail["missing_pct"]}%)'
                     )
 
+                elif itype == 'custom_rule':
+                    rule_name = _h(issue.get('rule_name', 'Custom Rule'))
+                    msg = _h(detail.get('message', ''))
+                    parts.append(
+                        f'<strong>{rule_name}</strong>'
+                        f' &mdash; {msg}'
+                    )
+                    examples = detail.get('examples', [])
+                    if examples:
+                        sample_str = ', '.join(
+                            f'"{_h(str(e))}"' for e in examples[:3]
+                        )
+                        parts.append(
+                            '<div style="font-size:0.85rem;'
+                            'color:var(--text-muted);">'
+                            f'Examples: {sample_str}</div>'
+                        )
+
                 else:
                     parts.append(
                         f'<strong>{_h(itype)}</strong>:'

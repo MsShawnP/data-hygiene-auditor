@@ -1,4 +1,5 @@
 """Integration and edge case tests."""
+import json
 import os
 import tempfile
 from pathlib import Path
@@ -220,3 +221,79 @@ class TestCountIssues:
         assert counts['schema'] == 1
         assert counts['total'] == 1
         assert counts['High'] == 1
+
+
+class TestCustomRulesIntegration:
+
+    def test_rules_produce_findings(self, tmp_path):
+        rules_file = tmp_path / "rules.json"
+        rules_file.write_text(json.dumps({
+            "rules": [{
+                "name": "No short names",
+                "description": "Names must be at least 10 characters",
+                "severity": "Medium",
+                "condition": "min_length",
+                "threshold": 10,
+                "column_pattern": "name",
+            }]
+        }))
+        results = run_audit(str(SAMPLE_PATH), rules_path=str(rules_file))
+        custom_findings = []
+        for sheet in results['sheets'].values():
+            for field_data in sheet['fields'].values():
+                for issue in field_data['issues']:
+                    if issue.get('type') == 'custom_rule':
+                        custom_findings.append(issue)
+        assert len(custom_findings) > 0
+        assert custom_findings[0]['rule_name'] == "No short names"
+        assert custom_findings[0]['severity'] == "Medium"
+
+    def test_rules_counted_in_totals(self, tmp_path):
+        rules_file = tmp_path / "rules.json"
+        rules_file.write_text(json.dumps({
+            "rules": [{
+                "name": "All digits",
+                "description": "IDs must be numeric",
+                "severity": "High",
+                "condition": "regex_match",
+                "threshold": "^\\d+$",
+                "column_pattern": ".*",
+            }]
+        }))
+        results_without = run_audit(str(SAMPLE_PATH))
+        results_with = run_audit(str(SAMPLE_PATH), rules_path=str(rules_file))
+        count_without = count_issues(results_without)['total']
+        count_with = count_issues(results_with)['total']
+        assert count_with > count_without
+
+    def test_rules_metadata_in_results(self, tmp_path):
+        rules_file = tmp_path / "rules.json"
+        rules_file.write_text(json.dumps({
+            "rules": [{
+                "name": "Test rule",
+                "description": "d",
+                "severity": "Low",
+                "condition": "max_missing_pct",
+                "threshold": 1,
+            }]
+        }))
+        results = run_audit(str(SAMPLE_PATH), rules_path=str(rules_file))
+        assert 'rules' in results
+        assert results['rules']['count'] == 1
+        assert results['rules']['names'] == ["Test rule"]
+
+    def test_rules_affect_health_score(self, tmp_path):
+        rules_file = tmp_path / "rules.json"
+        rules_file.write_text(json.dumps({
+            "rules": [{
+                "name": "Strict rule",
+                "description": "Everything fails",
+                "severity": "High",
+                "condition": "regex_match",
+                "threshold": "^IMPOSSIBLE_VALUE$",
+                "column_pattern": ".*",
+            }]
+        }))
+        results_without = run_audit(str(SAMPLE_PATH))
+        results_with = run_audit(str(SAMPLE_PATH), rules_path=str(rules_file))
+        assert results_with['overall_score'] < results_without['overall_score']

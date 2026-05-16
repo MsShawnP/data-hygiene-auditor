@@ -85,6 +85,13 @@ def generate_excel(results, output_path):
                         f" Blank: {detail['blank_count']},"
                         f" Whitespace: {detail['whitespace_only']}"
                     )
+                elif itype == 'custom_rule':
+                    desc = (
+                        f"{issue.get('rule_name', 'Custom Rule')}:"
+                        f" {detail.get('message', '')}"
+                    )
+                    examples = detail.get('examples', [])
+                    example = '; '.join(str(e) for e in examples[:5])
                 else:
                     desc = str(itype)
                     example = json.dumps(detail, default=str)

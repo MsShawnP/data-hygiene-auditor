@@ -1,0 +1,35 @@
+{
+  "rules": [
+    {
+      "name": "Phone format (US)",
+      "description": "Phone numbers should match standard US format (XXX) XXX-XXXX to ensure consistent dialing and deduplication",
+      "severity": "High",
+      "condition": "regex_match",
+      "threshold": "^\\(\\d{3}\\) \\d{3}-\\d{4}$",
+      "column_pattern": "phone|tel"
+    },
+    {
+      "name": "Valid status values",
+      "description": "Status fields should only contain known values to prevent downstream filtering and reporting errors",
+      "severity": "Medium",
+      "condition": "allowed_values",
+      "threshold": ["Active", "Inactive", "Pending", "Cancelled"],
+      "columns": ["Status"]
+    },
+    {
+      "name": "Email minimum length",
+      "description": "Valid emails are at least 6 characters (a@b.co) — shorter values are likely placeholders or typos",
+      "severity": "Low",
+      "condition": "min_length",
+      "threshold": 6,
+      "column_pattern": "email"
+    },
+    {
+      "name": "No test data in production",
+      "description": "Test and placeholder values in production data indicate incomplete data entry or inadequate validation",
+      "severity": "High",
+      "condition": "disallowed_values",
+      "threshold": ["test", "n/a", "tbd", "xxx", "asdf", "foo", "bar"]
+    }
+  ]
+}
