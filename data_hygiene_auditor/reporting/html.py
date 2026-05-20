@@ -2,13 +2,40 @@
 
 from __future__ import annotations
 
+import base64
 import json
 from html import escape as _html_escape
+from pathlib import Path
 from typing import Any
 
 from . import palette as P
 
 from ..core import count_issues
+
+_FONTS_DIR = Path(__file__).parent / "fonts"
+
+
+def _font_face_css() -> str:
+    """Return @font-face rules with base64-embedded woff2 fonts."""
+    blocks: list[str] = []
+    for name, css_family, weight in [
+        ("playfair-display-latin.woff2", "Playfair Display", "400 700"),
+        ("source-sans-3-latin.woff2", "Source Sans 3", "400 700"),
+    ]:
+        path = _FONTS_DIR / name
+        if not path.exists():
+            continue
+        b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+        blocks.append(
+            f"@font-face {{\n"
+            f"  font-family: '{css_family}';\n"
+            f"  font-style: normal;\n"
+            f"  font-weight: {weight};\n"
+            f"  font-display: swap;\n"
+            f"  src: url('data:font/woff2;base64,{b64}') format('woff2');\n"
+            f"}}"
+        )
+    return "\n".join(blocks)
 
 
 def _h(val: object) -> str:
@@ -48,6 +75,7 @@ def generate_html(results: dict[str, Any], output_path: str) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Data Hygiene Audit — {_h(results['input_file'])}</title>
 <style>
+{_font_face_css()}
 :root {{
     --canvas: {P.CANVAS};
     --card: #ffffff;
