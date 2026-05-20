@@ -17,16 +17,16 @@ def generate_excel(results: dict, output_path: str) -> str:
         "Description", "Example / Detail", "Why It Matters",
         "Suggested Fix", "Cardinality", "Uniqueness %",
     ]
-    header_font = Font(bold=True, color="FFFFFF", size=11, name="Arial")
-    header_fill = PatternFill("solid", fgColor="0f3460")
+    header_font = Font(bold=True, color="FFFFFF", size=11, name="Source Sans Pro")
+    header_fill = PatternFill("solid", fgColor="1f2e7a")
     header_align = Alignment(
         horizontal="center", vertical="center", wrap_text=True,
     )
     thin_border = Border(
-        left=Side(style='thin', color='cccccc'),
-        right=Side(style='thin', color='cccccc'),
-        top=Side(style='thin', color='cccccc'),
-        bottom=Side(style='thin', color='cccccc'),
+        left=Side(style='thin', color='d9d9d9'),
+        right=Side(style='thin', color='d9d9d9'),
+        top=Side(style='thin', color='d9d9d9'),
+        bottom=Side(style='thin', color='d9d9d9'),
     )
 
     for col_idx, h in enumerate(headers, 1):
@@ -37,9 +37,9 @@ def generate_excel(results: dict, output_path: str) -> str:
         cell.border = thin_border
 
     sev_fills = {
-        'High': PatternFill("solid", fgColor="F8D7DA"),
-        'Medium': PatternFill("solid", fgColor="FFF3CD"),
-        'Low': PatternFill("solid", fgColor="D4EDDA"),
+        'High': PatternFill("solid", fgColor="fce8e7"),
+        'Medium': PatternFill("solid", fgColor="fdeee0"),
+        'Low': PatternFill("solid", fgColor="e4f5f0"),
     }
 
     row_num = 2
@@ -112,7 +112,7 @@ def generate_excel(results: dict, output_path: str) -> str:
                     cell = ws.cell(
                         row=row_num, column=col_idx, value=val,
                     )
-                    cell.font = Font(name="Arial", size=10)
+                    cell.font = Font(name="Source Sans Pro", size=10)
                     cell.alignment = Alignment(
                         vertical="top", wrap_text=True,
                     )
@@ -148,7 +148,7 @@ def generate_excel(results: dict, output_path: str) -> str:
                 cell = ws.cell(
                     row=row_num, column=col_idx, value=val,
                 )
-                cell.font = Font(name="Arial", size=10)
+                cell.font = Font(name="Source Sans Pro", size=10)
                 cell.alignment = Alignment(
                     vertical="top", wrap_text=True,
                 )
@@ -196,7 +196,7 @@ def generate_excel(results: dict, output_path: str) -> str:
                 cell = ws.cell(
                     row=row_num, column=col_idx, value=val,
                 )
-                cell.font = Font(name="Arial", size=10)
+                cell.font = Font(name="Source Sans Pro", size=10)
                 cell.alignment = Alignment(
                     vertical="top", wrap_text=True,
                 )
@@ -241,7 +241,7 @@ def generate_excel(results: dict, output_path: str) -> str:
                 cell = ws.cell(
                     row=row_num, column=col_idx, value=val,
                 )
-                cell.font = Font(name="Arial", size=10)
+                cell.font = Font(name="Source Sans Pro", size=10)
                 cell.alignment = Alignment(
                     vertical="top", wrap_text=True,
                 )
@@ -267,10 +267,10 @@ def generate_excel(results: dict, output_path: str) -> str:
 
     ws2 = wb.create_sheet("Summary", 0)
     ws2['A1'] = "Data Hygiene Audit Summary"
-    ws2['A1'].font = Font(bold=True, size=14, name="Arial")
+    ws2['A1'].font = Font(bold=True, size=14, name="Source Sans Pro")
     ws2['A3'] = "Health Score:"
     ws2['B3'] = f"{results.get('overall_score', 'N/A')}/100"
-    ws2['B3'].font = Font(bold=True, name="Arial", size=12)
+    ws2['B3'].font = Font(bold=True, name="Source Sans Pro", size=12)
     ws2['A4'] = "File:"
     ws2['B4'] = results['input_file']
     ws2['A5'] = "Audit Date:"
@@ -279,24 +279,24 @@ def generate_excel(results: dict, output_path: str) -> str:
     ws2['B6'] = row_num - 2
     for r in range(3, 7):
         ws2.cell(row=r, column=1).font = Font(
-            bold=True, name="Arial", size=10,
+            bold=True, name="Source Sans Pro", size=10,
         )
         if r != 3:
             ws2.cell(row=r, column=2).font = Font(
-                name="Arial", size=10,
+                name="Source Sans Pro", size=10,
             )
 
     r = 8
     for sname, sdata in results['sheets'].items():
         ws2.cell(row=r, column=1, value=f"Sheet: {sname}")
         ws2.cell(row=r, column=1).font = Font(
-            bold=True, name="Arial", size=10,
+            bold=True, name="Source Sans Pro", size=10,
         )
         ws2.cell(
             row=r, column=2,
             value=f"Score: {sdata.get('health_score', 'N/A')}/100",
         )
-        ws2.cell(row=r, column=2).font = Font(name="Arial", size=10)
+        ws2.cell(row=r, column=2).font = Font(name="Source Sans Pro", size=10)
         r += 1
 
     trend = results.get('trend')
@@ -304,7 +304,7 @@ def generate_excel(results: dict, output_path: str) -> str:
         r += 1
         ws2.cell(row=r, column=1, value="Trend vs Baseline")
         ws2.cell(row=r, column=1).font = Font(
-            bold=True, name="Arial", size=12,
+            bold=True, name="Source Sans Pro", size=12,
         )
         r += 1
         ws2.cell(row=r, column=1, value="Baseline:")
@@ -332,10 +332,10 @@ def generate_excel(results: dict, output_path: str) -> str:
         )
         for rr in range(r - 2, r + 1):
             ws2.cell(row=rr, column=1).font = Font(
-                bold=True, name="Arial", size=10,
+                bold=True, name="Source Sans Pro", size=10,
             )
             ws2.cell(row=rr, column=2).font = Font(
-                name="Arial", size=10,
+                name="Source Sans Pro", size=10,
             )
 
     ws2.column_dimensions['A'].width = 16

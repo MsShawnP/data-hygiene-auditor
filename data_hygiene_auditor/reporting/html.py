@@ -44,34 +44,63 @@ def generate_html(results: dict, output_path: str) -> str:
 <title>Data Hygiene Audit — {_h(results['input_file'])}</title>
 <style>
 :root {{
-    --bg: #1a1a2e;
-    --card: #16213e;
-    --card-border: #0f3460;
-    --text: #e0e0e0;
-    --text-muted: #8892a0;
-    --accent: #e94560;
-    --accent-warm: #d4a574;
-    --high: #DC3545;
-    --medium: #FFC107;
-    --low: #28A745;
-    --info: #4a90d9;
+    --canvas: #f5f3ee;
+    --card: #ffffff;
+    --card-border: #d9d9d9;
+    --text: #333333;
+    --text-muted: #595959;
+    --ink: #0d0d0d;
+    --accent: #cc100a;
+    --chicago: #1f2e7a;
+    --chicago-95: #e8eaf4;
+    --chicago-85: #c5cbe6;
+    --hk-35: #158f75;
+    --hk-95: #e4f5f0;
+    --tokyo-40: #b82d4a;
+    --sg-55: #ee8a2a;
+    --sg-95: #fdeee0;
+    --red-95: #fce8e7;
+    --high: #cc100a;
+    --medium: #ee8a2a;
+    --low: #158f75;
+    --info: #1f2e7a;
+    --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    --sans: 'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --radius: 2px;
 }}
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 body {{
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg);
+    font-family: var(--sans);
+    background: var(--canvas);
     color: var(--text);
     line-height: 1.6;
-    padding: 2rem;
-    max-width: 1200px;
+    padding: 48px 24px;
+    max-width: 900px;
     margin: 0 auto;
 }}
-h1 {{ color: var(--accent); font-size: 1.8rem; margin-bottom: 0.25rem; }}
-h2 {{
-    color: var(--accent-warm); font-size: 1.4rem; margin: 2rem 0 1rem;
-    border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;
+h1 {{
+    font-family: var(--serif);
+    color: var(--ink);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
 }}
-h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
+h2 {{
+    font-family: var(--serif);
+    color: var(--ink);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 2rem 0 1rem;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 0.5rem;
+}}
+h3 {{
+    font-family: var(--serif);
+    color: var(--ink);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 1.5rem 0 0.5rem;
+}}
 .subtitle {{
     color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;
 }}
@@ -84,14 +113,19 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 .summary-card {{
     background: var(--card);
     border: 1px solid var(--card-border);
-    border-radius: 8px;
+    border-radius: var(--radius);
     padding: 1.2rem;
     text-align: center;
 }}
-.summary-card .number {{ font-size: 2rem; font-weight: 700; }}
+.summary-card .number {{
+    font-family: var(--serif);
+    font-size: 2rem;
+    font-weight: 700;
+}}
 .summary-card .label {{
+    font-family: var(--sans);
     color: var(--text-muted); font-size: 0.85rem;
-    text-transform: uppercase; letter-spacing: 0.05em;
+    text-transform: uppercase; letter-spacing: 0.04em;
 }}
 .high .number {{ color: var(--high); }}
 .medium .number {{ color: var(--medium); }}
@@ -100,7 +134,7 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 .field-card {{
     background: var(--card);
     border: 1px solid var(--card-border);
-    border-radius: 8px;
+    border-radius: var(--radius);
     padding: 1.2rem;
     margin-bottom: 1rem;
 }}
@@ -112,30 +146,31 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 }}
 .field-name {{ font-weight: 600; font-size: 1.05rem; }}
 .field-type {{
-    background: var(--card-border);
-    color: var(--text-muted);
+    background: var(--chicago-95);
+    color: var(--chicago);
     padding: 0.2rem 0.6rem;
-    border-radius: 12px;
+    border-radius: var(--radius);
     font-size: 0.8rem;
+    font-weight: 500;
 }}
 .null-bar {{
     height: 6px;
-    background: #2a2a4a;
-    border-radius: 3px;
+    background: #e0e0e0;
+    border-radius: var(--radius);
     margin: 0.5rem 0;
     overflow: hidden;
 }}
 .null-bar-fill {{
     height: 100%;
-    border-radius: 3px;
-    transition: width 0.3s;
+    border-radius: var(--radius);
+    transition: width 0.2s ease-out;
 }}
 .issue {{
-    border-left: 3px solid var(--text-muted);
+    border-left: 3px solid var(--card-border);
     padding: 0.75rem 1rem;
     margin: 0.75rem 0;
-    background: rgba(255,255,255,0.02);
-    border-radius: 0 6px 6px 0;
+    background: var(--card);
+    border-radius: 0 var(--radius) var(--radius) 0;
 }}
 .issue.severity-High {{ border-left-color: var(--high); }}
 .issue.severity-Medium {{ border-left-color: var(--medium); }}
@@ -143,40 +178,49 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 .severity-badge {{
     display: inline-block;
     padding: 0.15rem 0.5rem;
-    border-radius: 10px;
+    border-radius: var(--radius);
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
 }}
 .severity-badge.High {{ background: var(--high); color: #fff; }}
-.severity-badge.Medium {{ background: var(--medium); color: #000; }}
+.severity-badge.Medium {{ background: var(--medium); color: #fff; }}
 .severity-badge.Low {{ background: var(--low); color: #fff; }}
 .why-box {{
     margin-top: 0.5rem;
     padding: 0.5rem 0.75rem;
-    background: rgba(74, 144, 217, 0.08);
-    border-radius: 4px;
+    background: var(--chicago-95);
+    border-left: 3px solid var(--chicago-85);
+    border-radius: 0 var(--radius) var(--radius) 0;
     font-size: 0.9rem;
     color: var(--text-muted);
 }}
-.why-box strong {{ color: var(--info); }}
+.why-box strong {{ color: var(--chicago); }}
 .format-table {{
     width: 100%;
     border-collapse: collapse;
     margin: 0.5rem 0;
     font-size: 0.9rem;
 }}
-.format-table th, .format-table td {{
+.format-table th {{
     text-align: left;
     padding: 0.4rem 0.75rem;
-    border-bottom: 1px solid var(--card-border);
+    background: var(--chicago);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.8rem;
 }}
-.format-table th {{ color: var(--text-muted); font-weight: 600; }}
+.format-table td {{
+    text-align: left;
+    padding: 0.4rem 0.75rem;
+    border-bottom: 1px solid #e0e0e0;
+}}
+.format-table tr:nth-child(even) td {{ background: var(--canvas); }}
 .dup-group {{
     background: var(--card);
     border: 1px solid var(--card-border);
-    border-radius: 8px;
+    border-radius: var(--radius);
     padding: 1rem;
     margin-bottom: 1rem;
 }}
@@ -188,7 +232,7 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     padding: 1.5rem;
     background: var(--card);
     border: 1px solid var(--card-border);
-    border-radius: 12px;
+    border-radius: var(--radius);
 }}
 .score-ring {{
     position: relative;
@@ -202,13 +246,16 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    font-family: var(--serif);
     font-size: 2rem;
     font-weight: 700;
 }}
 .score-meta .score-label {{
+    font-family: var(--serif);
     font-size: 1.3rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 0.25rem;
+    color: var(--ink);
 }}
 .score-meta .score-desc {{
     color: var(--text-muted);
@@ -217,7 +264,7 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 .sheet-score {{
     display: inline-block;
     padding: 0.15rem 0.6rem;
-    border-radius: 10px;
+    border-radius: var(--radius);
     font-size: 0.8rem;
     font-weight: 600;
     margin-left: 0.5rem;
@@ -231,47 +278,57 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     padding: 1rem;
     background: var(--card);
     border: 1px solid var(--card-border);
-    border-radius: 8px;
+    border-radius: var(--radius);
 }}
 .filter-btn {{
     padding: 0.4rem 0.8rem;
     border: 1px solid var(--card-border);
-    border-radius: 6px;
+    border-radius: var(--radius);
     background: transparent;
     color: var(--text);
     cursor: pointer;
+    font-family: var(--sans);
     font-size: 0.85rem;
-    transition: all 0.2s;
+    font-weight: 600;
+    transition: all 0.1s ease-out;
 }}
-.filter-btn:hover {{ border-color: var(--accent); }}
-.filter-btn.active {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+.filter-btn:hover {{ border-color: var(--chicago); color: var(--chicago); }}
+.filter-btn.active {{ background: var(--chicago); color: #fff; border-color: var(--chicago); }}
 .filter-btn.active-high {{ background: var(--high); border-color: var(--high); color: #fff; }}
-.filter-btn.active-medium {{ background: var(--medium); border-color: var(--medium); color: #000; }}
+.filter-btn.active-medium {{ background: var(--medium); border-color: var(--medium); color: #fff; }}
 .filter-btn.active-low {{ background: var(--low); border-color: var(--low); color: #fff; }}
 .search-box {{
-    padding: 0.4rem 0.8rem;
+    padding: 8px 12px;
     border: 1px solid var(--card-border);
-    border-radius: 6px;
-    background: var(--bg);
+    border-radius: var(--radius);
+    background: #ffffff;
     color: var(--text);
+    font-family: var(--sans);
     font-size: 0.85rem;
     flex: 1;
     min-width: 200px;
+    height: 40px;
 }}
-.search-box::placeholder {{ color: var(--text-muted); }}
+.search-box:focus {{ border: 2px solid var(--chicago); outline: none; }}
+.search-box::placeholder {{ color: #b3b3b3; }}
 .toc {{
     background: var(--card);
     border: 1px solid var(--card-border);
-    border-radius: 8px;
+    border-radius: var(--radius);
     padding: 1rem 1.5rem;
     margin: 1rem 0;
 }}
-.toc-title {{ font-weight: 600; margin-bottom: 0.5rem; }}
+.toc-title {{
+    font-family: var(--serif);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--ink);
+}}
 .toc a {{
-    color: var(--accent); text-decoration: none;
+    color: var(--text); text-decoration: underline;
     font-size: 0.9rem;
 }}
-.toc a:hover {{ text-decoration: underline; }}
+.toc a:hover {{ color: var(--chicago); }}
 .toc ul {{ list-style: none; padding: 0; margin: 0; }}
 .toc li {{ padding: 0.25rem 0; }}
 .sheet-section {{ }}
@@ -282,7 +339,7 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 .sheet-toggle::before {{
     content: '▼ ';
     font-size: 0.7em;
-    transition: transform 0.2s;
+    transition: transform 0.2s ease-in-out;
     display: inline-block;
 }}
 .sheet-toggle.collapsed::before {{ content: '▶ '; }}
@@ -290,9 +347,9 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 .field-card.hidden {{ display: none; }}
 .fix-block {{
     margin-top: 0.5rem;
-    background: #1a1a2e;
+    background: #f2f2f2;
     border: 1px solid var(--card-border);
-    border-radius: 6px;
+    border-radius: var(--radius);
     overflow: hidden;
 }}
 .fix-header {{
@@ -300,26 +357,28 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     justify-content: space-between;
     align-items: center;
     padding: 0.4rem 0.8rem;
-    background: rgba(212, 165, 116, 0.15);
+    background: var(--chicago-95);
     font-size: 0.8rem;
-    color: var(--accent);
+    color: var(--chicago);
     font-weight: 600;
 }}
 .fix-copy {{
     cursor: pointer;
     background: none;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    border-radius: 4px;
+    border: 1px solid var(--chicago);
+    color: var(--chicago);
+    border-radius: var(--radius);
     padding: 0.15rem 0.5rem;
     font-size: 0.75rem;
+    font-family: var(--sans);
+    font-weight: 600;
 }}
-.fix-copy:hover {{ background: rgba(212, 165, 116, 0.2); }}
+.fix-copy:hover {{ background: var(--chicago); color: #fff; }}
 .fix-code {{
     padding: 0.6rem 0.8rem;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 0.8rem;
-    color: #e0e0e0;
+    color: var(--ink);
     white-space: pre-wrap;
     word-break: break-all;
     line-height: 1.4;
@@ -335,13 +394,14 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     gap: 1.5rem;
     align-items: center;
     padding: 1rem 1.5rem;
-    background: rgba(74, 144, 217, 0.08);
-    border: 1px solid var(--info);
-    border-radius: 8px;
+    background: var(--chicago-95);
+    border: 1px solid var(--chicago-85);
+    border-radius: var(--radius);
     margin: 1rem 0;
     font-size: 0.9rem;
 }}
 .trend-banner .delta {{
+    font-family: var(--serif);
     font-size: 1.3rem;
     font-weight: 700;
 }}
@@ -352,19 +412,23 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
     border-left: 3px solid var(--accent);
     padding: 0.75rem 1rem;
     margin: 0.75rem 0;
-    background: rgba(233, 69, 96, 0.05);
-    border-radius: 0 6px 6px 0;
+    background: var(--red-95);
+    border-radius: 0 var(--radius) var(--radius) 0;
 }}
 .footer {{
-    margin-top: 3rem;
+    margin-top: 60px;
     padding-top: 1rem;
     border-top: 1px solid var(--card-border);
     color: var(--text-muted);
     font-size: 0.85rem;
     text-align: center;
 }}
-@media (max-width: 600px) {{
-    body {{ padding: 1rem; }}
+@media print {{
+    body {{ background-color: #ffffff; }}
+}}
+@media (max-width: 640px) {{
+    body {{ padding: 32px 16px; }}
+    h1 {{ font-size: 1.4rem; }}
     .score-hero {{ flex-direction: column; text-align: center; }}
     .summary-grid {{ grid-template-columns: repeat(2, 1fr); }}
     .controls {{ flex-direction: column; }}
@@ -379,15 +443,15 @@ h3 {{ color: var(--text); font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }}
 
     overall = results.get('overall_score', 100)
     if overall >= 90:
-        score_color = 'var(--low)'
+        score_color = 'var(--hk-35)'
         score_label = 'Clean'
         score_desc = 'This dataset is in good shape.'
     elif overall >= 70:
-        score_color = 'var(--medium)'
+        score_color = 'var(--sg-55)'
         score_label = 'Needs Attention'
         score_desc = 'Several issues should be addressed before use.'
     else:
-        score_color = 'var(--high)'
+        score_color = 'var(--accent)'
         score_label = 'Significant Issues'
         score_desc = 'This dataset has serious quality problems.'
 
