@@ -1,6 +1,9 @@
 """PDF report generator."""
 
+from __future__ import annotations
+
 from collections import Counter
+from typing import Any
 from xml.sax.saxutils import escape as _xml_escape
 
 from reportlab.lib import colors as rl_colors
@@ -8,6 +11,8 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
+
+from . import palette as P
 from reportlab.platypus import (
     PageBreak,
     Paragraph,
@@ -18,12 +23,12 @@ from reportlab.platypus import (
 )
 
 
-def _p(val):
+def _p(val: object) -> str:
     """Escape a value for inclusion inside a reportlab Paragraph."""
     return _xml_escape(str(val))
 
 
-def generate_pdf(results: dict, output_path: str) -> str:
+def generate_pdf(results: dict[str, Any], output_path: str) -> str:
     """Generate a clean PDF report matching the HTML content."""
     doc = SimpleDocTemplate(
         output_path, pagesize=letter,
@@ -33,38 +38,38 @@ def generate_pdf(results: dict, output_path: str) -> str:
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(
         name='SectionHead', parent=styles['Heading2'],
-        textColor=rl_colors.HexColor('#0d0d0d'), fontSize=14,
+        textColor=rl_colors.HexColor(P.INK), fontSize=14,
         spaceAfter=8, spaceBefore=16,
     ))
     styles.add(ParagraphStyle(
         name='FieldHead', parent=styles['Heading3'],
         fontSize=11, spaceAfter=4, spaceBefore=10,
-        textColor=rl_colors.HexColor('#333333'),
+        textColor=rl_colors.HexColor(P.LONDON_20),
     ))
     styles.add(ParagraphStyle(
         name='SmallBody', parent=styles['Normal'],
         fontSize=9, leading=12, spaceAfter=4,
-        textColor=rl_colors.HexColor('#333333'),
+        textColor=rl_colors.HexColor(P.LONDON_20),
     ))
     styles.add(ParagraphStyle(
         name='WhyBox', parent=styles['Normal'],
         fontSize=8.5, leading=11, leftIndent=12,
-        textColor=rl_colors.HexColor('#595959'),
+        textColor=rl_colors.HexColor(P.LONDON_35),
         spaceAfter=6, spaceBefore=2,
     ))
     styles.add(ParagraphStyle(
         name='SevHigh', parent=styles['Normal'],
-        fontSize=9, textColor=rl_colors.HexColor('#cc100a'),
+        fontSize=9, textColor=rl_colors.HexColor(P.SEV_HIGH),
         fontName='Helvetica-Bold',
     ))
     styles.add(ParagraphStyle(
         name='SevMedium', parent=styles['Normal'],
-        fontSize=9, textColor=rl_colors.HexColor('#ee8a2a'),
+        fontSize=9, textColor=rl_colors.HexColor(P.SEV_MEDIUM),
         fontName='Helvetica-Bold',
     ))
     styles.add(ParagraphStyle(
         name='SevLow', parent=styles['Normal'],
-        fontSize=9, textColor=rl_colors.HexColor('#158f75'),
+        fontSize=9, textColor=rl_colors.HexColor(P.SEV_LOW),
         fontName='Helvetica-Bold',
     ))
 
@@ -122,15 +127,15 @@ def generate_pdf(results: dict, output_path: str) -> str:
     ]
     t = Table(summary_data, colWidths=[1.5*inch]*4)
     t.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), rl_colors.HexColor('#1f2e7a')),
+        ('BACKGROUND', (0, 0), (-1, 0), rl_colors.HexColor(P.CHICAGO_20)),
         ('TEXTCOLOR', (0, 0), (-1, 0), rl_colors.white),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('GRID', (0, 0), (-1, -1), 0.5, rl_colors.HexColor('#d9d9d9')),
-        ('BACKGROUND', (1, 1), (1, 1), rl_colors.HexColor('#fce8e7')),
-        ('BACKGROUND', (2, 1), (2, 1), rl_colors.HexColor('#fdeee0')),
-        ('BACKGROUND', (3, 1), (3, 1), rl_colors.HexColor('#e4f5f0')),
+        ('GRID', (0, 0), (-1, -1), 0.5, rl_colors.HexColor(P.LONDON_85)),
+        ('BACKGROUND', (1, 1), (1, 1), rl_colors.HexColor(P.SEV_HIGH_BG)),
+        ('BACKGROUND', (2, 1), (2, 1), rl_colors.HexColor(P.SEV_MEDIUM_BG)),
+        ('BACKGROUND', (3, 1), (3, 1), rl_colors.HexColor(P.SEV_LOW_BG)),
     ]))
     story.append(t)
     story.append(Spacer(1, 16))
@@ -221,11 +226,11 @@ def generate_pdf(results: dict, output_path: str) -> str:
                     ft.setStyle(TableStyle([
                         ('FONTSIZE', (0, 0), (-1, -1), 8),
                         ('BACKGROUND', (0, 0), (-1, 0),
-                         rl_colors.HexColor('#1f2e7a')),
+                         rl_colors.HexColor(P.CHICAGO_20)),
                         ('TEXTCOLOR', (0, 0), (-1, 0),
                          rl_colors.white),
                         ('GRID', (0, 0), (-1, -1), 0.25,
-                         rl_colors.HexColor('#d9d9d9')),
+                         rl_colors.HexColor(P.LONDON_85)),
                     ]))
                     story.append(ft)
 
@@ -445,7 +450,7 @@ def generate_pdf(results: dict, output_path: str) -> str:
         f" {results['audit_timestamp']} — Lailara LLC",
         ParagraphStyle(
             name='Footer', parent=styles['Normal'],
-            fontSize=8, textColor=rl_colors.HexColor('#595959'),
+            fontSize=8, textColor=rl_colors.HexColor(P.LONDON_35),
             alignment=TA_CENTER,
         ),
     ))

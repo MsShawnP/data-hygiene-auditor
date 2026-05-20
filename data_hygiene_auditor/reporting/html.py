@@ -1,17 +1,22 @@
 """HTML report generator."""
 
+from __future__ import annotations
+
 import json
 from html import escape as _html_escape
+from typing import Any
+
+from . import palette as P
 
 from ..core import count_issues
 
 
-def _h(val):
+def _h(val: object) -> str:
     """Escape a value for safe inclusion in HTML text or attributes."""
     return _html_escape(str(val), quote=True)
 
 
-def _render_fix(fix):
+def _render_fix(fix: dict[str, str]) -> str:
     """Render a fix suggestion as an HTML code block with copy button."""
     desc = _h(fix.get('description', ''))
     code = _h(fix.get('code', ''))
@@ -29,7 +34,7 @@ def _render_fix(fix):
     )
 
 
-def generate_html(results: dict, output_path: str) -> str:
+def generate_html(results: dict[str, Any], output_path: str) -> str:
     """Generate a client-readable HTML report."""
     counts = count_issues(results)
     total_issues = counts.get('total', 0)
@@ -44,29 +49,29 @@ def generate_html(results: dict, output_path: str) -> str:
 <title>Data Hygiene Audit — {_h(results['input_file'])}</title>
 <style>
 :root {{
-    --canvas: #f5f3ee;
+    --canvas: {P.CANVAS};
     --card: #ffffff;
-    --card-border: #d9d9d9;
-    --text: #333333;
-    --text-muted: #595959;
-    --ink: #0d0d0d;
-    --accent: #cc100a;
-    --chicago: #1f2e7a;
-    --chicago-95: #e8eaf4;
-    --chicago-85: #c5cbe6;
-    --hk-35: #158f75;
-    --hk-95: #e4f5f0;
-    --tokyo-40: #b82d4a;
-    --sg-55: #ee8a2a;
-    --sg-95: #fdeee0;
-    --red-95: #fce8e7;
-    --high: #cc100a;
-    --medium: #ee8a2a;
-    --low: #158f75;
-    --info: #1f2e7a;
-    --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
-    --sans: 'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    --radius: 2px;
+    --card-border: {P.LONDON_85};
+    --text: {P.LONDON_20};
+    --text-muted: {P.LONDON_35};
+    --ink: {P.INK};
+    --accent: {P.RED_42};
+    --chicago: {P.CHICAGO_20};
+    --chicago-95: {P.CHICAGO_95};
+    --chicago-85: {P.CHICAGO_85};
+    --hk-35: {P.HONG_KONG_35};
+    --hk-95: {P.HONG_KONG_95};
+    --tokyo-40: {P.TOKYO_40};
+    --sg-55: {P.SINGAPORE_55};
+    --sg-95: {P.SINGAPORE_95};
+    --red-95: {P.RED_95};
+    --high: {P.SEV_HIGH};
+    --medium: {P.SEV_MEDIUM};
+    --low: {P.SEV_LOW};
+    --info: {P.CHICAGO_20};
+    --serif: {P.FONT_SERIF};
+    --sans: {P.FONT_SANS};
+    --radius: {P.BORDER_RADIUS};
 }}
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 body {{
