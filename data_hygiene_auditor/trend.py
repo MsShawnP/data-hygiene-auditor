@@ -25,22 +25,23 @@ def compute_trend(current, baseline):
         ),
     }
 
-    current_counts = _count_issues(current)
-    baseline_counts = _count_issues(baseline)
+    from .core import count_issues
+    current_counts = count_issues(current)
+    baseline_counts = count_issues(baseline)
 
-    trend['total_issues_previous'] = baseline_counts['total']
+    trend['total_issues_previous'] = baseline_counts.get('total', 0)
     trend['total_issues_delta'] = (
-        current_counts['total'] - baseline_counts['total']
+        current_counts.get('total', 0) - baseline_counts.get('total', 0)
     )
     trend['severity_previous'] = {
-        'High': baseline_counts['High'],
-        'Medium': baseline_counts['Medium'],
-        'Low': baseline_counts['Low'],
+        'High': baseline_counts.get('High', 0),
+        'Medium': baseline_counts.get('Medium', 0),
+        'Low': baseline_counts.get('Low', 0),
     }
     trend['severity_deltas'] = {
-        'High': current_counts['High'] - baseline_counts['High'],
-        'Medium': current_counts['Medium'] - baseline_counts['Medium'],
-        'Low': current_counts['Low'] - baseline_counts['Low'],
+        'High': current_counts.get('High', 0) - baseline_counts.get('High', 0),
+        'Medium': current_counts.get('Medium', 0) - baseline_counts.get('Medium', 0),
+        'Low': current_counts.get('Low', 0) - baseline_counts.get('Low', 0),
     }
 
     trend['sheets'] = {}
@@ -74,14 +75,6 @@ def compute_trend(current, baseline):
             trend['sheets'][sheet_name] = {'status': 'removed'}
 
     return trend
-
-
-def _count_issues(results):
-    """Count total and per-severity issues across all sheets."""
-    counts: Counter[str] = Counter()
-    for sheet_data in results.get('sheets', {}).values():
-        counts += _count_sheet_issues(sheet_data)
-    return counts
 
 
 def _count_sheet_issues(sheet_data):

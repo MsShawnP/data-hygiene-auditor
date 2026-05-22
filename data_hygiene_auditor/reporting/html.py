@@ -8,7 +8,7 @@ from html import escape as _html_escape
 from pathlib import Path
 from typing import Any
 
-from ..core import count_issues
+from ..core import count_issues, score_label
 from . import palette as P
 
 _FONTS_DIR = Path(__file__).parent / "fonts"
@@ -474,17 +474,15 @@ h3 {{
 """)
 
     overall = results.get('overall_score', 100)
+    label = score_label(overall)
     if overall >= 90:
         score_color = 'var(--hk-35)'
-        score_label = 'Clean'
         score_desc = 'This dataset is in good shape.'
     elif overall >= 70:
         score_color = 'var(--sg-55)'
-        score_label = 'Needs Attention'
         score_desc = 'Several issues should be addressed before use.'
     else:
         score_color = 'var(--accent)'
-        score_label = 'Significant Issues'
         score_desc = 'This dataset has serious quality problems.'
 
     pct = min(overall, 100)
@@ -506,7 +504,7 @@ h3 {{
         <div class="score-value" style="color:{score_color}">{overall}</div>
     </div>
     <div class="score-meta">
-        <div class="score-label">{score_label}</div>
+        <div class="score-label">{label}</div>
         <div class="score-desc">{score_desc}</div>
     </div>
 </div>

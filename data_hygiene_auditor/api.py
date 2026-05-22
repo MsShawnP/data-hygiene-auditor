@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .core import run_audit
+from .core import describe_issue, run_audit
 from .reporting import generate_excel, generate_html, generate_pdf
 
 
@@ -32,6 +32,12 @@ class FixSuggestion:
     strategy: str
     description: str
     code: str
+
+    @classmethod
+    def from_dict(cls, d: dict | None) -> 'FixSuggestion | None':
+        if d is None:
+            return None
+        return cls(strategy=d['strategy'], description=d['description'], code=d['code'])
 
 
 @dataclass
@@ -249,35 +255,6 @@ class TrendData:
     sheets: Dict[str, Any] = dataclasses.field(default_factory=dict)
 
 
-def _describe_issue(issue_type: str, detail: dict) -> str:
-    """Generate a human-readable description for an issue."""
-    if issue_type == 'mixed_format':
-        return (
-            f"Mixed {detail.get('field_type', '')} formats:"
-            f" {detail.get('inconsistent_count', 0)} values"
-            f" deviate from {detail.get('dominant_format', '')}"
-        )
-    if issue_type == 'wrong_purpose':
-        return str(detail.get('issue', 'Wrong purpose'))
-    if issue_type in ('placeholder_value', 'placeholder'):
-        return (
-            f"Placeholder \"{detail.get('value', '')}\" found"
-            f" {detail.get('count', 0)} times"
-        )
-    if issue_type == 'suspicious_repetition':
-        return (
-            f"\"{detail.get('value', '')}\" repeated"
-            f" {detail.get('count', 0)} times"
-        )
-    if issue_type == 'null_analysis':
-        return (
-            f"{detail.get('total_missing', 0)} of"
-            f" {detail.get('total_rows', 0)} values missing"
-            f" ({detail.get('missing_pct', 0)}%)"
-        )
-    return str(issue_type)
-
-
 def audit_file(
     path: str,
     fuzzy_threshold: float = 0.85,
@@ -313,20 +290,13 @@ def audit_file(
             null = field_data['null_analysis']
             findings = []
             for issue in field_data['issues']:
-                raw_fix = issue.get('fix')
-                fix_obj = None
-                if raw_fix:
-                    fix_obj = FixSuggestion(
-                        strategy=raw_fix['strategy'],
-                        description=raw_fix['description'],
-                        code=raw_fix['code'],
-                    )
+                fix_obj = FixSuggestion.from_dict(issue.get('fix'))
                 findings.append(Finding(
                     field=col_name,
                     issue_type=issue['type'],
                     severity=issue['severity'],
-                    description=_describe_issue(
-                        issue['type'], issue['detail'],
+                    description=describe_issue(
+                        issue['type'], issue['detail'], issue,
                     ),
                     why=issue.get('why', ''),
                     detail=issue['detail'],
@@ -362,14 +332,7 @@ def audit_file(
 
         duplicates = []
         for dup in sheet_data['phantom_duplicates']:
-            raw_fix = dup.get('fix')
-            fix_obj = None
-            if raw_fix:
-                fix_obj = FixSuggestion(
-                    strategy=raw_fix['strategy'],
-                    description=raw_fix['description'],
-                    code=raw_fix['code'],
-                )
+            fix_obj = FixSuggestion.from_dict(dup.get('fix'))
             duplicates.append(Duplicate(
                 duplicate_type=dup['type'],
                 severity=dup['severity'],
@@ -382,14 +345,7 @@ def audit_file(
 
         fuzzy_dups = []
         for fuzz in sheet_data.get('fuzzy_duplicates', []):
-            raw_fix = fuzz.get('fix')
-            fix_obj = None
-            if raw_fix:
-                fix_obj = FixSuggestion(
-                    strategy=raw_fix['strategy'],
-                    description=raw_fix['description'],
-                    code=raw_fix['code'],
-                )
+            fix_obj = FixSuggestion.from_dict(fuzz.get('fix'))
             fuzzy_dups.append(FuzzyDuplicate(
                 match_method=fuzz['match_method'],
                 severity=fuzz['severity'],

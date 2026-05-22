@@ -303,7 +303,7 @@ Outputs three files:
         if not args.quiet:
             print(msg)
 
-    from .core import _load_sheets
+    from .core import load_sheets
     ROW_WARN = 500_000
     ROW_LIMIT = 2_000_000
 
@@ -315,7 +315,7 @@ Outputs three files:
 
     all_results = []
     for input_path in input_files:
-        sheets_preview = _load_sheets(input_path)
+        sheets_preview = load_sheets(input_path)
         total_rows = sum(len(df) for df in sheets_preview.values())
         if total_rows > ROW_LIMIT and not args.force:
             print(
@@ -337,6 +337,7 @@ Outputs three files:
             schema_path=args.schema,
             baseline_path=args.baseline,
             rules_path=args.rules,
+            sheets=sheets_preview,
         )
         all_results.append(results)
 

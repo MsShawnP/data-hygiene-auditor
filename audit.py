@@ -14,7 +14,6 @@ from data_hygiene_auditor import (  # noqa: F401
     Finding,
     FuzzyDuplicate,
     SheetResult,
-    _load_sheets,
     analyze_fuzzy_duplicates,
     analyze_mixed_formats,
     analyze_nulls,
@@ -26,6 +25,7 @@ from data_hygiene_auditor import (  # noqa: F401
     generate_html,
     generate_pdf,
     infer_field_type,
+    load_sheets,
     rate_severity,
     run_audit,
 )

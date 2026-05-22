@@ -14,10 +14,15 @@ from .api import (
     audit_file,
 )
 from .core import (  # noqa: F401
+    HIGH,
+    LOW,
+    MEDIUM,
     SUPPORTED_EXTENSIONS,
     WHY_IT_MATTERS,
-    _load_sheets,
     count_issues,
+    describe_issue,
+    issue_example,
+    load_sheets,
     run_audit,
     run_multi_audit,
 )

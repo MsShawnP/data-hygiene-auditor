@@ -1,7 +1,6 @@
 """Detection engines: field type inference, null analysis, mixed formats,
 wrong purpose, placeholders, and phantom duplicates."""
 
-import hashlib
 import re
 from collections import Counter, defaultdict
 
@@ -54,6 +53,18 @@ _NORMALIZE_WS = re.compile(r'\s+')
 _NORMALIZE_PUNCT = re.compile(r'[^\w\s@.]')
 
 EMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
+
+def _identify_id_columns(df, field_types):
+    """Return set of column names that are identifiers or fully unique."""
+    id_cols = set()
+    for col in df.columns:
+        ft = field_types.get(col, infer_field_type(col, df[col].values))
+        if ft == 'id':
+            id_cols.add(col)
+        elif df[col].nunique() == len(df):
+            id_cols.add(col)
+    return id_cols
 
 
 def infer_field_type(col_name, values):
@@ -352,14 +363,7 @@ def analyze_phantom_duplicates(df, sheet_name, field_types=None):
 
     field_types = field_types or {}
 
-    id_cols = set()
-    for col in df.columns:
-        ft = field_types.get(col, infer_field_type(col, df[col].values))
-        if ft == 'id':
-            id_cols.add(col)
-        elif df[col].nunique() == len(df):
-            id_cols.add(col)
-
+    id_cols = _identify_id_columns(df, field_types)
     content_cols = [c for c in df.columns if c not in id_cols]
     if not content_cols:
         content_cols = list(df.columns)
@@ -382,8 +386,7 @@ def analyze_phantom_duplicates(df, sheet_name, field_types=None):
     combined = norm_subset.iloc[:, 0].astype(str)
     for col in sig_cols[1:]:
         combined = combined + '||' + norm_subset[col].astype(str)
-    sig_values = [hashlib.md5(x.encode()).hexdigest() for x in combined]
-    sigs = pd.Series(sig_values, index=combined.index)
+    sigs = combined
     dup_sigs = sigs[sigs.duplicated(keep=False)]
     if dup_sigs.empty:
         return findings
@@ -532,14 +535,7 @@ def analyze_fuzzy_duplicates(
     for row_set in phantom_row_sets:
         already_matched.update(row_set)
 
-    id_cols = set()
-    for col in df.columns:
-        ft = field_types.get(col, infer_field_type(col, df[col].values))
-        if ft == 'id':
-            id_cols.add(col)
-        elif df[col].nunique() == len(df):
-            id_cols.add(col)
-
+    id_cols = _identify_id_columns(df, field_types)
     content_cols = [c for c in df.columns if c not in id_cols]
     if not content_cols:
         content_cols = list(df.columns)

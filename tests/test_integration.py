@@ -4,7 +4,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from audit import _load_sheets, generate_excel, generate_html, generate_pdf, run_audit
+from audit import generate_excel, generate_html, generate_pdf, load_sheets, run_audit
 from data_hygiene_auditor.core import count_issues
 
 SAMPLE_PATH = Path(__file__).parent.parent / "samples" / "input" / "sample_messy_data.xlsx"
@@ -88,7 +88,7 @@ class TestCSVSupport:
             f.write("Bob,bob@test.com,555-234-5678\n")
             f.name
         try:
-            sheets = _load_sheets(f.name)
+            sheets = load_sheets(f.name)
             assert len(sheets) == 1
             df = list(sheets.values())[0]
             assert len(df) == 2

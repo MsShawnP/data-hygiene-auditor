@@ -2,13 +2,25 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
+from ..core import describe_issue, describe_schema_violation, issue_example
 from . import palette as P
+
+
+def _write_row(ws, row_num: int, values: list, severity: str,
+               thin_border: Border, sev_fills: dict) -> None:
+    """Write a styled data row to the findings sheet."""
+    for col_idx, val in enumerate(values, 1):
+        cell = ws.cell(row=row_num, column=col_idx, value=val)
+        cell.font = Font(name=P.FONT_SANS_EXCEL, size=10)
+        cell.alignment = Alignment(vertical="top", wrap_text=True)
+        cell.border = thin_border
+        if col_idx == 5:
+            cell.fill = sev_fills.get(severity, PatternFill())
 
 
 def generate_excel(results: dict[str, Any], output_path: str) -> str:
@@ -57,52 +69,8 @@ def generate_excel(results: dict[str, Any], output_path: str) -> str:
                 detail = issue['detail']
                 itype = issue['type']
 
-                if itype == 'mixed_format':
-                    desc = (
-                        f"Mixed {detail['field_type']} formats:"
-                        f" {detail['inconsistent_count']} values"
-                        f" deviate from {detail['dominant_format']}"
-                    )
-                    example = '; '.join(
-                        f"{k}: {v}"
-                        for k, v in detail['format_distribution'].items()
-                    )
-                elif itype == 'wrong_purpose':
-                    desc = detail['issue']
-                    example = detail.get('example', '')
-                elif itype in ('placeholder_value', 'placeholder'):
-                    desc = (
-                        f"Placeholder \"{detail['value']}\""
-                        f" found {detail['count']} times"
-                    )
-                    example = f"{detail['pct']}% of non-null values"
-                elif itype == 'suspicious_repetition':
-                    desc = (
-                        f"\"{detail['value']}\" repeated"
-                        f" {detail['count']} times"
-                    )
-                    example = f"{detail['pct']}% of non-null values"
-                elif itype == 'null_analysis':
-                    desc = (
-                        f"{detail['total_missing']} of"
-                        f" {detail['total_rows']} values missing"
-                        f" ({detail['missing_pct']}%)"
-                    )
-                    example = (
-                        f"Null: {detail['null_count']},"
-                        f" Blank: {detail['blank_count']},"
-                        f" Whitespace: {detail['whitespace_only']}"
-                    )
-                elif itype == 'custom_rule':
-                    desc = (
-                        f"{issue.get('rule_name', 'Custom Rule')}:"
-                        f" {detail.get('message', '')}"
-                    )
-                    examples = detail.get('examples', [])
-                    example = '; '.join(str(e) for e in examples[:5])
-                else:
-                    desc = str(itype)
-                    example = json.dumps(detail, default=str)
+                desc = describe_issue(itype, detail)
+                example = issue_example(itype, detail, issue)
 
                 fix = issue.get('fix', {})
                 fix_text = fix.get('code', '') if fix else ''
@@ -116,20 +84,8 @@ def generate_excel(results: dict[str, Any], output_path: str) -> str:
                     profile.get('cardinality', ''),
                     profile.get('uniqueness_pct', ''),
                 ]
-                for col_idx, val in enumerate(values, 1):
-                    cell = ws.cell(
-                        row=row_num, column=col_idx, value=val,
-                    )
-                    cell.font = Font(name=P.FONT_SANS_EXCEL, size=10)
-                    cell.alignment = Alignment(
-                        vertical="top", wrap_text=True,
-                    )
-                    cell.border = thin_border
-                    if col_idx == 5:
-                        cell.fill = sev_fills.get(
-                            issue['severity'], PatternFill(),
-                        )
-
+                _write_row(ws, row_num, values, issue['severity'],
+                           thin_border, sev_fills)
                 row_num += 1
 
         for dup in sheet_data['phantom_duplicates']:
@@ -152,19 +108,8 @@ def generate_excel(results: dict[str, Any], output_path: str) -> str:
                 dup['severity'], desc, example, dup.get('why', ''),
                 dup_fix_text,
             ]
-            for col_idx, val in enumerate(values, 1):
-                cell = ws.cell(
-                    row=row_num, column=col_idx, value=val,
-                )
-                cell.font = Font(name=P.FONT_SANS_EXCEL, size=10)
-                cell.alignment = Alignment(
-                    vertical="top", wrap_text=True,
-                )
-                cell.border = thin_border
-                if col_idx == 5:
-                    cell.fill = sev_fills.get(
-                        dup['severity'], PatternFill(),
-                    )
+            _write_row(ws, row_num, values, dup['severity'],
+                       thin_border, sev_fills)
             row_num += 1
 
         for fuzz in sheet_data.get('fuzzy_duplicates', []):
@@ -200,64 +145,21 @@ def generate_excel(results: dict[str, Any], output_path: str) -> str:
                 desc, example, fuzz.get('why', ''),
                 fuzz_fix_text,
             ]
-            for col_idx, val in enumerate(values, 1):
-                cell = ws.cell(
-                    row=row_num, column=col_idx, value=val,
-                )
-                cell.font = Font(name=P.FONT_SANS_EXCEL, size=10)
-                cell.alignment = Alignment(
-                    vertical="top", wrap_text=True,
-                )
-                cell.border = thin_border
-                if col_idx == 5:
-                    cell.fill = sev_fills.get(
-                        fuzz['severity'], PatternFill(),
-                    )
+            _write_row(ws, row_num, values, fuzz['severity'],
+                       thin_border, sev_fills)
             row_num += 1
 
         for sv in sheet_data.get('schema_violations', []):
-            svtype = sv['type']
             col_name = sv.get('column', '')
-            detail = sv.get('detail', {})
-            if svtype == 'schema_type_mismatch':
-                desc = (
-                    f"Expected type '{detail.get('expected_type', '')}'"
-                    f" but inferred '{detail.get('actual_type', '')}'"
-                )
-                example = f"Column: {col_name}"
-            elif svtype == 'schema_missing_column':
-                desc = f"Required column '{col_name}' missing"
-                example = (
-                    f"Expected type:"
-                    f" {detail.get('expected_type', '')}"
-                )
-            elif svtype == 'schema_completeness_violation':
-                desc = (
-                    f"{detail.get('actual_missing_pct', 0)}% missing"
-                    f" (max {detail.get('max_missing_pct', 0)}%)"
-                )
-                example = f"Column: {col_name}"
-            else:
-                desc = svtype
-                example = str(detail)
+            desc = describe_schema_violation(sv)
+            example = f"Column: {col_name}"
             values = [
                 sheet_name, col_name, "—",
                 "Schema Violation", sv['severity'],
                 desc, example, sv.get('why', ''), '',
             ]
-            for col_idx, val in enumerate(values, 1):
-                cell = ws.cell(
-                    row=row_num, column=col_idx, value=val,
-                )
-                cell.font = Font(name=P.FONT_SANS_EXCEL, size=10)
-                cell.alignment = Alignment(
-                    vertical="top", wrap_text=True,
-                )
-                cell.border = thin_border
-                if col_idx == 5:
-                    cell.fill = sev_fills.get(
-                        sv['severity'], PatternFill(),
-                    )
+            _write_row(ws, row_num, values, sv['severity'],
+                       thin_border, sev_fills)
             row_num += 1
 
     ws.column_dimensions['A'].width = 14

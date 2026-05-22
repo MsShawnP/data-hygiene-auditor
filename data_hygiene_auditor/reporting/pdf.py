@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import Counter
 from typing import Any
 from xml.sax.saxutils import escape as _xml_escape
 
@@ -20,6 +19,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from ..core import count_issues, score_label
 from . import palette as P
 
 
@@ -83,15 +83,9 @@ def generate_pdf(results: dict[str, Any], output_path: str) -> str:
         styles['Normal'],
     ))
     overall = results.get('overall_score', 100)
-    if overall >= 90:
-        score_label = 'Clean'
-    elif overall >= 70:
-        score_label = 'Needs Attention'
-    else:
-        score_label = 'Significant Issues'
     story.append(Paragraph(
         f"<b>Health Score: {overall}/100</b>"
-        f" — {score_label}",
+        f" — {score_label(overall)}",
         ParagraphStyle(
             name='ScoreHead', parent=styles['Heading2'],
             fontSize=16, spaceAfter=12,
@@ -99,30 +93,15 @@ def generate_pdf(results: dict[str, Any], output_path: str) -> str:
     ))
     story.append(Spacer(1, 8))
 
-    total_issues = 0
-    severity_totals: Counter[str] = Counter()
-    for sheet in results['sheets'].values():
-        for field in sheet['fields'].values():
-            for issue in field['issues']:
-                total_issues += 1
-                severity_totals[issue['severity']] += 1
-        for d in sheet['phantom_duplicates']:
-            total_issues += 1
-            severity_totals[d['severity']] += 1
-        for f in sheet.get('fuzzy_duplicates', []):
-            total_issues += 1
-            severity_totals[f['severity']] += 1
-        for sv in sheet.get('schema_violations', []):
-            total_issues += 1
-            severity_totals[sv['severity']] += 1
+    counts = count_issues(results)
 
     summary_data = [
         ['Total Issues', 'High', 'Medium', 'Low'],
         [
-            str(total_issues),
-            str(severity_totals.get('High', 0)),
-            str(severity_totals.get('Medium', 0)),
-            str(severity_totals.get('Low', 0)),
+            str(counts.get('total', 0)),
+            str(counts.get('High', 0)),
+            str(counts.get('Medium', 0)),
+            str(counts.get('Low', 0)),
         ],
     ]
     t = Table(summary_data, colWidths=[1.5*inch]*4)
@@ -154,7 +133,7 @@ def generate_pdf(results: dict[str, Any], output_path: str) -> str:
             f"Score: {trend['overall_score_previous']} → "
             f"{results.get('overall_score', 0)} ({sign}{delta})  |  "
             f"Issues: {trend['total_issues_previous']} → "
-            f"{total_issues} ({td_sign}{td})",
+            f"{counts.get('total', 0)} ({td_sign}{td})",
             styles['SmallBody'],
         ))
         story.append(Spacer(1, 8))

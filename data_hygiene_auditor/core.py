@@ -20,6 +20,10 @@ from .schema import validate_schema
 from .suggestions import generate_dup_fix, generate_fix
 from .trend import compute_trend, load_baseline
 
+HIGH = 'High'
+MEDIUM = 'Medium'
+LOW = 'Low'
+
 WHY_IT_MATTERS = {
     'mixed_format_date': (
         "Mixed date formats cause sorting failures, broken filters, and incorrect calculations. "
@@ -77,6 +81,97 @@ WHY_IT_MATTERS = {
 SUPPORTED_EXTENSIONS = {'.xlsx', '.xls', '.csv', '.tsv'}
 
 
+def describe_issue(issue_type: str, detail: dict, issue: dict | None = None) -> str:
+    """Return a plain-text description for an issue."""
+    if issue_type == 'mixed_format':
+        return (
+            f"Mixed {detail.get('field_type', '')} formats:"
+            f" {detail.get('inconsistent_count', 0)} values"
+            f" deviate from {detail.get('dominant_format', '')}"
+        )
+    if issue_type == 'wrong_purpose':
+        return str(detail.get('issue', 'Wrong purpose'))
+    if issue_type in ('placeholder_value', 'placeholder'):
+        return (
+            f"Placeholder \"{detail.get('value', '')}\" found"
+            f" {detail.get('count', 0)} times"
+        )
+    if issue_type == 'suspicious_repetition':
+        return (
+            f"\"{detail.get('value', '')}\" repeated"
+            f" {detail.get('count', 0)} times"
+        )
+    if issue_type == 'null_analysis':
+        return (
+            f"{detail.get('total_missing', 0)} of"
+            f" {detail.get('total_rows', 0)} values missing"
+            f" ({detail.get('missing_pct', 0)}%)"
+        )
+    if issue_type == 'custom_rule':
+        rule_name = (issue or {}).get('rule_name', 'Custom Rule')
+        msg = detail.get('message', '')
+        return f"{rule_name}: {msg}"
+    return str(issue_type)
+
+
+def issue_example(issue_type: str, detail: dict, issue: dict | None = None) -> str:
+    """Return a plain-text example/detail string for an issue."""
+    if issue_type == 'mixed_format':
+        return '; '.join(
+            f"{k}: {v}"
+            for k, v in detail.get('format_distribution', {}).items()
+        )
+    if issue_type == 'wrong_purpose':
+        return str(detail.get('example', ''))
+    if issue_type in ('placeholder_value', 'placeholder'):
+        return f"{detail.get('pct', 0)}% of non-null values"
+    if issue_type == 'suspicious_repetition':
+        return f"{detail.get('pct', 0)}% of non-null values"
+    if issue_type == 'null_analysis':
+        return (
+            f"Null: {detail.get('null_count', 0)},"
+            f" Blank: {detail.get('blank_count', 0)},"
+            f" Whitespace: {detail.get('whitespace_only', 0)}"
+        )
+    if issue_type == 'custom_rule':
+        rule_name = (issue or {}).get('rule_name', 'Custom Rule')
+        msg = detail.get('message', '')
+        examples = detail.get('examples', [])
+        example_str = '; '.join(str(e) for e in examples[:5])
+        return f"{rule_name}: {msg} — {example_str}" if example_str else f"{rule_name}: {msg}"
+    import json
+    return json.dumps(detail, default=str)
+
+
+def describe_schema_violation(sv: dict) -> str:
+    """Return a plain-text description for a schema violation."""
+    svtype = sv['type']
+    detail = sv.get('detail', {})
+    col = sv.get('column', '') or detail.get('column', '')
+    if svtype == 'schema_type_mismatch':
+        return (
+            f"Expected type '{detail.get('expected_type', '')}'"
+            f" but inferred '{detail.get('actual_type', '')}'"
+        )
+    if svtype == 'schema_missing_column':
+        return f"Required column '{detail.get('expected_column', col)}' missing"
+    if svtype == 'schema_completeness_violation':
+        return (
+            f"{detail.get('actual_missing_pct', 0)}% missing"
+            f" (max {detail.get('max_missing_pct', 0)}%)"
+        )
+    return str(svtype)
+
+
+def score_label(score: int | float) -> str:
+    """Return a human-readable label for a health score."""
+    if score >= 90:
+        return 'Clean'
+    if score >= 70:
+        return 'Needs Attention'
+    return 'Significant Issues'
+
+
 def count_issues(results):
     """Count total and per-severity issues across all sheets.
 
@@ -107,7 +202,7 @@ def count_issues(results):
     return dict(totals)
 
 
-def _load_sheets(input_path):
+def load_sheets(input_path):
     """Load tabular data as a dict of {sheet_name: DataFrame}."""
     ext = Path(input_path).suffix.lower()
     if ext in ('.csv', '.tsv'):
@@ -122,7 +217,7 @@ def _load_sheets(input_path):
         }
 
 
-def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=None, rules_path=None):
+def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=None, rules_path=None, sheets=None):
     """Run all checks against an Excel or CSV file. Returns structured audit results."""
     schema = None
     if schema_path:
@@ -134,7 +229,8 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
         from .rules import evaluate_rule, load_rules
         rules = load_rules(rules_path)
 
-    sheets = _load_sheets(input_path)
+    if sheets is None:
+        sheets = load_sheets(input_path)
     results = {
         'input_file': os.path.basename(input_path),
         'audit_timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),

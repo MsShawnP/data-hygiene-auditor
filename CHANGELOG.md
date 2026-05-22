@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- `describe_issue()` and `issue_example()` shared helpers for consistent issue formatting
+- `describe_schema_violation()` shared helper for schema violation text
+- `score_label()` shared helper for health score labels (Clean/Needs Attention/Significant Issues)
+- `FixSuggestion.from_dict()` class method to eliminate construction boilerplate
+- `HIGH`, `MEDIUM`, `LOW` severity constants
+- `load_sheets()` public API (renamed from private `_load_sheets`)
+
+### Changed
+- PDF report uses `count_issues()` from core instead of duplicating the counting loop
+- `trend.py` uses shared `count_issues()` instead of local duplicate
+- CLI passes pre-loaded sheets to `run_audit()` to avoid double file load
+- Excel report uses `_write_row()` helper to eliminate 4x repeated cell-styling code
+- Phantom duplicate detection uses raw string keys instead of MD5 hashes
+- ID-column detection extracted to `_identify_id_columns()` helper in detection module
+
+### Fixed
+- `.gitignore` now covers `.env`, `*.key`, and `credentials.*`
+
 ## [1.1.0] - 2026-05-16
 
 ### Fixed
