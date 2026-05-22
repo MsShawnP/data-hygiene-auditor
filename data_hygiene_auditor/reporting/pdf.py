@@ -11,8 +11,6 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-
-from . import palette as P
 from reportlab.platypus import (
     PageBreak,
     Paragraph,
@@ -21,6 +19,8 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
+
+from . import palette as P
 
 
 def _p(val: object) -> str:

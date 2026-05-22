@@ -24,3 +24,8 @@
 **Context:** Interactive HTML report needs filters, search, collapsible sections.
 **Decision:** All CSS and JS inline in one HTML file. No external dependencies, no build step.
 **Rationale:** Report must be shareable as a single file (email, Slack, etc.). Client-side JS means no server needed. Dark theme with accent color matches the audit-tool aesthetic.
+
+## 2026-05-22: Improvement audit — 16 findings across 3 priority tiers
+**Context:** First `/improve` pass on the project. Ran full audit (manual + security review + 3-agent code review). Security review found 0 real vulnerabilities (2 candidates scored 2/10 confidence — correctly filtered). Code review found 16 actionable items.
+**Decision:** Fix all 16 in the next session, prioritized as: 4 critical (duplicated logic, double file load, missing .gitignore entries), 7 important (extract shared helpers to reduce copy-paste across reporting modules), 5 nice-to-have (enum for severity, shared thresholds, changelog hygiene).
+**Rationale:** The codebase works correctly but has accumulated duplication across the 3 report generators and detection modules. Fixing these reduces maintenance surface and prevents the kind of drift bugs already caught once (PDF severity color mismatch). Critical items first because they affect correctness (double load) and security (.gitignore).

@@ -8,9 +8,8 @@ from html import escape as _html_escape
 from pathlib import Path
 from typing import Any
 
-from . import palette as P
-
 from ..core import count_issues
+from . import palette as P
 
 _FONTS_DIR = Path(__file__).parent / "fonts"
 
