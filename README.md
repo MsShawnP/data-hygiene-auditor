@@ -291,6 +291,8 @@ Findings appear as code scanning alerts in the GitHub Security tab.
 python generate_sample.py
 ```
 
+## Stack
+
 ## Requirements
 
 - Python 3.9+
@@ -315,3 +317,6 @@ The `publish.yml` workflow builds, tests, and uploads to PyPI automatically on v
 ## License
 
 MIT — see [LICENSE](LICENSE)
+
+---
+Built by [Lailara LLC](https://lailarallc.com) — data hygiene and analytics consulting for specialty food brands scaling into national retail.
