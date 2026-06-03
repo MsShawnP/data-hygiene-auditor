@@ -1,5 +1,7 @@
 # Data Hygiene Auditor
 
+**PyPI:** `pip install data-hygiene-auditor`
+
 **A linter for your data.** Point it at a spreadsheet, get back every inconsistency, placeholder, and hidden duplicate — with severity ratings, root causes, and fix code.
 
 ```
