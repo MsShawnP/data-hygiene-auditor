@@ -25,6 +25,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - `.gitignore` now covers `.env`, `*.key`, and `credentials.*`
 
+## [1.1.1] - 2026-06-10
+
+### Fixed
+- README image and file links converted to absolute URLs for correct PyPI rendering
+
 ## [1.1.0] - 2026-05-16
 
 ### Fixed
@@ -82,6 +87,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Test suite (171 tests) and CI pipeline
 - MIT license
 
-[Unreleased]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/MsShawnP/Data-Hygiene-Auditor/releases/tag/v1.0.0
