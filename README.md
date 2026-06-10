@@ -54,20 +54,20 @@ Real outputs from a real run are committed to this repo so you can preview them 
 
 | File | Description |
 |------|-------------|
-| [samples/input/sample_messy_data.xlsx](samples/input/sample_messy_data.xlsx) | Input — the messy workbook |
-| [samples/output/sample_messy_data_audit_report.html](samples/output/sample_messy_data_audit_report.html) | HTML stakeholder report |
-| [samples/output/sample_messy_data_audit_findings.xlsx](samples/output/sample_messy_data_audit_findings.xlsx) | Excel findings file |
-| [samples/output/sample_messy_data_audit_report.pdf](samples/output/sample_messy_data_audit_report.pdf) | PDF deliverable |
+| [samples/input/sample_messy_data.xlsx](https://github.com/MsShawnP/data-hygiene-auditor/blob/main/samples/input/sample_messy_data.xlsx) | Input — the messy workbook |
+| [samples/output/sample_messy_data_audit_report.html](https://github.com/MsShawnP/data-hygiene-auditor/blob/main/samples/output/sample_messy_data_audit_report.html) | HTML stakeholder report |
+| [samples/output/sample_messy_data_audit_findings.xlsx](https://github.com/MsShawnP/data-hygiene-auditor/blob/main/samples/output/sample_messy_data_audit_findings.xlsx) | Excel findings file |
+| [samples/output/sample_messy_data_audit_report.pdf](https://github.com/MsShawnP/data-hygiene-auditor/blob/main/samples/output/sample_messy_data_audit_report.pdf) | PDF deliverable |
 
-![Summary cards at the top of the HTML report](samples/output/screenshots/summary_cards.png)
+![Summary cards at the top of the HTML report](https://raw.githubusercontent.com/MsShawnP/data-hygiene-auditor/main/samples/output/screenshots/summary_cards.png)
 
 *Top of the HTML report. The four cards show total issue count and a breakdown by severity, generated from a 30-row, 2-sheet sample workbook designed to exercise every detection category. Below the summary, findings are organized by sheet and by column.*
 
-![Multiple stacked findings on a single column](samples/output/screenshots/multiple_findings_one_column.png)
+![Multiple stacked findings on a single column](https://raw.githubusercontent.com/MsShawnP/data-hygiene-auditor/main/samples/output/screenshots/multiple_findings_one_column.png)
 
 *One column (`FirstName`) with multiple stacked issues at different severities. The yellow progress bar shows the missing-data rate (13.3%, with 1 whitespace-only value), and four findings are stacked underneath: a LOW high-missing-rate flag, a HIGH "code stuffed in name field" flag with a concrete example from row 16, a MEDIUM placeholder detection for "Test", and a LOW placeholder detection for "TBD".*
 
-![Format distribution table on the Phone column](samples/output/screenshots/format_distribution_table.png)
+![Format distribution table on the Phone column](https://raw.githubusercontent.com/MsShawnP/data-hygiene-auditor/main/samples/output/screenshots/format_distribution_table.png)
 
 *The `Phone` column finding showing a HIGH severity Mixed Phone Formats issue: 17 of 26 values deviate from the dominant format. The embedded table breaks down the actual format distribution found in the data, so a reader can see exactly which variants are present and how often. Below it, additional findings on the same column flag a placeholder ("TBD") and a suspicious repetition ("(555) 123-4567" appearing 3 times).*
 
@@ -231,7 +231,7 @@ Each rule requires: `name`, `description`, `severity` (High/Medium/Low), `condit
 | `disallowed_values` | Array of strings | Values found in the disallowed set (case-insensitive) |
 | `max_missing_pct` | Number (0-100) | Missing percentage exceeds threshold |
 
-See [`samples/rules_example.json`](samples/rules_example.json) for a working example with 4 rules.
+See [`samples/rules_example.json`](https://github.com/MsShawnP/data-hygiene-auditor/blob/main/samples/rules_example.json) for a working example with 4 rules.
 
 ## Multi-file Mode
 
@@ -285,7 +285,7 @@ Findings appear as code scanning alerts in the GitHub Security tab.
 
 ## Regenerating the Sample Data
 
-`generate_sample.py` recreates the deliberately-messy demo workbook at `samples/input/sample_messy_data.xlsx`. Run it if you want to modify the demo data or verify that generation is reproducible. The committed outputs in [samples/output/](samples/output/) can then be regenerated with the command shown in [See It In Action](#see-it-in-action).
+`generate_sample.py` recreates the deliberately-messy demo workbook at `samples/input/sample_messy_data.xlsx`. Run it if you want to modify the demo data or verify that generation is reproducible. The committed outputs in [samples/output/](https://github.com/MsShawnP/data-hygiene-auditor/tree/main/samples/output/) can then be regenerated with the command shown in [See It In Action](#see-it-in-action).
 
 ```
 python generate_sample.py
@@ -314,4 +314,4 @@ The `publish.yml` workflow builds, tests, and uploads to PyPI automatically on v
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT — see [LICENSE](https://github.com/MsShawnP/data-hygiene-auditor/blob/main/LICENSE)
