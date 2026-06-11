@@ -52,7 +52,7 @@ A single run produces three files:
 
 ## See It In Action
 
-Real outputs from a real run are committed to this repo so you can preview them without installing anything. They were produced from the deliberately-messy demo file under [samples/](samples/) — a 30-row, 2-sheet workbook that exercises every detection category. The run reported **59 issues** (23 High, 20 Medium, 16 Low).
+Real outputs from a real run are committed to this repo so you can preview them without installing anything. They were produced from the deliberately-messy demo file under [samples/](https://github.com/MsShawnP/data-hygiene-auditor/tree/main/samples/) — a 30-row, 2-sheet workbook that exercises every detection category. The run reported **59 issues** (23 High, 20 Medium, 16 Low).
 
 | File | Description |
 |------|-------------|

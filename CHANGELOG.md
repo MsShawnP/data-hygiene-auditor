@@ -25,6 +25,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - `.gitignore` now covers `.env`, `*.key`, and `credentials.*`
 
+## [1.1.2] - 2026-06-10
+
+### Fixed
+- Fix README image and file links for PyPI rendering
+
 ## [1.1.1] - 2026-06-10
 
 ### Fixed
