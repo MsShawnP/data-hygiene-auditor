@@ -9,3 +9,8 @@ dist/
 .env
 *.key
 credentials.*
+
+# Security - secret leak prevention
+.env.*
+*.pem
+secrets.*
