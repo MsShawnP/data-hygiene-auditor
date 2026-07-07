@@ -6,6 +6,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-07-07
+
 ### Added
 - `describe_issue()` and `issue_example()` shared helpers for consistent issue formatting
 - `describe_schema_violation()` shared helper for schema violation text
