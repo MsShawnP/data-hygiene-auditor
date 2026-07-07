@@ -134,15 +134,15 @@ python audit.py --input samples/input/sample_messy_data.xlsx --output ./reports
   Data Hygiene Auditor
   Auditing: samples/input/sample_messy_data.xlsx
 
-  [1/2] Analyzed sheet: Customers  (score: 42)
-  [2/2] Analyzed sheet: Orders  (score: 68)
+  [1/2] Analyzed sheet: Customers  (score: 0)
+  [2/2] Analyzed sheet: Orders  (score: 65)
 
   Generating reports...
     HTML  -> ./reports/sample_messy_data_audit_report.html
     Excel -> ./reports/sample_messy_data_audit_findings.xlsx
     PDF   -> ./reports/sample_messy_data_audit_report.pdf
 
-  Health Score: 55/100
+  Health Score: 32/100
   59 issues found  —  High: 23 | Medium: 20 | Low: 16
 ```
 
