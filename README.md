@@ -293,14 +293,12 @@ Findings appear as code scanning alerts in the GitHub Security tab.
 python generate_sample.py
 ```
 
-## Stack
-
 ## Requirements
 
 - Python 3.9+
-- pandas
-- openpyxl
-- reportlab
+- pandas >= 2.0
+- openpyxl >= 3.1
+- reportlab >= 4.0
 
 Maintainer release process: see [RELEASING.md](https://github.com/MsShawnP/data-hygiene-auditor/blob/main/RELEASING.md)
 
