@@ -40,6 +40,10 @@ WHY_IT_MATTERS = {
         "aggregation and comparison. Summing a column with text-formatted currency returns errors or "
         "silently drops values, leading to wrong totals in financial reports."
     ),
+    'mixed_format_id': (
+        "Inconsistent ID formats break joins, lookups, and deduplication — a key stored as "
+        "\"CUST-001\" won't match \"1027\", so related records silently fail to link."
+    ),
     'wrong_purpose': (
         "When a field is used for something other than its intended purpose — like storing reference "
         "codes in a name field or text in a currency field — it corrupts both the misused field and "
@@ -293,11 +297,16 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
                 field_findings['issues'].append(issue)
 
             for w in wrong:
+                why_key = (
+                    'mixed_format_id'
+                    if w.get('issue') == 'Mixed ID formats'
+                    else 'wrong_purpose'
+                )
                 issue = {
                     'type': 'wrong_purpose',
                     'severity': rate_severity('wrong_purpose', w),
                     'detail': w,
-                    'why': WHY_IT_MATTERS['wrong_purpose'],
+                    'why': WHY_IT_MATTERS[why_key],
                 }
                 fix = generate_fix('wrong_purpose', w, col, field_type)
                 if fix:
@@ -517,7 +526,10 @@ def _compute_profile(series, field_type):
             non_empty.str.replace(r'[$,£€]', '', regex=True),
             errors='coerce',
         ).dropna()
-        if len(numeric) > 0:
+        # Only report a numeric range when a strong majority of values are
+        # actually numeric; otherwise a single stray number produces a
+        # meaningless "range 1027.0-1027.0".
+        if len(non_empty) > 0 and len(numeric) / len(non_empty) >= 0.80:
             profile['min_value'] = round(float(numeric.min()), 2)
             profile['max_value'] = round(float(numeric.max()), 2)
             profile['mean_value'] = round(float(numeric.mean()), 2)
@@ -525,7 +537,9 @@ def _compute_profile(series, field_type):
 
     elif field_type == 'id':
         numeric = pd.to_numeric(non_empty, errors='coerce').dropna()
-        if len(numeric) > 0:
+        # ID columns are frequently coded (CUST-001); only emit a numeric
+        # range when the column is overwhelmingly bare numbers.
+        if len(non_empty) > 0 and len(numeric) / len(non_empty) >= 0.80:
             profile['min_value'] = round(float(numeric.min()), 2)
             profile['max_value'] = round(float(numeric.max()), 2)
             profile['mean_value'] = round(float(numeric.mean()), 2)

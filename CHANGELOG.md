@@ -24,6 +24,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 - `.gitignore` now covers `.env`, `*.key`, and `credentials.*`
+- Column profiles no longer report a meaningless numeric range (e.g. `range 1027.0–1027.0`) for `id`/`currency` columns that are mostly non-numeric; the min/max/mean/median are emitted only when ≥80% of non-empty values actually parse as numeric.
+- The "Mixed ID formats" finding now shows ID-format-specific guidance ("Inconsistent ID formats break joins, lookups, and deduplication…") instead of the generic wrong-purpose (field-misuse) text.
 
 ## [1.1.2] - 2026-06-10
 
