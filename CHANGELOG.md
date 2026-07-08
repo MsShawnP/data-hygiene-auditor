@@ -6,6 +6,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-07-08
+
+### Changed
+- Health-score scale recalibrated: scores at or above 25 are unchanged, but
+  catastrophically messy sheets now asymptote toward a soft floor of ~8 instead
+  of saturating at 0. The transform is strictly monotonic, so ranking is
+  preserved. Sample effect: Customers 0 → 18, Orders 65 (unchanged), overall
+  32 → 42.
+- `score_label()` gains a "Critical" band below "Significant Issues" (≥40
+  significant issues, <40 critical) so single-digit scores read with a word.
+
 ## [1.1.3] - 2026-07-07
 
 ### Added
