@@ -1,5 +1,7 @@
 """Core audit orchestrator and data loading."""
 
+from __future__ import annotations
+
 import os
 from datetime import datetime
 from pathlib import Path

@@ -188,8 +188,7 @@ def evaluate_rule(rule: Rule, series: pd.Series, col_name: str) -> Optional[Dict
         return None
 
     if rule.condition == 'regex_match':
-        pattern = re.compile(rule.threshold)
-        violations = non_empty[~non_empty.str.fullmatch(pattern, na=False)]
+        violations = non_empty[~non_empty.str.fullmatch(rule.threshold, na=False)]
         if len(violations) == 0:
             return None
         examples = violations.head(5).tolist()
@@ -212,8 +211,7 @@ def evaluate_rule(rule: Rule, series: pd.Series, col_name: str) -> Optional[Dict
         }
 
     if rule.condition == 'not_regex_match':
-        pattern = re.compile(rule.threshold)
-        violations = non_empty[non_empty.str.fullmatch(pattern, na=False)]
+        violations = non_empty[non_empty.str.fullmatch(rule.threshold, na=False)]
         if len(violations) == 0:
             return None
         examples = violations.head(5).tolist()
