@@ -173,7 +173,9 @@ def score_label(score: int | float) -> str:
         return 'Clean'
     if score >= 70:
         return 'Needs Attention'
-    return 'Significant Issues'
+    if score >= 40:
+        return 'Significant Issues'
+    return 'Critical'
 
 
 def count_issues(results):
@@ -463,10 +465,13 @@ def run_multi_audit(input_paths, fuzzy_threshold=0.85, schema_path=None, rules_p
 
 
 def _compute_health_score(sheet_data):
-    """Compute a 0-100 health score for a sheet.
+    """Compute a health score for a sheet.
 
     Starts at 100 and deducts for issues found. Designed so:
-    90+ = clean, 70-89 = needs attention, <70 = significant issues.
+    90+ = clean, 70-89 = needs attention, 40-69 = significant issues,
+    <40 = critical. Scores at or above 25 are the raw 100-minus-penalties
+    value; below 25, a soft-floor transform compresses catastrophic sheets
+    toward a floor of 8 (never 0) while staying strictly monotonic.
     """
     score = 100.0
 
@@ -497,7 +502,13 @@ def _compute_health_score(sheet_data):
     for sv in sheet_data.get('schema_violations', []):
         score -= severity_penalty.get(sv['severity'], 1.0)
 
-    return max(0, round(score))
+    KNEE, FLOOR, SCALE = 25.0, 8.0, 40.0
+    if score >= KNEE:
+        final = score
+    else:
+        deficit = KNEE - score            # >= 0, unbounded
+        final = KNEE - (KNEE - FLOOR) * deficit / (deficit + SCALE)
+    return int(min(100, max(FLOOR, round(final))))
 
 
 def _compute_profile(series, field_type):

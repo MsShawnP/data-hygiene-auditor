@@ -29,7 +29,7 @@ A single run produces three reports tailored to three audiences: an **HTML repor
 
 **Completeness Baseline** — Every field receives a null/missing analysis with severity rating, including detection of whitespace-only values that look populated but carry no data.
 
-**Health Score** — Every sheet and the overall file receive a 0-100 hygiene score. 90+ is clean, 70-89 needs attention, below 70 has significant issues. The score appears in all three reports and on the CLI.
+**Health Score** — Every sheet and the overall file receive a 0-100 hygiene score. 90+ is clean, 70-89 needs attention, 40-69 has significant issues, and below 40 is critical. The score appears in all three reports and on the CLI.
 
 **Fix Suggestions** — Every finding includes a copyable pandas code snippet: date normalization scripts, phone reformatting, placeholder replacement, dedup strategies. The HTML report has one-click copy buttons; the Excel report adds a "Suggested Fix" column.
 
@@ -134,7 +134,7 @@ python audit.py --input samples/input/sample_messy_data.xlsx --output ./reports
   Data Hygiene Auditor
   Auditing: samples/input/sample_messy_data.xlsx
 
-  [1/2] Analyzed sheet: Customers  (score: 0)
+  [1/2] Analyzed sheet: Customers  (score: 18)
   [2/2] Analyzed sheet: Orders  (score: 65)
 
   Generating reports...
@@ -142,7 +142,7 @@ python audit.py --input samples/input/sample_messy_data.xlsx --output ./reports
     Excel -> ./reports/sample_messy_data_audit_findings.xlsx
     PDF   -> ./reports/sample_messy_data_audit_report.pdf
 
-  Health Score: 32/100
+  Health Score: 42/100
   59 issues found  —  High: 23 | Medium: 20 | Low: 16
 ```
 

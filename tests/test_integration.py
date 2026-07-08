@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 
 from audit import generate_excel, generate_html, generate_pdf, load_sheets, run_audit
-from data_hygiene_auditor.core import count_issues
+from data_hygiene_auditor.core import _compute_health_score, count_issues
 
 SAMPLE_PATH = Path(__file__).parent.parent / "samples" / "input" / "sample_messy_data.xlsx"
 
@@ -129,10 +129,26 @@ class TestHealthScore:
         finally:
             os.unlink(f.name)
 
-    def test_score_floors_at_zero(self):
+    def test_score_never_negative(self):
         results = run_audit(str(SAMPLE_PATH))
         for sheet in results["sheets"].values():
             assert sheet["health_score"] >= 0
+
+    def test_catastrophic_sheet_floors_in_single_digits(self):
+        # A sheet with overwhelming penalties (raw score deeply negative)
+        # should asymptote toward the soft floor: single digits, never 0 or below.
+        sheet_data = {
+            "fields": {},
+            "phantom_duplicates": [
+                {"type": "exact_duplicate", "severity": "High"}
+                for _ in range(200)
+            ],
+            "fuzzy_duplicates": [],
+            "schema_violations": [],
+        }
+        score = _compute_health_score(sheet_data)
+        assert score > 0          # never floors to 0 or below
+        assert score < 10         # catastrophic data lands in single digits
 
 
 class TestEdgeCases:
