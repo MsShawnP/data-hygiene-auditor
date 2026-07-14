@@ -21,6 +21,7 @@ from reportlab.platypus import (
 
 from ..core import count_issues, score_label
 from . import palette as P
+from .brand_fonts import SANS, SANS_BOLD, SERIF_BOLD, register_fonts
 
 
 def _p(val: object) -> str:
@@ -30,29 +31,38 @@ def _p(val: object) -> str:
 
 def generate_pdf(results: dict[str, Any], output_path: str) -> str:
     """Generate a clean PDF report matching the HTML content."""
+    register_fonts()
     doc = SimpleDocTemplate(
         output_path, pagesize=letter,
         leftMargin=0.75*inch, rightMargin=0.75*inch,
         topMargin=0.75*inch, bottomMargin=0.75*inch,
     )
     styles = getSampleStyleSheet()
+    # Sample styles used directly default to Helvetica/Times internally;
+    # pin them to the brand faces so nothing inherits a base-14 font.
+    styles['Title'].fontName = SERIF_BOLD
+    styles['Normal'].fontName = SANS
     styles.add(ParagraphStyle(
         name='SectionHead', parent=styles['Heading2'],
+        fontName=SERIF_BOLD,
         textColor=rl_colors.HexColor(P.INK), fontSize=14,
         spaceAfter=8, spaceBefore=16,
     ))
     styles.add(ParagraphStyle(
         name='FieldHead', parent=styles['Heading3'],
+        fontName=SERIF_BOLD,
         fontSize=11, spaceAfter=4, spaceBefore=10,
         textColor=rl_colors.HexColor(P.LONDON_20),
     ))
     styles.add(ParagraphStyle(
         name='SmallBody', parent=styles['Normal'],
+        fontName=SANS,
         fontSize=9, leading=12, spaceAfter=4,
         textColor=rl_colors.HexColor(P.LONDON_20),
     ))
     styles.add(ParagraphStyle(
         name='WhyBox', parent=styles['Normal'],
+        fontName=SANS,
         fontSize=8.5, leading=11, leftIndent=12,
         textColor=rl_colors.HexColor(P.LONDON_35),
         spaceAfter=6, spaceBefore=2,
@@ -60,17 +70,17 @@ def generate_pdf(results: dict[str, Any], output_path: str) -> str:
     styles.add(ParagraphStyle(
         name='SevHigh', parent=styles['Normal'],
         fontSize=9, textColor=rl_colors.HexColor(P.SEV_HIGH),
-        fontName='Helvetica-Bold',
+        fontName=SANS_BOLD,
     ))
     styles.add(ParagraphStyle(
         name='SevMedium', parent=styles['Normal'],
         fontSize=9, textColor=rl_colors.HexColor(P.SEV_MEDIUM),
-        fontName='Helvetica-Bold',
+        fontName=SANS_BOLD,
     ))
     styles.add(ParagraphStyle(
         name='SevLow', parent=styles['Normal'],
         fontSize=9, textColor=rl_colors.HexColor(P.SEV_LOW),
-        fontName='Helvetica-Bold',
+        fontName=SANS_BOLD,
     ))
 
     story = []
@@ -88,6 +98,7 @@ def generate_pdf(results: dict[str, Any], output_path: str) -> str:
         f" — {score_label(overall)}",
         ParagraphStyle(
             name='ScoreHead', parent=styles['Heading2'],
+            fontName=SERIF_BOLD,
             fontSize=16, spaceAfter=12,
         ),
     ))
@@ -108,7 +119,8 @@ def generate_pdf(results: dict[str, Any], output_path: str) -> str:
     t.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), rl_colors.HexColor(P.CHICAGO_20)),
         ('TEXTCOLOR', (0, 0), (-1, 0), rl_colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 0), (-1, -1), SANS),
+        ('FONTNAME', (0, 0), (-1, 0), SANS_BOLD),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('GRID', (0, 0), (-1, -1), 0.5, rl_colors.HexColor(P.LONDON_85)),
@@ -203,6 +215,8 @@ def generate_pdf(results: dict[str, Any], output_path: str) -> str:
                         fmt_data.append([fmt, str(cnt)])
                     ft = Table(fmt_data, colWidths=[3*inch, 1*inch])
                     ft.setStyle(TableStyle([
+                        ('FONTNAME', (0, 0), (-1, -1), SANS),
+                        ('FONTNAME', (0, 0), (-1, 0), SANS_BOLD),
                         ('FONTSIZE', (0, 0), (-1, -1), 8),
                         ('BACKGROUND', (0, 0), (-1, 0),
                          rl_colors.HexColor(P.CHICAGO_20)),
@@ -429,6 +443,7 @@ def generate_pdf(results: dict[str, Any], output_path: str) -> str:
         f" {results['audit_timestamp']} — Lailara LLC",
         ParagraphStyle(
             name='Footer', parent=styles['Normal'],
+            fontName=SANS,
             fontSize=8, textColor=rl_colors.HexColor(P.LONDON_35),
             alignment=TA_CENTER,
         ),
