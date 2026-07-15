@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "data-hygiene-auditor"
-version = "1.1.4"
+version = "1.1.5"
 description = "A linter for your data — detect mixed formats, misused fields, placeholder floods, and phantom duplicates in Excel and CSV files"
 readme = "README.md"
 license = {text = "MIT"}
@@ -41,6 +41,7 @@ include = ["data_hygiene_auditor*"]
 
 [tool.setuptools.package-data]
 data_hygiene_auditor = ["py.typed"]
+"data_hygiene_auditor.reporting.brand_fonts" = ["*.ttf", "*.txt"]
 
 [project.scripts]
 data-hygiene-audit = "data_hygiene_auditor.cli:main"
