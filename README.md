@@ -126,6 +126,26 @@ Supports `.xlsx`, `.xls`, `.csv`, and `.tsv` files.
 
 ### Example
 
+The repo ships two sample inputs. Run either.
+
+**`sample_realistic_data.xlsx` — a member roster that has drifted.** A few mixed date and phone formats, two placeholder cells, one lowercase status, one double-entered row, one case-variant duplicate. Most rows are clean — the kind of file a real audit usually meets.
+
+```
+python audit.py --input samples/input/sample_realistic_data.xlsx --output ./reports
+```
+
+```
+  Data Hygiene Auditor
+  Auditing: samples/input/sample_realistic_data.xlsx
+
+  [1/1] Analyzed sheet: Members  (score: 67)
+
+  Health Score: 67/100
+  11 issues found  —  High: 5 | Medium: 5 | Low: 1
+```
+
+**`sample_messy_data.xlsx` — a torture test.** Wrong-purpose fields, placeholder floods, numbers stored as text, three flavors of duplicate, missing-data rows. No real export looks this bad; it exists to exercise every detector at once.
+
 ```
 python audit.py --input samples/input/sample_messy_data.xlsx --output ./reports
 ```
@@ -137,14 +157,11 @@ python audit.py --input samples/input/sample_messy_data.xlsx --output ./reports
   [1/2] Analyzed sheet: Customers  (score: 18)
   [2/2] Analyzed sheet: Orders  (score: 65)
 
-  Generating reports...
-    HTML  -> ./reports/sample_messy_data_audit_report.html
-    Excel -> ./reports/sample_messy_data_audit_findings.xlsx
-    PDF   -> ./reports/sample_messy_data_audit_report.pdf
-
   Health Score: 42/100
   59 issues found  —  High: 23 | Medium: 20 | Low: 16
 ```
+
+Two files, two verdicts: 67 for a roster that needs attention, 18 for the torture test's worst sheet (42 blended across its two sheets, 11 vs 59 issues). The score tracks severity — it doesn't flatten every imperfect file to the same failing number.
 
 ## Use as a Library
 
