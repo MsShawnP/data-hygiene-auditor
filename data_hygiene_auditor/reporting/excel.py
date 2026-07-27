@@ -69,8 +69,13 @@ def generate_excel(results: dict[str, Any], output_path: str) -> str:
                 detail = issue['detail']
                 itype = issue['type']
 
-                desc = describe_issue(itype, detail)
+                desc = describe_issue(itype, detail, issue)
                 example = issue_example(itype, detail, issue)
+
+                # Custom rules carry their name at the top level; surface it
+                # in the Issue Type column so distinct rules are
+                # distinguishable (HTML/PDF/CSV already do this).
+                itype_display = issue.get('rule_name', itype)
 
                 fix = issue.get('fix', {})
                 fix_text = fix.get('code', '') if fix else ''
@@ -78,7 +83,7 @@ def generate_excel(results: dict[str, Any], output_path: str) -> str:
                 values = [
                     sheet_name, col_name,
                     field_data['inferred_type'],
-                    itype, issue['severity'],
+                    itype_display, issue['severity'],
                     desc, example, issue.get('why', ''),
                     fix_text,
                     profile.get('cardinality', ''),
