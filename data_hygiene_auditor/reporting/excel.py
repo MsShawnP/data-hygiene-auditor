@@ -7,7 +7,12 @@ from typing import Any
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
-from ..core import describe_issue, describe_schema_violation, issue_example
+from ..core import (
+    describe_issue,
+    describe_schema_violation,
+    issue_example,
+    sanitize_spreadsheet_cell,
+)
 from . import palette as P
 
 
@@ -15,7 +20,10 @@ def _write_row(ws, row_num: int, values: list, severity: str,
                thin_border: Border, sev_fills: dict) -> None:
     """Write a styled data row to the findings sheet."""
     for col_idx, val in enumerate(values, 1):
-        cell = ws.cell(row=row_num, column=col_idx, value=val)
+        cell = ws.cell(
+            row=row_num, column=col_idx,
+            value=sanitize_spreadsheet_cell(val),
+        )
         cell.font = Font(name=P.FONT_SANS_EXCEL, size=10)
         cell.alignment = Alignment(vertical="top", wrap_text=True)
         cell.border = thin_border
@@ -187,7 +195,7 @@ def generate_excel(results: dict[str, Any], output_path: str) -> str:
     ws2['B3'] = f"{results.get('overall_score', 'N/A')}/100"
     ws2['B3'].font = Font(bold=True, name=P.FONT_SANS_EXCEL, size=12)
     ws2['A4'] = "File:"
-    ws2['B4'] = results['input_file']
+    ws2['B4'] = sanitize_spreadsheet_cell(results['input_file'])
     ws2['A5'] = "Audit Date:"
     ws2['B5'] = results['audit_timestamp']
     ws2['A6'] = "Total Issues:"

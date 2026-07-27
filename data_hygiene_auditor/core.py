@@ -86,6 +86,28 @@ WHY_IT_MATTERS = {
 
 SUPPORTED_EXTENSIONS = {'.xlsx', '.xls', '.csv', '.tsv'}
 
+# Leading characters that spreadsheet applications (Excel, LibreOffice,
+# Google Sheets) will interpret as the start of a formula when opening an
+# xlsx or CSV file.
+_FORMULA_TRIGGERS = ('=', '+', '-', '@', '\t', '\r')
+
+
+def sanitize_spreadsheet_cell(value):
+    """Neutralize spreadsheet formula injection in a cell value.
+
+    User-supplied text — sheet names, column headers, and echoed cell
+    values from the audited file — is written into the Excel findings file
+    and the remediation CSV. A spreadsheet app evaluates any cell whose
+    text begins with ``=``, ``+``, ``-``, ``@``, or a tab/CR as a formula,
+    so a column named ``=HYPERLINK(...)`` would execute when a recipient
+    opens the "email-ready" deliverable. Prefixing a single quote forces
+    the value to be treated as literal text. Non-string values (ints,
+    floats, ``None``) pass through unchanged.
+    """
+    if isinstance(value, str) and value[:1] in _FORMULA_TRIGGERS:
+        return "'" + value
+    return value
+
 
 def describe_issue(issue_type: str, detail: dict, issue: dict | None = None) -> str:
     """Return a plain-text description for an issue."""

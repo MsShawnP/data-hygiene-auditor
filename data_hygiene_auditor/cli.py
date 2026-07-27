@@ -11,6 +11,7 @@ from .core import (
     combine_overall_score,
     count_issues,
     run_audit,
+    sanitize_spreadsheet_cell,
 )
 from .reporting import generate_excel, generate_html, generate_pdf
 
@@ -205,6 +206,13 @@ def _export_remediation_csv(all_results, output_path):
                 })
 
     rows.sort(key=lambda r: {'High': 0, 'Medium': 1, 'Low': 2}.get(r['Severity'], 3))
+
+    # Neutralize spreadsheet formula injection: this CSV is meant to be
+    # opened in Excel/Sheets and assigned out, and several fields (Field,
+    # Sheet, Description) carry values derived from the audited file.
+    for row in rows:
+        for key, value in row.items():
+            row[key] = sanitize_spreadsheet_cell(value)
 
     fieldnames = [
         'File', 'Sheet', 'Field', 'Issue Type', 'Severity',

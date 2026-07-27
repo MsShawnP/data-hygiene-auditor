@@ -87,6 +87,45 @@ class TestRemediationCsv:
         ranks = [order.get(r["Severity"], 3) for r in rows]
         assert ranks == sorted(ranks)
 
+    def test_neutralizes_formula_injection(self, tmp_path):
+        # A field name that is a spreadsheet formula must be written as
+        # literal text (leading apostrophe), not left to execute when the
+        # remediation CSV is opened in Excel/Sheets.
+        results = {
+            'input_file': 'x.csv',
+            'audit_timestamp': '2024-01-01 00:00:00',
+            'overall_score': 50,
+            'sheets': {
+                'Sheet1': {
+                    'row_count': 1,
+                    'col_count': 1,
+                    'fields': {
+                        '=HYPERLINK("http://evil","x")': {
+                            'inferred_type': 'name',
+                            'issues': [{
+                                'type': 'placeholder',
+                                'severity': 'High',
+                                'detail': {'value': 'x', 'count': 1, 'pct': 100},
+                                'why': 'w',
+                            }],
+                            'profile': {},
+                        },
+                    },
+                    'phantom_duplicates': [],
+                    'fuzzy_duplicates': [],
+                    'schema_violations': [],
+                    'health_score': 50,
+                },
+            },
+        }
+        out = tmp_path / "fixes.csv"
+        _export_remediation_csv([results], str(out))
+        with open(out, newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+        field_values = [r["Field"] for r in rows]
+        assert any(v.startswith("'=") for v in field_values)
+        assert not any(v.startswith("=") for v in field_values)
+
 
 class TestMain:
     def _argv(self, monkeypatch, argv):

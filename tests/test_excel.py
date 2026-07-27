@@ -63,3 +63,49 @@ class TestCustomRuleName:
         assert row[3] == "No short names"          # Issue Type column
         assert "No short names" in str(row[5])      # Description column
         assert row[3] != "custom_rule"
+
+
+class TestFormulaInjection:
+    def test_no_data_cell_is_written_as_a_formula(self):
+        # Sheet name, field name, echoed value, and input_file all start with
+        # a formula trigger. None may be stored as a live formula; each must
+        # be neutralized with a leading apostrophe.
+        results = {
+            'input_file': '=cmd|calc.csv',
+            'audit_timestamp': '2024-01-01 00:00:00',
+            'overall_score': 50,
+            'sheets': {
+                '=Sheet': {
+                    'row_count': 1,
+                    'col_count': 1,
+                    'fields': {
+                        '=HYPERLINK("http://evil","x")': {
+                            'inferred_type': 'name',
+                            'issues': [{
+                                'type': 'placeholder',
+                                'severity': 'Low',
+                                'detail': {'value': '@SUM(A1)', 'count': 1, 'pct': 100},
+                                'why': 'w',
+                            }],
+                            'profile': {'cardinality': 1, 'uniqueness_pct': 100.0},
+                        },
+                    },
+                    'phantom_duplicates': [],
+                    'fuzzy_duplicates': [],
+                    'schema_violations': [],
+                    'health_score': 50,
+                },
+            },
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = generate_excel(results, os.path.join(tmpdir, "f.xlsx"))
+            wb = load_workbook(path)
+            ws = wb["Findings"]
+            for row in ws.iter_rows(min_row=2):
+                for cell in row:
+                    assert cell.data_type != 'f', f"formula leaked: {cell.value!r}"
+            assert str(ws.cell(row=2, column=1).value).startswith("'=")   # Sheet
+            assert str(ws.cell(row=2, column=2).value).startswith("'=")   # Field
+            summary = wb["Summary"]
+            assert summary['B4'].data_type != 'f'
+            assert str(summary['B4'].value).startswith("'=")
