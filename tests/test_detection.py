@@ -163,3 +163,21 @@ class TestAnalyzeMixedFormats:
         result = analyze_mixed_formats(series, "date")
         assert result is not None
         assert "not-a-date" in result["sample_nonstandard"]
+
+    def test_nonstandard_plurality_does_not_become_dominant(self):
+        # 3 unparseable values, 2 clean ISO dates. The junk must NOT be
+        # reported as the standard; the clean dates must be the dominant
+        # format and the junk counted as the deviation.
+        series = pd.Series(
+            ["nope", "junk", "bad", "2023-01-01", "2023-02-15"]
+        )
+        result = analyze_mixed_formats(series, "date")
+        assert result is not None
+        assert result["dominant_format"] == "YYYY-MM-DD"
+        assert result["dominant_count"] == 2
+        assert result["inconsistent_count"] == 3
+
+    def test_only_nonstandard_returns_none(self):
+        # Nothing matches a known format -> not a "mixed format" finding.
+        series = pd.Series(["nope", "junk", "bad"])
+        assert analyze_mixed_formats(series, "date") is None

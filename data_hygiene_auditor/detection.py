@@ -187,7 +187,17 @@ def analyze_mixed_formats(series, field_type):
     if len(format_counts) <= 1:
         return None
 
-    dominant = format_counts.most_common(1)[0]
+    # The dominant format must be a *recognized* format. The synthetic
+    # '(non-standard)' bucket is never "the norm": even when unparseable
+    # values are the plurality, they are the problem, not the standard.
+    # Picking most_common() blindly would otherwise flag the clean values
+    # as the deviations and label the junk as the format to conform to.
+    recognized = {
+        fmt: n for fmt, n in format_counts.items() if fmt != '(non-standard)'
+    }
+    if not recognized:
+        return None
+    dominant = max(recognized.items(), key=lambda kv: kv[1])
     total_typed = sum(format_counts.values())
     inconsistent_count = total_typed - dominant[1]
     inconsistent_pct = round(inconsistent_count / total_typed * 100, 1)
