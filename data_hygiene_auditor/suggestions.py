@@ -260,8 +260,8 @@ def generate_dup_fix(dup_type: str, detail: dict,
             ),
             'code': (
                 f'# Flag fuzzy matches for manual review\n'
-                f'fuzzy_rows = [{", ".join(str(r - 1) for r in rows)}]'
-                f'  # 0-indexed\n'
+                f'fuzzy_rows = [{", ".join(str(r - 2) for r in rows)}]'
+                f'  # 0-indexed DataFrame positions\n'
                 f'df["_fuzzy_review"] = df.index.isin(fuzzy_rows)'
             ),
         }

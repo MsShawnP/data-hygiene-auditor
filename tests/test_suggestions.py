@@ -173,6 +173,24 @@ class TestDuplicateFixes:
         assert fix['strategy'] == 'review_fuzzy_matches'
         assert '_fuzzy_review' in fix['code']
 
+    def test_fuzzy_fix_flags_the_actual_duplicate_rows(self):
+        # Reported row numbers are spreadsheet rows (0-based position + 2).
+        # Duplicates at DataFrame positions 1 and 5 are reported as [3, 7];
+        # the generated code must select positions 1 and 5, not their
+        # neighbours. Regression test for the r-1 vs r-2 off-by-one.
+        import pandas as pd
+        fix = generate_dup_fix('fuzzy_duplicate', {
+            'rows': [3, 7],
+            'group_size': 2,
+            'match_method': 'fingerprint',
+        })
+        assert 'fuzzy_rows = [1, 5]' in fix['code']
+        df = pd.DataFrame({'v': range(8)})
+        namespace = {'df': df}
+        exec(fix['code'], namespace)  # noqa: S102 - exercising generated code
+        flagged = set(df.index[df['_fuzzy_review']])
+        assert flagged == {1, 5}
+
 
 class TestUnknownType:
     def test_unknown_issue_type(self):
