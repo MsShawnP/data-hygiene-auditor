@@ -165,7 +165,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Test suite (171 tests) and CI pipeline
 - MIT license
 
-[Unreleased]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.5...v1.2.0
+[1.1.5]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.4...v1.1.5
+[1.1.4]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.3...v1.1.4
+[1.1.3]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.2...v1.1.3
+[1.1.2]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/MsShawnP/Data-Hygiene-Auditor/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/MsShawnP/Data-Hygiene-Auditor/releases/tag/v1.0.0
