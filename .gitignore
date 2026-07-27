@@ -1,4 +1,6 @@
 reports/
+# ui-review-skill screenshot output (regenerated per run)
+/screenshots/
 __pycache__/
 *.pyc
 .DS_Store

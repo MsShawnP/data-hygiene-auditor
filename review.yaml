@@ -1,0 +1,56 @@
+project: data-hygiene-auditor
+
+# The "UI" of this project is the generated HTML audit report. There is no
+# web server or deployed site, so we point the reviewer at the committed
+# sample report via a file:// URL. Regenerate samples/output/ from
+# samples/input/sample_messy_data.xlsx before reviewing if the report
+# template changed. Override per-run with --base-url.
+base_url: "file:///C:/Users/mssha/projects/published/data-hygiene-auditor/samples/output/"
+
+routes:
+  - path: "sample_messy_data_audit_report.html"
+    name: HTML Audit Report
+
+forbidden_content:
+  # 'XXX' is intentionally omitted: this tool renders "(XXX) XXX-XXXX" phone
+  # masks into the report and rules examples, so it is legitimate content here.
+  - pattern: "TODO|FIXME|HACK"
+    severity: warning
+    reason: Dev markers in shipped web assets
+  - pattern: "password\\s*=|api_key\\s*=|secret\\s*="
+    severity: fail
+    reason: Possible hardcoded credentials
+    exclude:
+      - "*.md"
+
+dom_checks:
+  - route: ""
+    elements:
+      - selector: h1
+        label: Report heading present
+      - selector: .score-hero
+        label: Health score hero present
+      - selector: .summary-grid
+        label: Summary cards present
+      - selector: .controls
+        label: Severity filter / search controls present
+      - selector: .toc
+        label: Table of contents present
+      - selector: .sheet-section
+        label: At least one sheet section rendered
+      - selector: .field-card
+        label: At least one field card rendered
+      - selector: .footer
+        label: Footer present
+    absent:
+      - selector: .error-state
+        label: No error state shown
+
+layout:
+  - route: ""
+    checks:
+      - name: No horizontal scroll
+        assert: no_horizontal_scroll
+      - name: Summary grid not empty
+        assert: not_empty
+        selector: .summary-grid
