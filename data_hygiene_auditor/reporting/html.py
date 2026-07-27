@@ -272,7 +272,7 @@ h3 {{
     height: 120px;
     flex-shrink: 0;
 }}
-.score-ring svg {{ transform: rotate(-90deg); }}
+.score-ring svg {{ display: block; transform: rotate(-90deg); }}
 .score-ring .score-value {{
     position: absolute;
     top: 50%;

@@ -185,7 +185,8 @@ def generate_excel(results: dict[str, Any], output_path: str) -> str:
     ws.column_dimensions['H'].width = 55
     ws.column_dimensions['I'].width = 50
 
-    ws.auto_filter.ref = f"A1:I{row_num - 1}"
+    # Findings table has 11 columns (A–K); the filter must span all of them.
+    ws.auto_filter.ref = f"A1:K{row_num - 1}"
     ws.freeze_panes = "A2"
 
     ws2 = wb.create_sheet("Summary", 0)

@@ -49,9 +49,6 @@ CURRENCY_PATTERNS = [
     (re.compile(r'^\$[\d,]+\.\d{2}\s+USD$'), '$X,XXX.XX USD'),
 ]
 
-_NORMALIZE_WS = re.compile(r'\s+')
-_NORMALIZE_PUNCT = re.compile(r'[^\w\s@.]')
-
 EMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
 

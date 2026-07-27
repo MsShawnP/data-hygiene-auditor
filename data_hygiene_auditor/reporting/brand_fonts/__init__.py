@@ -7,7 +7,9 @@ base-14 Helvetica/Times faces.
 
 Usage::
 
-    from lailara_palette.fonts import register_fonts, SERIF, SERIF_BOLD, SANS, SANS_BOLD
+    from data_hygiene_auditor.reporting.brand_fonts import (
+        register_fonts, SERIF, SERIF_BOLD, SANS, SANS_BOLD,
+    )
 
     register_fonts()  # idempotent — safe to call once at import or per render
     ParagraphStyle("body", fontName=SANS)
@@ -18,8 +20,8 @@ Paragraph whose ``fontName`` is ``SERIF``/``SANS`` renders bold runs with the
 matching 700/600 face via the registered font families.
 
 The fonts are SIL Open Font License 1.1 (see the ``OFL-*.txt`` files bundled
-in this package). ``reportlab`` is an optional dependency; install it with
-``pip install lailara-palette[pdf]``.
+in this package). ``reportlab`` is a required dependency of
+data-hygiene-auditor (declared in ``pyproject.toml``).
 """
 from importlib import resources
 
