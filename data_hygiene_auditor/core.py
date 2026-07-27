@@ -191,15 +191,32 @@ def describe_schema_violation(sv: dict) -> str:
     return str(svtype)
 
 
+# Health-score bands. The threshold boundaries live here and nowhere else;
+# every renderer keys its colours/labels off the band name from score_band()
+# rather than re-testing 90/70/40, so the bands cannot drift between the CLI,
+# HTML, and PDF outputs.
+_SCORE_BAND_LABELS = {
+    'clean': 'Clean',
+    'attention': 'Needs Attention',
+    'significant': 'Significant Issues',
+    'critical': 'Critical',
+}
+
+
+def score_band(score: int | float) -> str:
+    """Return the band key ('clean'/'attention'/'significant'/'critical')."""
+    if score >= 90:
+        return 'clean'
+    if score >= 70:
+        return 'attention'
+    if score >= 40:
+        return 'significant'
+    return 'critical'
+
+
 def score_label(score: int | float) -> str:
     """Return a human-readable label for a health score."""
-    if score >= 90:
-        return 'Clean'
-    if score >= 70:
-        return 'Needs Attention'
-    if score >= 40:
-        return 'Significant Issues'
-    return 'Critical'
+    return _SCORE_BAND_LABELS[score_band(score)]
 
 
 def count_issues(results):

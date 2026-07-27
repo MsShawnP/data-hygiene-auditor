@@ -12,8 +12,18 @@ from .core import (
     count_issues,
     run_audit,
     sanitize_spreadsheet_cell,
+    score_band,
 )
 from .reporting import generate_excel, generate_html, generate_pdf
+
+# ANSI colour per health-score band (green / yellow / red). Keyed by the band
+# name from core.score_band so the thresholds live in exactly one place.
+_SCORE_ANSI = {
+    'clean': '32',
+    'attention': '33',
+    'significant': '31',
+    'critical': '31',
+}
 
 
 def _supports_color():
@@ -360,7 +370,7 @@ Outputs three files:
         )
         for i, (name, sdata) in enumerate(results['sheets'].items(), 1):
             score = sdata['health_score']
-            score_color = '32' if score >= 90 else ('33' if score >= 70 else '31')
+            score_color = _SCORE_ANSI[score_band(score)]
             _log(
                 f"  {file_label}[{i}/{sheet_count}]"
                 f" Analyzed sheet: {_c(name, '36')}"
@@ -434,7 +444,7 @@ Outputs three files:
     # files) so the CLI and run_multi_audit never diverge. A single file
     # weights to its own score, so single-file output is unchanged.
     overall = combine_overall_score(all_results) if all_results else 100
-    score_color = '32' if overall >= 90 else ('33' if overall >= 70 else '31')
+    score_color = _SCORE_ANSI[score_band(overall)]
 
     score_str = f"{overall}/100"
     if len(all_results) == 1:

@@ -8,10 +8,31 @@ from html import escape as _html_escape
 from pathlib import Path
 from typing import Any
 
-from ..core import count_issues, score_label
+from ..core import count_issues, score_band, score_label
 from . import palette as P
 
 _FONTS_DIR = Path(__file__).parent / "fonts"
+
+# Band -> colour/description maps for the report. Keyed by the band name from
+# core.score_band so the thresholds are defined in exactly one place.
+_OVERALL_COLORS = {
+    'clean': 'var(--hk-35)',
+    'attention': 'var(--sg-55)',
+    'significant': 'var(--accent)',
+    'critical': 'var(--accent)',
+}
+_OVERALL_DESC = {
+    'clean': 'This dataset is in good shape.',
+    'attention': 'Several issues should be addressed before use.',
+    'significant': 'This dataset has serious quality problems.',
+    'critical': 'This dataset has serious quality problems.',
+}
+_SHEET_COLORS = {
+    'clean': 'var(--low)',
+    'attention': 'var(--medium)',
+    'significant': 'var(--high)',
+    'critical': 'var(--high)',
+}
 
 
 def _font_face_css() -> str:
@@ -475,15 +496,9 @@ h3 {{
 
     overall = results.get('overall_score', 100)
     label = score_label(overall)
-    if overall >= 90:
-        score_color = 'var(--hk-35)'
-        score_desc = 'This dataset is in good shape.'
-    elif overall >= 70:
-        score_color = 'var(--sg-55)'
-        score_desc = 'Several issues should be addressed before use.'
-    else:
-        score_color = 'var(--accent)'
-        score_desc = 'This dataset has serious quality problems.'
+    _band = score_band(overall)
+    score_color = _OVERALL_COLORS[_band]
+    score_desc = _OVERALL_DESC[_band]
 
     pct = min(overall, 100)
     circumference = 2 * 3.14159 * 52
@@ -577,12 +592,7 @@ h3 {{
 
     for sheet_name, sheet_data in results['sheets'].items():
         ss = sheet_data.get('health_score', 100)
-        if ss >= 90:
-            ss_color = 'var(--low)'
-        elif ss >= 70:
-            ss_color = 'var(--medium)'
-        else:
-            ss_color = 'var(--high)'
+        ss_color = _SHEET_COLORS[score_band(ss)]
         sid = _h(sheet_name.replace(' ', '-').lower())
         parts.append(f"""
 <div class="sheet-section" id="sheet-{sid}">

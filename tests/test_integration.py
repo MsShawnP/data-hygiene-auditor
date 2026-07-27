@@ -10,6 +10,8 @@ from data_hygiene_auditor.core import (
     combine_overall_score,
     count_issues,
     run_multi_audit,
+    score_band,
+    score_label,
 )
 
 SAMPLE_PATH = Path(__file__).parent.parent / "samples" / "input" / "sample_messy_data.xlsx"
@@ -427,6 +429,24 @@ class TestColumnProfiling:
         assert profile['cardinality'] == 0
         assert profile['uniqueness_pct'] == 0.0
         assert profile['min_length'] == 0
+
+
+class TestScoreBands:
+    def test_band_boundaries(self):
+        assert score_band(100) == 'clean'
+        assert score_band(90) == 'clean'
+        assert score_band(89) == 'attention'
+        assert score_band(70) == 'attention'
+        assert score_band(69) == 'significant'
+        assert score_band(40) == 'significant'
+        assert score_band(39) == 'critical'
+        assert score_band(0) == 'critical'
+
+    def test_label_matches_band(self):
+        assert score_label(95) == 'Clean'
+        assert score_label(75) == 'Needs Attention'
+        assert score_label(50) == 'Significant Issues'
+        assert score_label(10) == 'Critical'
 
 
 class TestCombineOverallScore:
