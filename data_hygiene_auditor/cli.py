@@ -6,7 +6,12 @@ import os
 import sys
 from pathlib import Path
 
-from .core import SUPPORTED_EXTENSIONS, count_issues, run_audit
+from .core import (
+    SUPPORTED_EXTENSIONS,
+    combine_overall_score,
+    count_issues,
+    run_audit,
+)
 from .reporting import generate_excel, generate_html, generate_pdf
 
 
@@ -406,12 +411,10 @@ Outputs three files:
         _log(f"    {_c('Fixes', '32')} -> {args.export_fixes}")
 
     total_counts = {'total': 0, 'High': 0, 'Medium': 0, 'Low': 0, 'schema': 0}
-    scores = []
     for results in all_results:
         counts = count_issues(results)
         for k in ('total', 'High', 'Medium', 'Low', 'schema'):
             total_counts[k] += counts.get(k, 0)
-        scores.append(results['overall_score'])
 
     total_issues = total_counts['total']
     high = total_counts['High']
@@ -419,7 +422,10 @@ Outputs three files:
     low = total_counts['Low']
     schema_count = total_counts['schema']
 
-    overall = round(sum(scores) / len(scores)) if scores else 100
+    # Single shared definition of the combined score (row-weighted across
+    # files) so the CLI and run_multi_audit never diverge. A single file
+    # weights to its own score, so single-file output is unchanged.
+    overall = combine_overall_score(all_results) if all_results else 100
     score_color = '32' if overall >= 90 else ('33' if overall >= 70 else '31')
 
     score_str = f"{overall}/100"

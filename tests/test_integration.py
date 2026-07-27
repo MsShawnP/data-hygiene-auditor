@@ -5,7 +5,12 @@ import tempfile
 from pathlib import Path
 
 from audit import generate_excel, generate_html, generate_pdf, load_sheets, run_audit
-from data_hygiene_auditor.core import _compute_health_score, count_issues
+from data_hygiene_auditor.core import (
+    _compute_health_score,
+    combine_overall_score,
+    count_issues,
+    run_multi_audit,
+)
 
 SAMPLE_PATH = Path(__file__).parent.parent / "samples" / "input" / "sample_messy_data.xlsx"
 
@@ -422,3 +427,39 @@ class TestColumnProfiling:
         assert profile['cardinality'] == 0
         assert profile['uniqueness_pct'] == 0.0
         assert profile['min_length'] == 0
+
+
+class TestCombineOverallScore:
+    def test_score_is_row_weighted_not_simple_mean(self):
+        # 10 rows @ 90 and 90 rows @ 40 -> weighted 45, not the simple mean 65.
+        big = {'overall_score': 40, 'sheets': {'s': {'row_count': 90}}}
+        small = {'overall_score': 90, 'sheets': {'s': {'row_count': 10}}}
+        assert combine_overall_score([small, big]) == 45
+
+    def test_all_empty_files_fall_back_to_100(self):
+        empty = {'overall_score': 100, 'sheets': {}}
+        assert combine_overall_score([empty, empty]) == 100
+
+    def test_single_file_equals_its_own_score(self):
+        one = {'overall_score': 73, 'sheets': {'s': {'row_count': 5}}}
+        assert combine_overall_score([one]) == 73
+
+
+class TestMultiAudit:
+    def _write_csv(self, path, rows):
+        path.write_text("Name,Email\n" + "\n".join(rows) + "\n")
+
+    def test_multi_audit_structure_and_shared_scoring(self, tmp_path):
+        clean = tmp_path / "clean.csv"
+        self._write_csv(clean, [f"User{i},user{i}@test.com" for i in range(8)])
+        messy = tmp_path / "messy.csv"
+        self._write_csv(messy, ["Test,N/A", "Test,N/A", "Test,N/A", "TBD,"])
+
+        result = run_multi_audit([str(clean), str(messy)])
+        assert result['total_files'] == 2
+        assert set(result['files']) == {"clean.csv", "messy.csv"}
+        assert result['total_rows'] == 12
+        # The combined score must equal the shared helper over the per-file
+        # results — one definition, no drift between entry points.
+        expected = combine_overall_score(list(result['files'].values()))
+        assert result['overall_score'] == expected

@@ -445,6 +445,29 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
     return results
 
 
+def _sheet_row_total(results):
+    """Total data rows audited across all sheets of one file's results."""
+    return sum(s['row_count'] for s in results['sheets'].values())
+
+
+def combine_overall_score(file_results):
+    """Combine per-file audit results into one row-weighted overall score.
+
+    Each file's ``overall_score`` is weighted by the number of rows it
+    contributed, so a large file counts for more than a tiny one. Returns
+    100 when there are no rows to audit. This is the single definition of a
+    combined multi-file score, shared by ``run_multi_audit`` and the CLI so
+    the two entry points cannot drift apart.
+    """
+    total_rows = sum(_sheet_row_total(r) for r in file_results)
+    if total_rows <= 0:
+        return 100
+    weighted = sum(
+        r['overall_score'] * _sheet_row_total(r) for r in file_results
+    ) / total_rows
+    return round(weighted)
+
+
 def run_multi_audit(input_paths, fuzzy_threshold=0.85, schema_path=None, rules_path=None):
     """Run audits across multiple files. Returns a combined results dict.
 
@@ -464,21 +487,11 @@ def run_multi_audit(input_paths, fuzzy_threshold=0.85, schema_path=None, rules_p
         )
         file_results[os.path.basename(path)] = results
 
-    total_rows = sum(
-        sum(s['row_count'] for s in r['sheets'].values())
-        for r in file_results.values()
-    )
-    if total_rows > 0:
-        weighted_score = sum(
-            r['overall_score'] * sum(s['row_count'] for s in r['sheets'].values())
-            for r in file_results.values()
-        ) / total_rows
-    else:
-        weighted_score = 100
+    total_rows = sum(_sheet_row_total(r) for r in file_results.values())
 
     return {
         'files': file_results,
-        'overall_score': round(weighted_score),
+        'overall_score': combine_overall_score(list(file_results.values())),
         'total_files': len(file_results),
         'total_rows': total_rows,
     }
