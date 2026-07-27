@@ -6,6 +6,41 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-27
+
+### Security
+- Neutralize spreadsheet formula injection in the Excel findings report and
+  the `--export-fixes` CSV. User-derived sheet names, column headers, and
+  echoed cell values that begin with `=`, `+`, `-`, `@`, or a tab/CR are now
+  prefixed with a single quote so spreadsheet applications treat them as
+  literal text instead of executing them when a recipient opens the report.
+
+### Fixed
+- Fuzzy-duplicate remediation code now flags the correct rows. It was off by
+  one (converting reported spreadsheet rows with `r-1` instead of `r-2`), so
+  the generated snippet marked the row *after* each fuzzy duplicate.
+- Mixed-format detection no longer inverts when unparseable values are the
+  plurality: the dominant format is always a recognized format, so clean
+  values are never reported as the deviation.
+- The Excel findings report preserves custom-rule names in the Issue Type and
+  Description columns instead of showing a generic "Custom Rule".
+- Empty-input audits (every sheet empty) are now flagged with `audited: false`
+  and a warning rather than silently scoring 100/"Clean".
+- The HTML score ring no longer overflows its container, and the Excel
+  findings autofilter spans all columns (A–K).
+
+### Changed
+- Multi-file CLI health score is now row-weighted, matching `run_multi_audit`,
+  via a single shared `combine_overall_score()`. Single-file output is
+  unchanged.
+- Issue descriptions are worded consistently across the HTML, PDF, Excel, and
+  API outputs, driven by a single `issue_headline()` producer. As a result,
+  `api` `Finding.description` now leads with the issue label
+  (e.g. "High missing rate: 3 of 10 values missing (30.0%)").
+- Health-score bands and per-sheet issue counting are each defined in one
+  place (`score_band()`, `count_sheet_issues()`) so the CLI, HTML, PDF, and
+  trend outputs cannot drift apart.
+
 ## [1.1.5] - 2026-07-15
 
 ### Added
