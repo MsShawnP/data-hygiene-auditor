@@ -1,7 +1,6 @@
 """Trend analysis — compare current audit against a previous baseline."""
 
 import json
-from collections import Counter
 
 
 def load_baseline(path):
@@ -25,7 +24,7 @@ def compute_trend(current, baseline):
         ),
     }
 
-    from .core import count_issues
+    from .core import count_issues, count_sheet_issues
     current_counts = count_issues(current)
     baseline_counts = count_issues(baseline)
 
@@ -55,8 +54,8 @@ def compute_trend(current, baseline):
         base_sheet = baseline.get('sheets', {}).get(sheet_name)
 
         if curr_sheet and base_sheet:
-            curr_issues = _count_sheet_issues(curr_sheet)
-            base_issues = _count_sheet_issues(base_sheet)
+            curr_issues = count_sheet_issues(curr_sheet)
+            base_issues = count_sheet_issues(base_sheet)
             trend['sheets'][sheet_name] = {
                 'status': 'compared',
                 'score_previous': base_sheet.get('health_score', 0),
@@ -75,22 +74,3 @@ def compute_trend(current, baseline):
             trend['sheets'][sheet_name] = {'status': 'removed'}
 
     return trend
-
-
-def _count_sheet_issues(sheet_data):
-    """Count issues in a single sheet."""
-    counts: Counter[str] = Counter()
-    for field_data in sheet_data.get('fields', {}).values():
-        for issue in field_data.get('issues', []):
-            counts['total'] += 1
-            counts[issue.get('severity', 'Medium')] += 1
-    for dup in sheet_data.get('phantom_duplicates', []):
-        counts['total'] += 1
-        counts[dup.get('severity', 'Medium')] += 1
-    for fuzz in sheet_data.get('fuzzy_duplicates', []):
-        counts['total'] += 1
-        counts[fuzz.get('severity', 'Medium')] += 1
-    for sv in sheet_data.get('schema_violations', []):
-        counts['total'] += 1
-        counts[sv.get('severity', 'Medium')] += 1
-    return counts

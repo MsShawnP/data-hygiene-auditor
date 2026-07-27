@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -255,6 +256,33 @@ def score_label(score: int | float) -> str:
     return _SCORE_BAND_LABELS[score_band(score)]
 
 
+def count_sheet_issues(sheet_data):
+    """Count issues in a single sheet across every source.
+
+    Tallies field issues, phantom duplicates, fuzzy duplicates, and schema
+    violations into a Counter with keys 'total', per-severity ('High' /
+    'Medium' / 'Low'), and 'schema' (the number of schema violations). This
+    is the single per-sheet counter shared by count_issues (summed across
+    sheets) and the trend comparison, so the two cannot drift apart.
+    """
+    counts: Counter[str] = Counter()
+    for field_data in sheet_data.get('fields', {}).values():
+        for issue in field_data.get('issues', []):
+            counts['total'] += 1
+            counts[issue['severity']] += 1
+    for dup in sheet_data.get('phantom_duplicates', []):
+        counts['total'] += 1
+        counts[dup['severity']] += 1
+    for fuzz in sheet_data.get('fuzzy_duplicates', []):
+        counts['total'] += 1
+        counts[fuzz['severity']] += 1
+    for sv in sheet_data.get('schema_violations', []):
+        counts['total'] += 1
+        counts[sv['severity']] += 1
+        counts['schema'] += 1
+    return counts
+
+
 def count_issues(results):
     """Count total and per-severity issues across all sheets.
 
@@ -263,26 +291,12 @@ def count_issues(results):
 
     Returns dict with keys: 'total', 'High', 'Medium', 'Low', 'schema'.
     """
-    from collections import Counter
     totals: Counter[str] = Counter()
-    schema_count = 0
     for sheet in results['sheets'].values():
-        for field_data in sheet['fields'].values():
-            for issue in field_data['issues']:
-                totals['total'] += 1
-                totals[issue['severity']] += 1
-        for d in sheet['phantom_duplicates']:
-            totals['total'] += 1
-            totals[d['severity']] += 1
-        for f in sheet.get('fuzzy_duplicates', []):
-            totals['total'] += 1
-            totals[f['severity']] += 1
-        for sv in sheet.get('schema_violations', []):
-            totals['total'] += 1
-            totals[sv['severity']] += 1
-            schema_count += 1
-    totals['schema'] = schema_count
-    return dict(totals)
+        totals.update(count_sheet_issues(sheet))
+    result = dict(totals)
+    result.setdefault('schema', 0)
+    return result
 
 
 def load_sheets(input_path):
