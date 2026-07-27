@@ -19,7 +19,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from ..core import count_issues, score_label
+from ..core import count_issues, issue_headline, score_label
 from . import palette as P
 from .brand_fonts import SANS, SANS_BOLD, SERIF_BOLD, register_fonts
 
@@ -196,18 +196,18 @@ def generate_pdf(results: dict[str, Any], output_path: str) -> str:
                 itype = issue['type']
                 sev_style = f'Sev{sev}'
 
+                # Shared one-line headline; the mixed-format table and
+                # custom-rule example list are PDF-specific extras below.
+                label, detail_text = issue_headline(itype, detail, issue)
+                text = f"[{sev}] {_p(label)}"
+                if detail_text:
+                    text += f" — {_p(detail_text)}"
+                story.append(Paragraph(
+                    text,
+                    styles.get(sev_style, styles['SmallBody']),
+                ))
+
                 if itype == 'mixed_format':
-                    text = (
-                        f"[{sev}] Mixed"
-                        f" {_p(detail['field_type'])} formats"
-                        f" — {detail['inconsistent_count']}"
-                        " values deviate"
-                        f" from {_p(detail['dominant_format'])}"
-                    )
-                    story.append(Paragraph(
-                        text,
-                        styles.get(sev_style, styles['SmallBody']),
-                    ))
                     fmt_data = [['Format', 'Count']]
                     for fmt, cnt in (
                         detail['format_distribution'].items()
@@ -227,61 +227,7 @@ def generate_pdf(results: dict[str, Any], output_path: str) -> str:
                     ]))
                     story.append(ft)
 
-                elif itype == 'wrong_purpose':
-                    text = f"[{sev}] {_p(detail['issue'])}"
-                    if detail.get('example'):
-                        text += (
-                            f' — e.g. "{_p(detail["example"])}"'
-                        )
-                    story.append(Paragraph(
-                        text,
-                        styles.get(sev_style, styles['SmallBody']),
-                    ))
-
-                elif itype in ('placeholder_value', 'placeholder'):
-                    text = (
-                        f'[{sev}] Placeholder:'
-                        f' "{_p(detail["value"])}"'
-                        f' × {detail["count"]}'
-                        f' ({detail["pct"]}%)'
-                    )
-                    story.append(Paragraph(
-                        text,
-                        styles.get(sev_style, styles['SmallBody']),
-                    ))
-
-                elif itype == 'suspicious_repetition':
-                    text = (
-                        f'[{sev}] Repetition:'
-                        f' "{_p(detail["value"])}"'
-                        f' × {detail["count"]}'
-                        f' ({detail["pct"]}%)'
-                    )
-                    story.append(Paragraph(
-                        text,
-                        styles.get(sev_style, styles['SmallBody']),
-                    ))
-
-                elif itype == 'null_analysis':
-                    text = (
-                        f"[{sev}] High missing rate:"
-                        f" {detail['total_missing']}"
-                        f"/{detail['total_rows']}"
-                        f" ({detail['missing_pct']}%)"
-                    )
-                    story.append(Paragraph(
-                        text,
-                        styles.get(sev_style, styles['SmallBody']),
-                    ))
-
                 elif itype == 'custom_rule':
-                    rule_name = _p(issue.get('rule_name', 'Custom Rule'))
-                    msg = _p(detail.get('message', ''))
-                    text = f"[{sev}] {rule_name} — {msg}"
-                    story.append(Paragraph(
-                        text,
-                        styles.get(sev_style, styles['SmallBody']),
-                    ))
                     examples = detail.get('examples', [])
                     if examples:
                         sample_str = ', '.join(

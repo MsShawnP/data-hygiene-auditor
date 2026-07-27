@@ -9,6 +9,8 @@ from data_hygiene_auditor.core import (
     _compute_health_score,
     combine_overall_score,
     count_issues,
+    describe_issue,
+    issue_headline,
     run_multi_audit,
     score_band,
     score_label,
@@ -429,6 +431,34 @@ class TestColumnProfiling:
         assert profile['cardinality'] == 0
         assert profile['uniqueness_pct'] == 0.0
         assert profile['min_length'] == 0
+
+
+class TestIssueHeadline:
+    def test_mixed_format_label_and_detail(self):
+        label, detail = issue_headline('mixed_format', {
+            'field_type': 'date', 'dominant_format': 'YYYY-MM-DD',
+            'dominant_count': 8, 'inconsistent_count': 2,
+        })
+        assert label == 'Mixed date formats'
+        assert detail == '2 of 10 values deviate from YYYY-MM-DD'
+
+    def test_custom_rule_uses_rule_name(self):
+        label, detail = issue_headline(
+            'custom_rule', {'message': 'too short'},
+            {'rule_name': 'No short names'},
+        )
+        assert label == 'No short names'
+        assert detail == 'too short'
+
+    def test_describe_issue_composes_label_and_detail(self):
+        # describe_issue (used by Excel + the API) is now derived from the
+        # same headline producer as the HTML/PDF renderers.
+        assert describe_issue('null_analysis', {
+            'total_missing': 3, 'total_rows': 10, 'missing_pct': 30.0,
+        }) == 'High missing rate: 3 of 10 values missing (30.0%)'
+
+    def test_unknown_type_has_empty_detail(self):
+        assert issue_headline('mystery', {}) == ('mystery', '')
 
 
 class TestScoreBands:

@@ -109,37 +109,73 @@ def sanitize_spreadsheet_cell(value):
     return value
 
 
-def describe_issue(issue_type: str, detail: dict, issue: dict | None = None) -> str:
-    """Return a plain-text description for an issue."""
+def issue_headline(
+    issue_type: str, detail: dict, issue: dict | None = None,
+) -> tuple[str, str]:
+    """Return the ``(label, detail_text)`` for an issue's one-line headline.
+
+    ``label`` is the emphasized lead (bolded in the HTML report, bracketed
+    in the PDF); ``detail_text`` is the remainder of the sentence and may be
+    empty. This is the SINGLE source of the per-issue-type wording shared by
+    the HTML, PDF, Excel, and API outputs — add or rename an issue type here
+    and every renderer stays in sync. Renderers add their own markup and any
+    type-specific extras (format-distribution table, example lists).
+    """
+    issue = issue or {}
     if issue_type == 'mixed_format':
+        total = (
+            detail.get('dominant_count', 0) + detail.get('inconsistent_count', 0)
+        )
         return (
-            f"Mixed {detail.get('field_type', '')} formats:"
-            f" {detail.get('inconsistent_count', 0)} values"
-            f" deviate from {detail.get('dominant_format', '')}"
+            f"Mixed {detail.get('field_type', '')} formats",
+            f"{detail.get('inconsistent_count', 0)} of {total} values"
+            f" deviate from {detail.get('dominant_format', '')}",
         )
     if issue_type == 'wrong_purpose':
-        return str(detail.get('issue', 'Wrong purpose'))
+        example = detail.get('example')
+        return (
+            str(detail.get('issue', 'Wrong purpose')),
+            f'e.g. "{example}"' if example else '',
+        )
     if issue_type in ('placeholder_value', 'placeholder'):
         return (
-            f"Placeholder \"{detail.get('value', '')}\" found"
-            f" {detail.get('count', 0)} times"
+            'Placeholder',
+            f'"{detail.get("value", "")}" appears'
+            f' {detail.get("count", 0)} times ({detail.get("pct", 0)}%)',
         )
     if issue_type == 'suspicious_repetition':
         return (
-            f"\"{detail.get('value', '')}\" repeated"
-            f" {detail.get('count', 0)} times"
+            'Suspicious repetition',
+            f'"{detail.get("value", "")}" appears'
+            f' {detail.get("count", 0)} times ({detail.get("pct", 0)}%)',
         )
     if issue_type == 'null_analysis':
         return (
-            f"{detail.get('total_missing', 0)} of"
-            f" {detail.get('total_rows', 0)} values missing"
-            f" ({detail.get('missing_pct', 0)}%)"
+            'High missing rate',
+            f'{detail.get("total_missing", 0)} of'
+            f' {detail.get("total_rows", 0)} values missing'
+            f' ({detail.get("missing_pct", 0)}%)',
         )
     if issue_type == 'custom_rule':
-        rule_name = (issue or {}).get('rule_name', 'Custom Rule')
-        msg = detail.get('message', '')
-        return f"{rule_name}: {msg}"
-    return str(issue_type)
+        return (
+            str(issue.get('rule_name', 'Custom Rule')),
+            str(detail.get('message', '')),
+        )
+    return (str(issue_type), '')
+
+
+# Issue types with a dedicated headline in issue_headline(); anything else
+# falls back to a raw dump of the detail dict in the renderers.
+KNOWN_ISSUE_TYPES = frozenset({
+    'mixed_format', 'wrong_purpose', 'placeholder_value', 'placeholder',
+    'suspicious_repetition', 'null_analysis', 'custom_rule',
+})
+
+
+def describe_issue(issue_type: str, detail: dict, issue: dict | None = None) -> str:
+    """Return a plain-text one-line description for an issue."""
+    label, detail_text = issue_headline(issue_type, detail, issue)
+    return f"{label}: {detail_text}" if detail_text else label
 
 
 def issue_example(issue_type: str, detail: dict, issue: dict | None = None) -> str:

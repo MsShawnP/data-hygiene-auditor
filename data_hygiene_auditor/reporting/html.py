@@ -8,7 +8,13 @@ from html import escape as _html_escape
 from pathlib import Path
 from typing import Any
 
-from ..core import count_issues, score_band, score_label
+from ..core import (
+    KNOWN_ISSUE_TYPES,
+    count_issues,
+    issue_headline,
+    score_band,
+    score_label,
+)
 from . import palette as P
 
 _FONTS_DIR = Path(__file__).parent / "fonts"
@@ -658,19 +664,14 @@ color:#fff">{ss}/100</span></h2>
                     f'<span class="severity-badge {sev}">{sev}</span> '
                 )
 
+                # Shared one-line headline (bold label + detail); type-specific
+                # rich extras (tables, sample lists) are appended below.
+                label, detail_text = issue_headline(itype, detail, issue)
+                parts.append(f'<strong>{_h(label)}</strong>')
+                if detail_text:
+                    parts.append(f' &mdash; {_h(detail_text)}')
+
                 if itype == 'mixed_format':
-                    total = (
-                        detail["dominant_count"]
-                        + detail["inconsistent_count"]
-                    )
-                    parts.append(
-                        f'<strong>Mixed {_h(detail["field_type"])}'
-                        f' formats</strong>'
-                        f' &mdash; {detail["inconsistent_count"]}'
-                        f' of {total}'
-                        f' values deviate from dominant format'
-                        f' ({_h(detail["dominant_format"])})'
-                    )
                     parts.append(
                         '<table class="format-table">'
                         '<tr><th>Format</th><th>Count</th></tr>'
@@ -693,45 +694,10 @@ color:#fff">{ss}/100</span></h2>
                         )
 
                 elif itype == 'wrong_purpose':
-                    parts.append(
-                        f'<strong>{_h(detail["issue"])}</strong>'
-                    )
-                    if detail.get('example'):
-                        parts.append(
-                            f' &mdash; e.g. "{_h(detail["example"])}"'
-                        )
                     if detail.get('row') is not None:
                         parts.append(f' (row {detail["row"] + 2})')
 
-                elif itype in ('placeholder_value', 'placeholder'):
-                    parts.append(
-                        f'<strong>Placeholder detected:</strong>'
-                        f' "{_h(detail["value"])}" appears'
-                        f' {detail["count"]} times ({detail["pct"]}%)'
-                    )
-
-                elif itype == 'suspicious_repetition':
-                    parts.append(
-                        f'<strong>Suspicious repetition:</strong>'
-                        f' "{_h(detail["value"])}" appears'
-                        f' {detail["count"]} times ({detail["pct"]}%)'
-                    )
-
-                elif itype == 'null_analysis':
-                    parts.append(
-                        f'<strong>High missing rate:</strong>'
-                        f' {detail["total_missing"]} of'
-                        f' {detail["total_rows"]} values missing'
-                        f' ({detail["missing_pct"]}%)'
-                    )
-
                 elif itype == 'custom_rule':
-                    rule_name = _h(issue.get('rule_name', 'Custom Rule'))
-                    msg = _h(detail.get('message', ''))
-                    parts.append(
-                        f'<strong>{rule_name}</strong>'
-                        f' &mdash; {msg}'
-                    )
                     examples = detail.get('examples', [])
                     if examples:
                         sample_str = ', '.join(
@@ -743,10 +709,9 @@ color:#fff">{ss}/100</span></h2>
                             f'Examples: {sample_str}</div>'
                         )
 
-                else:
+                elif itype not in KNOWN_ISSUE_TYPES:
                     parts.append(
-                        f'<strong>{_h(itype)}</strong>:'
-                        f' {_h(json.dumps(detail, default=str))}'
+                        f': {_h(json.dumps(detail, default=str))}'
                     )
 
                 if why:
