@@ -247,6 +247,13 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
 
     for sheet_name, df in sheets.items():
         if df.empty:
+            results.setdefault('warnings', []).append({
+                'type': 'empty_sheet',
+                'sheet': sheet_name,
+                'message': (
+                    f"Sheet '{sheet_name}' has no data rows and was skipped."
+                ),
+            })
             continue
 
         sheet_results: dict = {
@@ -408,7 +415,18 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
         scores = [s['health_score'] for s in results['sheets'].values()]
         results['overall_score'] = round(sum(scores) / len(scores))
     else:
+        # Nothing was audited (every sheet was empty). A perfect score here
+        # would falsely read as "Clean", so flag it explicitly and mark the
+        # score as not meaningful rather than silently reporting 100.
         results['overall_score'] = 100
+        results['audited'] = False
+        results.setdefault('warnings', []).append({
+            'type': 'nothing_audited',
+            'message': (
+                "No non-empty sheets were found — nothing was audited, so"
+                " the health score is not meaningful."
+            ),
+        })
 
     if schema:
         results['schema'] = {'source': schema_path, 'validated': True}

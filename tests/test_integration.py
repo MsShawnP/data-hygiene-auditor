@@ -11,8 +11,7 @@ SAMPLE_PATH = Path(__file__).parent.parent / "samples" / "input" / "sample_messy
 
 
 class TestIntegration:
-    def test_full_audit_issue_counts(self):
-        results = run_audit(str(SAMPLE_PATH))
+    def _tally(self, results):
         total = 0
         severity_totals = {"High": 0, "Medium": 0, "Low": 0}
         for sheet in results["sheets"].values():
@@ -23,6 +22,26 @@ class TestIntegration:
             for d in sheet["phantom_duplicates"]:
                 total += 1
                 severity_totals[d["severity"]] += 1
+        return total, severity_totals
+
+    def test_full_audit_issue_counts_are_consistent(self):
+        # Structural invariants that hold regardless of threshold/rule tweaks:
+        # the sample is deliberately messy, so it must surface issues at every
+        # severity, and the total must equal the sum of the severity buckets.
+        results = run_audit(str(SAMPLE_PATH))
+        total, severity_totals = self._tally(results)
+        assert total == sum(severity_totals.values())
+        assert severity_totals["High"] > 0
+        assert severity_totals["Medium"] > 0
+        assert severity_totals["Low"] > 0
+
+    def test_full_audit_matches_readme_snapshot(self):
+        # Golden snapshot mirroring the figures quoted in README.md
+        # ("59 issues — 23 High, 20 Medium, 16 Low"). This is EXPECTED to
+        # churn when detection thresholds change; when it does, update both
+        # this assertion and the README together so the docs never drift.
+        results = run_audit(str(SAMPLE_PATH))
+        total, severity_totals = self._tally(results)
         assert total == 59
         assert severity_totals["High"] == 23
         assert severity_totals["Medium"] == 20
@@ -187,6 +206,20 @@ class TestEdgeCases:
         finally:
             os.unlink(f.name)
 
+    def test_empty_file_is_not_reported_clean(self):
+        # Headers but zero data rows: nothing is audited, so the result must
+        # be flagged rather than silently scored 100/"Clean".
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode="w", delete=False, newline="") as f:
+            f.write("Name,Email\n")
+        try:
+            results = run_audit(f.name)
+            assert results["sheets"] == {}
+            assert results.get("audited") is False
+            warning_types = {w["type"] for w in results.get("warnings", [])}
+            assert "nothing_audited" in warning_types
+        finally:
+            os.unlink(f.name)
+
 
 class TestCountIssues:
     def test_counts_all_issue_sources(self):
@@ -207,21 +240,23 @@ class TestCountIssues:
             manual_total += len(sheet.get("schema_violations", []))
         assert counts['total'] == manual_total
 
-    def test_includes_fuzzy_duplicates(self):
-        results = run_audit(str(SAMPLE_PATH))
-        has_fuzzy = any(
-            len(sheet.get("fuzzy_duplicates", [])) > 0
-            for sheet in results["sheets"].values()
-        )
-        if has_fuzzy:
-            counts = count_issues(results)
-            no_fuzzy_total = 0
-            for sheet in results["sheets"].values():
-                for field in sheet["fields"].values():
-                    no_fuzzy_total += len(field["issues"])
-                no_fuzzy_total += len(sheet["phantom_duplicates"])
-                no_fuzzy_total += len(sheet.get("schema_violations", []))
-            assert counts['total'] > no_fuzzy_total
+    def test_counts_fuzzy_duplicates(self):
+        # Deterministic: a fuzzy duplicate contributes to both the grand
+        # total and its severity bucket. (The messy sample's near-duplicates
+        # are all caught as phantom duplicates, so it yields no standalone
+        # fuzzy duplicates to exercise this against.)
+        counts = count_issues({'sheets': {
+            'Sheet1': {
+                'fields': {},
+                'phantom_duplicates': [],
+                'fuzzy_duplicates': [
+                    {'severity': 'Medium', 'type': 'fuzzy_duplicate'},
+                ],
+                'schema_violations': [],
+            },
+        }})
+        assert counts['total'] == 1
+        assert counts['Medium'] == 1
 
     def test_schema_count_tracked(self):
         counts = count_issues({'sheets': {
