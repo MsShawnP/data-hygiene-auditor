@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 from pathlib import Path
 
+import pytest
 from openpyxl import load_workbook
 
 from audit import generate_excel, generate_html, generate_pdf, run_audit
@@ -112,10 +114,56 @@ class TestPDFBranding:
 
 
 class TestPaletteModule:
-    def test_severity_aliases_match(self):
-        assert P.SEV_HIGH == P.RED_42
-        assert P.SEV_MEDIUM == P.SINGAPORE_55
-        assert P.SEV_LOW == P.HONG_KONG_35
+    # Un-pinned. This class used to assert SEV_HIGH == RED_42, SEV_MEDIUM ==
+    # SINGAPORE_55 and SEV_LOW == HONG_KONG_35. palette.py:29-31 defines those
+    # names *as* those aliases, so all three assertions were tautologies that
+    # could not fail for any palette, correct or not. Worse, the first one
+    # asserted the thing the design system forbids: Red-42 is ink -- text and
+    # 1px rules -- never a background fill, and reporting/html.py:246,356 plus
+    # _SHEET_COLORS/_OVERALL_COLORS fill 23 severity badges, 2 sheet-score
+    # chips and 1 filter button with it. pdf.py:127 and excel.py:68 already use
+    # the right convention: a Red-95 surface with Red-18 text.
+    #
+    # Replaced with the assertion the audit asked for. It is strict-xfail, so
+    # the suite stays green now and fails the moment the fills are ported,
+    # forcing the marker off.
+    # Tracked in PLAN.md -- "Red-42 used as a background fill".
+
+    def test_severity_aliases_are_the_documented_palette_steps(self):
+        # Not a tautology: these compare against the literal hexes, so a change
+        # to either the alias or the underlying step is caught.
+        assert P.SEV_MEDIUM == '#ee8a2a'   # Singapore-55
+        assert P.SEV_LOW == '#158f75'      # Hong Kong-35
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason="html.py:246,356 fill severity badges with Red-42, which is ink-only",
+    )
+    def test_red_42_is_never_a_background_fill_in_the_generated_css(self):
+        results = _audit_results()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = generate_html(results, os.path.join(tmpdir, "r.html"))
+            css = Path(path).read_text(encoding="utf-8")
+
+        # Fills reach Red-42 through custom properties (--accent, --high), so
+        # resolve those first rather than grepping for the raw hex after
+        # "background".
+        red_vars = {
+            name
+            for name, value in re.findall(r"--([\w-]+):\s*([^;]+);", css)
+            if value.strip().lower() == P.RED_42.lower()
+        }
+        alternatives = "|".join(re.escape(v) for v in sorted(red_vars)) or r"\0"
+        offenders = re.findall(
+            rf"(background|background-color|fill)\s*:\s*(?:{re.escape(P.RED_42)}|var\(--(?:{alternatives})\))",
+            css,
+            re.IGNORECASE,
+        )
+        assert not offenders, (
+            f"Red-42 is used as a fill in {len(offenders)} declaration(s); "
+            f"it is ink only. Port the Red-95 surface / Red-18 text convention "
+            f"from pdf.py:127 and excel.py:68."
+        )
 
     def test_xl_strips_hash(self):
         assert P.xl('#1f2e7a') == '1f2e7a'

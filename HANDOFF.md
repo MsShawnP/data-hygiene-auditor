@@ -2,6 +2,29 @@
 
 Session-to-session continuity for data-hygiene-auditor. Most recent entry on top.
 
+## 2026-07-28 — un-pinned defect, fix not written
+
+`TestPaletteModule.test_severity_aliases_match` asserted `SEV_HIGH == RED_42`
+and two siblings. `palette.py:29-31` defines those names *as* those aliases, so
+all three were tautologies that could not fail for any palette. The first also
+asserted the thing the design system forbids.
+
+- [ ] **Red-42 used as a background fill.** `reporting/html.py:246,356` plus
+      `_SHEET_COLORS`/`_OVERALL_COLORS` fill 23 severity badges, 2 sheet-score
+      chips and 1 filter button with Red-42 — 5 CSS declarations. Red-42 is ink:
+      text and 1px rules, never a fill. Port the convention `pdf.py:127` and
+      `excel.py:68` already use: a Red-95 (`#fce8e7`) surface with Red-18 text.
+      Test: `tests/test_branding.py` —
+      `test_red_42_is_never_a_background_fill_in_the_generated_css`, marked
+      `xfail(strict=True)`. It resolves the CSS custom properties before
+      matching, so it catches `var(--high)` as well as the raw hex, and it
+      XPASSes and fails the suite the moment the fills are ported. Do not
+      remove the marker without doing the fix.
+
+Also recorded this session: the serif display scale is rem-based and diverges
+from the DS px steps — written up in CLAUDE.md as a deliberate deviation, not a
+defect. No production logic changed. 262 passed, 1 xfailed.
+
 ## 2026-07-27 21:05
 
 **Started from:** Local `main` at v1.1.4; ran `/improve` + code review + UI review on the package. (Remote had silently advanced to v1.1.5 on another machine — discovered at push time.)
