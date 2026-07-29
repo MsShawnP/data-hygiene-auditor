@@ -52,14 +52,45 @@ CURRENCY_PATTERNS = [
 EMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
 
+
+# A signature built only from low-cardinality columns cannot identify a record.
+# Matching a customer master on (City, Status) buckets rows by category; it does
+# not find duplicates. Both conditions must hold before we suppress, so a file
+# with genuine duplication is not silently dropped:
+#   1. no signature column varies enough to distinguish records, and
+#   2. the resulting "duplicates" would cover most of the table.
+_MIN_DISCRIMINATING_RATIO = 0.5
+_MAX_DUPLICATE_ROW_SHARE = 0.5
+
+
+def _signature_can_identify_records(normalized, sig_cols, n_rows):
+    """False when the signature buckets rows by category instead of matching records."""
+    if n_rows == 0:
+        return False
+    if max(normalized[c].nunique() for c in sig_cols) >= _MIN_DISCRIMINATING_RATIO * n_rows:
+        return True
+    combined = normalized[sig_cols].astype(str).agg('||'.join, axis=1)
+    return (combined.duplicated(keep=False).sum() / n_rows) <= _MAX_DUPLICATE_ROW_SHARE
+
+
 def _identify_id_columns(df, field_types):
-    """Return set of column names that are identifiers or fully unique."""
+    """Return the columns to treat as identifiers rather than record content.
+
+    Only columns actually inferred as identifiers qualify. A column that merely
+    happens to be fully unique is NOT an identifier: in a customer master,
+    FullName and Email are unique and are precisely the fields that make a
+    record distinct. Treating them as identifiers dropped them from the content
+    comparison, so genuinely different records compared equal and were reported
+    as exact duplicates.
+
+    Fully unique columns are still excluded from the matching signature itself
+    (see analyze_phantom_duplicates), which is what preserves the intended
+    "same content, different surrogate key" case.
+    """
     id_cols = set()
     for col in df.columns:
         ft = field_types.get(col, infer_field_type(col, df[col].values))
         if ft == 'id':
-            id_cols.add(col)
-        elif df[col].nunique() == len(df):
             id_cols.add(col)
     return id_cols
 
@@ -387,6 +418,9 @@ def analyze_phantom_duplicates(df, sheet_name, field_types=None):
 
     sig_cols = [c for c in content_cols if normalized[c].nunique() < len(df)]
     if not sig_cols:
+        return findings
+
+    if not _signature_can_identify_records(normalized, sig_cols, len(df)):
         return findings
 
     norm_subset = normalized[sig_cols]

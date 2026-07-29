@@ -6,6 +6,10 @@ from audit import (
     analyze_nulls,
     infer_field_type,
 )
+from data_hygiene_auditor.detection import (
+    _identify_id_columns,
+    analyze_phantom_duplicates,
+)
 
 
 class TestInferFieldType:
@@ -181,3 +185,52 @@ class TestAnalyzeMixedFormats:
         # Nothing matches a known format -> not a "mixed format" finding.
         series = pd.Series(["nope", "junk", "bad"])
         assert analyze_mixed_formats(series, "date") is None
+
+
+class TestDuplicateSignatureDiscrimination:
+    """A signature of low-cardinality columns must not report clean records as duplicates.
+
+    Regression for the 1.2.0 defect: _identify_id_columns excluded every fully
+    unique column, so a customer master lost FullName and Email from the
+    comparison and matched on (City, Status) alone. A 200-row file with zero
+    real duplicates produced 15 'exact duplicate' groups covering all 200 rows
+    and scored 15/100 Critical.
+    """
+
+    @staticmethod
+    def _customer_master(n=200):
+        return pd.DataFrame({
+            "CustomerID": [f"C{i:04d}" for i in range(n)],
+            "FullName": [f"Person {i}" for i in range(n)],
+            "Email": [f"p{i}@example.com" for i in range(n)],
+            "City": ["Austin", "Denver", "Miami", "Boise", "Reno"] * (n // 5),
+            "Status": (["Active", "Churned", "Trial"] * (n // 3 + 1))[:n],
+        })
+
+    def test_clean_customer_master_reports_no_duplicates(self):
+        assert analyze_phantom_duplicates(self._customer_master(), "Customers") == []
+
+    def test_clean_narrow_vendor_master_reports_no_duplicates(self):
+        vendors = pd.DataFrame({
+            "VendorID": [f"V{i:03d}" for i in range(120)],
+            "VendorName": [f"Vendor {i}" for i in range(120)],
+            "Terms": ["Net30", "Net60", "Net15"] * 40,
+            "Region": ["East", "West", "Central", "South"] * 30,
+            "Active": ["Y", "N"] * 60,
+        })
+        assert analyze_phantom_duplicates(vendors, "Vendors") == []
+
+    def test_same_content_different_surrogate_key_is_still_caught(self):
+        """The documented use case must survive the fix."""
+        df = pd.DataFrame({
+            "RowKey": [f"K{i}" for i in range(100)],
+            "Name": [f"Co {i}" for i in range(98)] + ["Co 0", "Co 1"],
+            "Email": [f"c{i}@x.com" for i in range(98)] + ["c0@x.com", "c1@x.com"],
+            "City": ["Austin", "Denver"] * 50,
+        })
+        assert len(analyze_phantom_duplicates(df, "Accounts")) == 2
+
+    def test_unique_content_columns_are_not_treated_as_identifiers(self):
+        df = self._customer_master(20)
+        ids = _identify_id_columns(df, {})
+        assert "FullName" not in ids and "Email" not in ids

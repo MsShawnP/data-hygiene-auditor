@@ -6,6 +6,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-28
+
+### Fixed
+- Duplicate detection no longer reports distinct records as duplicates.
+  `_identify_id_columns` excluded every fully unique column, so a customer
+  master lost FullName and Email from the comparison and matched on
+  (City, Status) alone. A 200-row file with zero real duplicates produced 15
+  "exact duplicate" groups covering all 200 rows and scored 15/100 Critical;
+  a 5-column vendor master produced 12. Only columns actually inferred as
+  identifiers are excluded now, and a signature made solely of low-cardinality
+  columns is rejected before grouping. The documented "same content, different
+  surrogate key" case is unaffected and covered by a regression test.
+
+
 ## [1.2.0] - 2026-07-27
 
 ### Security
