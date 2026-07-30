@@ -6,6 +6,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-07-30
+
+### Changed
+- HTML report score ring now prints its scale inline ("Health score, 0–100 —
+  90+ clean · 70–89 needs attention · 40–69 significant issues · below 40
+  critical"), so a bare score like 42 is self-defining on first read.
+
 ## [1.2.1] - 2026-07-28
 
 ### Fixed
