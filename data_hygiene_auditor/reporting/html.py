@@ -300,6 +300,11 @@ h3 {{
     flex-shrink: 0;
 }}
 .score-ring svg {{ display: block; transform: rotate(-90deg); }}
+.score-scale {{
+    font-size: 12px;
+    color: var(--text-secondary, #595959);
+    margin-top: 6px;
+}}
 .score-ring .score-value {{
     position: absolute;
     top: 50%;
@@ -527,6 +532,7 @@ h3 {{
     <div class="score-meta">
         <div class="score-label">{label}</div>
         <div class="score-desc">{score_desc}</div>
+        <div class="score-scale">Health score, 0&ndash;100 &mdash; 90+ clean &middot; 70&ndash;89 needs attention &middot; 40&ndash;69 significant issues &middot; below 40 critical</div>
     </div>
 </div>
 
