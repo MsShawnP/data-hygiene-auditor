@@ -17,7 +17,7 @@ A single run produces three reports tailored to three audiences: an **HTML repor
 
 ## What It Detects
 
-**Mixed Formats** — Identifies dates, phone numbers, and currency values stored in inconsistent formats within the same column. For example, `2023-01-15` alongside `Jan 15, 2023` and `01/15/2023` in one date field. The auditor recognizes 6 date patterns, 7 phone patterns, and 6 currency patterns.
+**Mixed Formats** — Identifies dates, phone numbers, and currency values stored in inconsistent formats within the same column. For example, `2023-01-15` alongside `Jan 15, 2023` and `01/15/2023` in one date field. The auditor recognizes 9 date patterns, 7 phone patterns, and 6 currency patterns.
 
 **Misused Fields** — Flags data stored in the wrong column: reference codes in name fields, free text in currency columns, invalid email addresses, and mixed boolean representations (`Y/N` vs `1/0` vs `Active/Inactive` in the same field).
 

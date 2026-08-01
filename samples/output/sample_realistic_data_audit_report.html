@@ -217,6 +217,11 @@ h3 {
     flex-shrink: 0;
 }
 .score-ring svg { display: block; transform: rotate(-90deg); }
+.score-scale {
+    font-size: 12px;
+    color: var(--text-secondary, #595959);
+    margin-top: 6px;
+}
 .score-ring .score-value {
     position: absolute;
     top: 50%;
@@ -414,7 +419,7 @@ h3 {
 <body>
 
 <h1>Data Hygiene Audit Report</h1>
-<p class="subtitle">sample_realistic_data.xlsx &mdash; 2026-07-27 16:58:36</p>
+<p class="subtitle">sample_realistic_data.xlsx &mdash; 2026-07-31 21:22:53</p>
 
 <div class="score-hero">
     <div class="score-ring">
@@ -431,6 +436,9 @@ h3 {
     <div class="score-meta">
         <div class="score-label">Significant Issues</div>
         <div class="score-desc">This dataset has serious quality problems.</div>
+        <div class="score-scale">Health score, 0&ndash;100 &mdash; 90+ clean &middot;
+            70&ndash;89 needs attention &middot; 40&ndash;69 significant issues &middot;
+            below 40 critical</div>
     </div>
 </div>
 
@@ -599,7 +607,7 @@ suspect = df.loc[mask, &quot;Status&quot;]</pre></div></div><div class="issue se
     <div class="null-bar"><div class="null-bar-fill"
         style="width:3.6%;background:var(--low);"></div></div>
 <div style="font-size:0.8rem;color:var(--text-muted);margin:0.2rem 0 0.4rem 0;">25 distinct &nbsp;|&nbsp; 92.6% unique &nbsp;|&nbsp; avg len 5.0</div></div>
-<div class="field-card" data-field="notes" data-severities="Medium High">
+<div class="field-card" data-field="notes" data-severities="High Medium">
     <div class="field-header">
         <span class="field-name">Notes</span>
         <span class="field-type">freetext</span>
@@ -633,7 +641,7 @@ for col in text_cols:
     df[col] = df[col].str.strip().str.lower()
 df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div></div></div>
 <div class="footer">
-    Data Hygiene Audit &mdash; Generated 2026-07-27 16:58:36 &mdash; Lailara LLC
+    Data Hygiene Audit &mdash; Generated 2026-07-31 21:22:53 &mdash; Lailara LLC
 </div>
 
 <script>
