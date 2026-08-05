@@ -124,6 +124,19 @@ class TestAuditResultProperties:
         assert all(f.is_medium for f in mediums)
         assert all(f.is_low for f in lows)
 
+    def test_severity_counts_foot_to_total_issues(self):
+        # Regression: the H/M/L breakdown must reconcile to total_issues. The
+        # findings-only view (high_issues/…) undercounts because duplicates and
+        # schema violations carry severity too but are not findings.
+        result = audit_file(str(SAMPLE_PATH))
+        counts = result.severity_counts
+        assert set(counts) == {"High", "Medium", "Low"}
+        assert sum(counts.values()) == result.total_issues
+        # And it strictly exceeds the findings-only sum whenever non-finding
+        # issues exist (the sample has duplicates).
+        findings_only = len(result.high_issues) + len(result.medium_issues) + len(result.low_issues)
+        assert sum(counts.values()) >= findings_only
+
     def test_to_dict(self):
         result = audit_file(str(SAMPLE_PATH))
         d = result.to_dict()

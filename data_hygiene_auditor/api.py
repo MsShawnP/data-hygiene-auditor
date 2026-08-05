@@ -192,6 +192,29 @@ class AuditResult:
     def low_issues(self) -> List[Finding]:
         return [f for f in self.findings if f.is_low]
 
+    @property
+    def severity_counts(self) -> Dict[str, int]:
+        """Issue counts by severity across EVERY issue type — findings,
+        duplicates, fuzzy duplicates, and schema violations — so the breakdown
+        foots to ``total_issues``.
+
+        ``high_issues`` / ``medium_issues`` / ``low_issues`` are the *findings*
+        view (Finding objects only); duplicates and schema violations carry a
+        severity too, so a High/Medium/Low breakdown drawn only from findings
+        undercounts and does not reconcile to the headline total. This property
+        is the reconciling breakdown: ``sum(severity_counts.values()) ==
+        total_issues``.
+        """
+        counts = {"High": 0, "Medium": 0, "Low": 0}
+        for s in self.sheets:
+            for collection in (s.findings, s.duplicates, s.fuzzy_duplicates,
+                               s.schema_violations):
+                for issue in collection:
+                    sev = getattr(issue, "severity", None)
+                    if sev in counts:
+                        counts[sev] += 1
+        return counts
+
     def to_dict(self) -> Dict[str, Any]:
         """Return the raw audit results dict."""
         return self._raw
