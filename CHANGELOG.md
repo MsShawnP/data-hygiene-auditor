@@ -6,6 +6,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- README "What It Detects" now states **9** date patterns (was 6), matching
+  `DATE_PATTERNS` in `detection.py` (7 phone / 6 currency were already correct).
+
+### Changed
+- Regenerated the committed `samples/output/` reports from current source so the
+  shipped showcase artifacts reflect the 1.3.0 tool.
+
 ## [1.3.0] - 2026-08-05
 
 ### Added
