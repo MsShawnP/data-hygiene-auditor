@@ -87,6 +87,15 @@ def _render_fix(fix: dict[str, str]) -> str:
     )
 
 
+# Static one-liner lifted out of the score-hero f-string so no source line exceeds
+# the 120-char lint limit; implicit concatenation reproduces the exact same markup.
+_SCORE_SCALE_HTML = (
+    '<div class="score-scale">Health score, 0&ndash;100 &mdash; '
+    '90+ clean &middot; 70&ndash;89 needs attention &middot; '
+    '40&ndash;69 significant issues &middot; below 40 critical</div>'
+)
+
+
 def generate_html(results: dict[str, Any], output_path: str) -> str:
     """Generate a client-readable HTML report."""
     counts = count_issues(results)
@@ -532,7 +541,7 @@ h3 {{
     <div class="score-meta">
         <div class="score-label">{label}</div>
         <div class="score-desc">{score_desc}</div>
-        <div class="score-scale">Health score, 0&ndash;100 &mdash; 90+ clean &middot; 70&ndash;89 needs attention &middot; 40&ndash;69 significant issues &middot; below 40 critical</div>
+        {_SCORE_SCALE_HTML}
     </div>
 </div>
 
