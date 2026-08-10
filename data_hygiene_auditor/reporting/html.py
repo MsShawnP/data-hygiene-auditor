@@ -636,7 +636,14 @@ color:#fff">{ss}/100</span></h2>
             else:
                 null_color = 'var(--high)'
 
-            severities = ' '.join(set(i['severity'] for i in issues))
+            # Sort to a fixed High>Medium>Low order before emitting: a bare
+            # set iterates in hash order, so the same input produced different
+            # `data-severities` bytes run-to-run (DECISIONS 2026-08-07). The
+            # secondary key keeps any unexpected value deterministic too.
+            _sev_rank = {'High': 0, 'Medium': 1, 'Low': 2}
+            severities = ' '.join(sorted(
+                set(i['severity'] for i in issues),
+                key=lambda s: (_sev_rank.get(s, 99), s)))
             parts.append(f"""
 <div class="field-card" data-field="{_h(col_name.lower())}" data-severities="{severities}">
     <div class="field-header">
