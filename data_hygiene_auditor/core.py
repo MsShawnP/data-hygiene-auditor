@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -26,6 +26,25 @@ from .trend import compute_trend, load_baseline
 HIGH = 'High'
 MEDIUM = 'Medium'
 LOW = 'Low'
+
+
+def _report_timestamp() -> str:
+    """Timestamp shown in the report header/footer and findings workbook.
+
+    Honors SOURCE_DATE_EPOCH (the reproducible-builds standard): when set, the
+    timestamp is derived from that UTC epoch so regenerated deliverables are
+    byte-reproducible; otherwise it is the current wall-clock time. The report
+    also emits per-field `data-severities` in a fixed High>Medium>Low order —
+    together these are the two nondeterminism sources noted in DECISIONS.md
+    (2026-08-07); a bare `datetime.now()` here defeats any byte-lock on the
+    output regardless of PYTHONHASHSEED.
+    """
+    sde = os.environ.get('SOURCE_DATE_EPOCH')
+    if sde:
+        return datetime.fromtimestamp(int(sde), tz=timezone.utc).strftime(
+            '%Y-%m-%d %H:%M:%S')
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
 
 WHY_IT_MATTERS = {
     'mixed_format_date': (
@@ -330,7 +349,7 @@ def run_audit(input_path, fuzzy_threshold=0.85, schema_path=None, baseline_path=
         sheets = load_sheets(input_path)
     results = {
         'input_file': os.path.basename(input_path),
-        'audit_timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'audit_timestamp': _report_timestamp(),
         'sheets': {},
     }
 

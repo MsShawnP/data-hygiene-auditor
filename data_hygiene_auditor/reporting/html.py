@@ -87,6 +87,15 @@ def _render_fix(fix: dict[str, str]) -> str:
     )
 
 
+# Static one-liner lifted out of the score-hero f-string so no source line exceeds
+# the 120-char lint limit; implicit concatenation reproduces the exact same markup.
+_SCORE_SCALE_HTML = (
+    '<div class="score-scale">Health score, 0&ndash;100 &mdash; '
+    '90+ clean &middot; 70&ndash;89 needs attention &middot; '
+    '40&ndash;69 significant issues &middot; below 40 critical</div>'
+)
+
+
 def generate_html(results: dict[str, Any], output_path: str) -> str:
     """Generate a client-readable HTML report."""
     counts = count_issues(results)
@@ -532,9 +541,7 @@ h3 {{
     <div class="score-meta">
         <div class="score-label">{label}</div>
         <div class="score-desc">{score_desc}</div>
-        <div class="score-scale">Health score, 0&ndash;100 &mdash; 90+ clean &middot;
-            70&ndash;89 needs attention &middot; 40&ndash;69 significant issues &middot;
-            below 40 critical</div>
+        {_SCORE_SCALE_HTML}
     </div>
 </div>
 
@@ -629,7 +636,14 @@ color:#fff">{ss}/100</span></h2>
             else:
                 null_color = 'var(--high)'
 
-            severities = ' '.join(set(i['severity'] for i in issues))
+            # Sort to a fixed High>Medium>Low order before emitting: a bare
+            # set iterates in hash order, so the same input produced different
+            # `data-severities` bytes run-to-run (DECISIONS 2026-08-07). The
+            # secondary key keeps any unexpected value deterministic too.
+            _sev_rank = {'High': 0, 'Medium': 1, 'Low': 2}
+            severities = ' '.join(sorted(
+                set(i['severity'] for i in issues),
+                key=lambda s: (_sev_rank.get(s, 99), s)))
             parts.append(f"""
 <div class="field-card" data-field="{_h(col_name.lower())}" data-severities="{severities}">
     <div class="field-header">

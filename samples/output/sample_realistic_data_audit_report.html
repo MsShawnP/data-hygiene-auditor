@@ -419,7 +419,7 @@ h3 {
 <body>
 
 <h1>Data Hygiene Audit Report</h1>
-<p class="subtitle">sample_realistic_data.xlsx &mdash; 2026-07-31 21:22:53</p>
+<p class="subtitle">sample_realistic_data.xlsx &mdash; 2026-08-05 00:00:00</p>
 
 <div class="score-hero">
     <div class="score-ring">
@@ -436,9 +436,7 @@ h3 {
     <div class="score-meta">
         <div class="score-label">Significant Issues</div>
         <div class="score-desc">This dataset has serious quality problems.</div>
-        <div class="score-scale">Health score, 0&ndash;100 &mdash; 90+ clean &middot;
-            70&ndash;89 needs attention &middot; 40&ndash;69 significant issues &middot;
-            below 40 critical</div>
+        <div class="score-scale">Health score, 0&ndash;100 &mdash; 90+ clean &middot; 70&ndash;89 needs attention &middot; 40&ndash;69 significant issues &middot; below 40 critical</div>
     </div>
 </div>
 
@@ -560,7 +558,7 @@ df[&quot;Phone&quot;] = (
 <div style="font-size:0.8rem;color:var(--text-muted);margin:0.2rem 0 0.4rem 0;">26 distinct &nbsp;|&nbsp; 92.9% unique &nbsp;|&nbsp; avg len 10.1</div><div class="issue severity-Medium"><span class="severity-badge Medium">Medium</span> <strong>Mixed date formats</strong> &mdash; 3 of 28 values deviate from YYYY-MM-DD<table class="format-table"><tr><th>Format</th><th>Count</th></tr><tr><td>YYYY-MM-DD</td><td>25</td></tr><tr><td>MM/DD/YYYY</td><td>2</td></tr><tr><td>Mon DD, YYYY</td><td>1</td></tr></table><div class="why-box"><strong>Why this matters:</strong> Mixed date formats cause sorting failures, broken filters, and incorrect calculations. A date stored as text (&quot;Jan 15, 2023&quot;) won&#x27;t sort chronologically next to &quot;2023-01-15&quot;. Downstream tools, APIs, and reports will misparse or reject inconsistent dates.</div><div class="fix-block"><div class="fix-header"><span>Suggested Fix (normalize_dates)</span><button class="fix-copy" onclick="copyFix(this)">Copy</button></div><div class="fix-desc">Standardize all dates in &quot;JoinDate&quot; to YYYY-MM-DD format</div><pre class="fix-code">df[&quot;JoinDate&quot;] = pd.to_datetime(
     df[&quot;JoinDate&quot;], format=&quot;mixed&quot;, dayfirst=False
 ).dt.strftime(&quot;%Y-%m-%d&quot;)</pre></div></div></div>
-<div class="field-card" data-field="monthlyfee" data-severities="Medium High Low">
+<div class="field-card" data-field="monthlyfee" data-severities="High Medium Low">
     <div class="field-header">
         <span class="field-name">MonthlyFee</span>
         <span class="field-type">currency</span>
@@ -641,7 +639,7 @@ for col in text_cols:
     df[col] = df[col].str.strip().str.lower()
 df = df.drop_duplicates(keep=&quot;first&quot;).reset_index(drop=True)</pre></div></div></div></div>
 <div class="footer">
-    Data Hygiene Audit &mdash; Generated 2026-07-31 21:22:53 &mdash; Lailara LLC
+    Data Hygiene Audit &mdash; Generated 2026-08-05 00:00:00 &mdash; Lailara LLC
 </div>
 
 <script>

@@ -6,6 +6,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- README "What It Detects" now states **9** date patterns (was 6), matching
+  `DATE_PATTERNS` in `detection.py` (7 phone / 6 currency were already correct).
+
+### Changed
+- Regenerated the committed `samples/output/` reports from current source so the
+  shipped showcase artifacts reflect the 1.3.0 tool.
+
+## [1.3.0] - 2026-08-05
+
+### Added
+- `AuditResult.severity_counts` — a High/Medium/Low breakdown that counts **every**
+  issue type (findings, duplicates, fuzzy duplicates, schema violations), so it
+  reconciles to `total_issues`. The findings-only `high_issues` / `medium_issues`
+  / `low_issues` properties undercounted, because duplicates and schema violations
+  carry a severity but are not findings — a severity breakdown drawn from them did
+  not foot to the headline total. `severity_counts` is the reconciling view.
+
 ## [1.2.2] - 2026-07-30
 
 ### Changed
